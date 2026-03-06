@@ -234,12 +234,14 @@ body {
 
 /* ── SIDEBAR ── */
 .sidebar {
-  width: 272px; min-width: 272px;
+  width: 272px; min-width: 200px; max-width: 480px;
   background: var(--surface);
   border-right: 1px solid var(--border);
   display: flex; flex-direction: column;
   overflow: hidden; z-index: 10;
   box-shadow: 1px 0 6px var(--shadow);
+  resize: horizontal;
+  position: relative;
 }
 .sb-section {
   padding: 12px 14px;
@@ -430,12 +432,12 @@ textarea {
   border-radius: 4px; padding: 2px 6px;
   text-transform: uppercase; flex-shrink: 0;
 }
-.cat-bride-family { background: #fbd0de; color: #8c2040; }
-.cat-bride-rel    { background: #fce0ea; color: #a03060; }
-.cat-bride-friend { background: #fdeaf2; color: #c04878; }
-.cat-groom-family { background: #d0e0fb; color: #1a3a90; }
-.cat-groom-rel    { background: #ddeafc; color: #2a4aa8; }
-.cat-groom-friend { background: #e6f0fd; color: #3a5cc0; }
+.cat-bride-family { background: #fce8ef; color: #9c2848; }
+.cat-bride-rel    { background: #fdf0f5; color: #b03868; }
+.cat-bride-friend { background: #fef4f9; color: #c84878; }
+.cat-groom-family { background: #e4edfd; color: #1e3e98; }
+.cat-groom-rel    { background: #edf3fe; color: #2a4ab0; }
+.cat-groom-friend { background: #f0f5fe; color: #3a5cc8; }
 
 /* ════════════════════════════════════════════
    FILTER CHIPS
@@ -599,6 +601,7 @@ textarea {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .table-count { font-size: 16px; color: var(--muted); margin-top: 4px; font-weight: 600; }
+.table-extra-label { font-size: 9px; color: var(--accent-dk); margin-top: 2px; font-weight: 600; opacity: .85; }
 
 /* TABLE ACTIONS */
 .table-actions {
@@ -634,7 +637,7 @@ textarea {
 .seat.occupied         { border-width: 2px; }
 /* category badge — full-width bar at top of card */
 .seat-cat-badge {
-  font-size: 7px; font-weight: 700; letter-spacing: 0.2px;
+  font-size: 7px; font-weight: 700; letter-spacing: 0.1px;
   text-transform: none; text-align: center;
   padding: 3px 4px; flex-shrink: 0;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -657,10 +660,11 @@ textarea {
   position: absolute; bottom: calc(100% + 7px); left: 50%;
   transform: translateX(-50%);
   background: var(--text); color: var(--bg);
-  border-radius: 6px; padding: 4px 9px; font-size: 10px;
+  border-radius: 7px; padding: 6px 10px; font-size: 10px;
   white-space: nowrap; pointer-events: none;
-  opacity: 0; transition: opacity 0.15s; z-index: 200;
-  box-shadow: 0 3px 10px var(--shadow-md);
+  opacity: 0; transition: opacity 0.18s; z-index: 200;
+  box-shadow: 0 4px 14px var(--shadow-md);
+  line-height: 1.5; text-align: center;
 }
 .seat-tip::after {
   content: ''; position: absolute; top: 100%; left: 50%;

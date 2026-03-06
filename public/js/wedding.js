@@ -13,9 +13,8 @@ let activeFilter='all', selEl=null, dragGId=null, moving=null;
 let gridVisible=true;
 
 // ── GUEST LIST SORT STATE
-// cols: 'seq','table','seat','lastName','firstName','nickName','cat','subCat','attended'
-let glSortCol='seq';
-let glSortDir=1; // 1=asc, -1=desc
+// Multi-sort stack: [{col, dir}]  (first = primary sort)
+let glSortStack=[{col:'table',dir:1}]; // default: sort by table ASC
 
 // ── MULTI-SELECT STATE (unassigned sidebar)
 let multiSelectMode=false;
@@ -737,7 +736,8 @@ function renderTable(t,cv){
   disc.style.cssText=`left:${hw-DISC_R}px;top:${hh-DISC_R}px;width:${DISC_R*2}px;height:${DISC_R*2}px;`;
   // Display name as-is; use desc field for subtitle
   const desc=t.desc||'';
-  disc.innerHTML=`<div class="table-num" style="font-size:${t.name.length>6?'18px':'30px'}">${esc(t.name)}</div>${desc?`<div class="table-sublabel">${esc(desc)}</div>`:''}<div class="table-count">${occ}/${sc}</div>`;
+  const extraSeats=t.extraSeats||0;
+  disc.innerHTML=`<div class="table-num" style="font-size:${t.name.length>6?'18px':'30px'}">${esc(t.name)}</div>${desc?`<div class="table-sublabel">${esc(desc)}</div>`:''}<div class="table-count">${occ}/${sc}</div>${extraSeats>0?`<div class="table-extra-label">+${extraSeats} extra seat${extraSeats>1?'s':''}</div>`:''}`;
   wrap.appendChild(disc);
 
   for(let s=0;s<sc;s++){
@@ -766,12 +766,14 @@ function renderTable(t,cv){
     const body=document.createElement('div');
     body.className='seat-body';
 
-    // name — 2-line clamp, always min-height reserved
+    // name row: color dot + 2-line name
     const nameEl=document.createElement('div');
     nameEl.className='seat-guest-name';
     if(g){
       const dn=guestDisplayName(g);
-      nameEl.textContent=dn;
+      // color dot prepended
+      const dot=`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${isSeatSelected?'var(--accent)':g.color};margin-right:4px;flex-shrink:0;vertical-align:middle;"></span>`;
+      nameEl.innerHTML=dot+esc(dn);
       if(isSeatSelected) nameEl.style.color='var(--accent)';
     } else {
       nameEl.textContent=`Seat ${s+1}${s>=SEAT_COUNT?' ★':''}`;
@@ -795,12 +797,14 @@ function renderTable(t,cv){
 
     seat.appendChild(body);
 
-    // tooltip
+    // tooltip — richer hover card
     if(g){
       const dn=guestDisplayName(g);
       const tip=document.createElement('div');
       tip.className='seat-tip';
-      tip.textContent=`${dn}${g.nickName?' ('+g.nickName+')':''} · ${cat.short} · S${s+1}`;
+      tip.innerHTML=`<b>${esc(dn)}</b>${g.nickName?` <span style="opacity:.75;font-style:italic;">(${esc(g.nickName)})</span>`:''}<br>`+
+        `<span style="opacity:.8">${esc(cat.short)}</span>${g.subCat?` · <span style="opacity:.7">${esc(g.subCat)}</span>`:''}`+
+        `<span style="opacity:.5;margin-left:6px;">S${s+1}</span>`;
       seat.appendChild(tip);
     }
 
@@ -1097,15 +1101,15 @@ const GL_COLS = [
   {id:'seq',      label:'Seq',          always:true},
   {id:'table',    label:'Table',        always:true},
   {id:'seat',     label:'Seat',         always:true},
+  {id:'cat',      label:'Relationship', always:false},
+  {id:'subCat',   label:'Sub-Cat',      always:false},
   {id:'lastName', label:'Last Name',    always:false},
   {id:'firstName',label:'First Name',   always:false},
   {id:'nickName', label:'Nick Name',    always:false},
-  {id:'cat',      label:'Relationship', always:false},
-  {id:'subCat',   label:'Sub-Cat',      always:false},
   {id:'attended', label:'Attended',     always:true},
 ];
 // Default visible cols
-let glVisibleCols = new Set(['seq','table','seat','lastName','firstName','nickName','cat','subCat','attended']);
+let glVisibleCols = new Set(['seq','table','seat','cat','subCat','lastName','firstName','nickName','attended']);
 
 function openGuestListModal(){
   const tSel = document.getElementById('gl-filter-table');
@@ -1119,25 +1123,129 @@ function openGuestListModal(){
   openModal('modal-guest-list');
 }
 
-function renderGLColToggles(){
-  const bar = document.getElementById('gl-col-toggles');
-  if(!bar) return;
-  bar.innerHTML = GL_COLS.filter(c=>!c.always).map(c=>`
-    <label style="display:flex;align-items:center;gap:4px;font-size:10px;cursor:pointer;white-space:nowrap;color:var(--text2);">
-      <input type="checkbox" ${glVisibleCols.has(c.id)?'checked':''} onchange="glToggleCol('${c.id}',this.checked)" style="accent-color:var(--accent)">
-      ${c.label}
-    </label>`).join('');
-}
-
+function renderGLColToggles(){ /* col toggles removed */ }
 function glToggleCol(id, visible){
   if(visible) glVisibleCols.add(id); else glVisibleCols.delete(id);
   renderGuestList();
 }
 
+// Header click: toggle dir in-place, never reorder
 function glSetSort(col){
-  if(glSortCol===col){ glSortDir*=-1; }
-  else { glSortCol=col; glSortDir=1; }
+  const existing = glSortStack.findIndex(s=>s.col===col);
+  if(existing>=0){
+    glSortStack[existing].dir *= -1;
+  } else {
+    glSortStack.push({col,dir:1});
+    if(glSortStack.length>6) glSortStack.pop();
+  }
   renderGuestList();
+}
+
+const GL_DEFAULT_SORT = ()=>[
+  {col:'cat',dir:1},{col:'subCat',dir:1},{col:'lastName',dir:1},{col:'firstName',dir:1}
+];
+const GL_CLEAR_SORT = ()=>[ {col:'table',dir:1} ];
+
+function glClearSort(){
+  glSortStack = GL_CLEAR_SORT(); // clear → sort by table ASC
+  renderGuestList();
+}
+function glResetSort(){
+  glSortStack = GL_DEFAULT_SORT(); // reset → default 4-level sort
+  renderGuestList();
+}
+
+function glRemoveSort(col){
+  glSortStack = glSortStack.filter(s=>s.col!==col);
+  if(!glSortStack.length) glSortStack = GL_CLEAR_SORT();
+  renderGuestList();
+}
+
+// ── ADVANCED SORT MODAL
+let glSortDraft = [];
+
+function openAdvancedSort(){
+  glSortDraft = glSortStack.map(s=>({...s}));
+  renderAdvSortRows();
+  document.getElementById('modal-adv-sort').classList.remove('hidden');
+}
+function closeAdvancedSort(){
+  document.getElementById('modal-adv-sort').classList.add('hidden');
+}
+function applyAdvancedSort(){
+  glSortStack = glSortDraft.filter(s=>s.col).map(s=>({...s}));
+  if(!glSortStack.length) glSortStack = GL_DEFAULT_SORT();
+  closeAdvancedSort();
+  renderGuestList();
+}
+function resetAdvancedSort(){
+  glSortDraft = GL_DEFAULT_SORT();
+  renderAdvSortRows();
+}
+function clearAdvancedSort(){
+  glSortDraft = GL_CLEAR_SORT();
+  renderAdvSortRows();
+}
+function advSortAddRow(){
+  const used = glSortDraft.map(s=>s.col);
+  const next = GL_COLS.filter(c=>c.id!=='attended'&&!used.includes(c.id))[0];
+  glSortDraft.push({col: next?next.id:'lastName', dir:1});
+  renderAdvSortRows();
+}
+function advSortRemoveRow(i){
+  glSortDraft.splice(i,1);
+  renderAdvSortRows();
+}
+function advSortSetCol(i,val){ glSortDraft[i].col=val; }
+function advSortSetDir(i,val){ glSortDraft[i].dir=parseInt(val); }
+function renderAdvSortRows(){
+  const sortableCols = GL_COLS.filter(c=>c.id!=='attended');
+  const container = document.getElementById('adv-sort-rows');
+  if(!container) return;
+  container.innerHTML = glSortDraft.map((s,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:11px;color:var(--muted);min-width:54px;font-family:monospace;">${i===0?'Sort by':'then by'}</span>
+      <select onchange="advSortSetCol(${i},this.value)"
+        style="padding:5px 10px;border:1.5px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);font-size:12px;cursor:pointer;min-width:140px;">
+        ${sortableCols.map(c=>`<option value="${c.id}"${s.col===c.id?' selected':''}>${c.label}</option>`).join('')}
+      </select>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;white-space:nowrap;">
+        <input type="radio" name="advdir-${i}" value="1"${s.dir===1?' checked':''} onchange="advSortSetDir(${i},1)"
+          style="accent-color:var(--accent);width:15px;height:15px;cursor:pointer;"> A to Z
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;white-space:nowrap;">
+        <input type="radio" name="advdir-${i}" value="-1"${s.dir===-1?' checked':''} onchange="advSortSetDir(${i},-1)"
+          style="accent-color:var(--accent);width:15px;height:15px;cursor:pointer;"> Z to A
+      </label>
+      ${i>0?`<button onclick="advSortRemoveRow(${i})"
+        style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:2px 6px;line-height:1;" title="Remove">🗑</button>`
+       :'<div style="margin-left:auto;"></div>'}
+    </div>`).join('');
+}
+
+// ── SORT CHIP DRAG-AND-DROP
+let _glDragIdx = null;
+function glChipDragStart(e, i){
+  _glDragIdx = i;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.style.opacity = '0.4';
+}
+function glChipDragOver(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.style.transform = 'scale(1.08)';
+}
+function glChipDrop(e, toIdx){
+  e.preventDefault();
+  if(_glDragIdx === null || _glDragIdx === toIdx) return;
+  const moved = glSortStack.splice(_glDragIdx, 1)[0];
+  glSortStack.splice(toIdx, 0, moved);
+  renderGuestList();
+}
+function glChipDragEnd(e){
+  _glDragIdx = null;
+  e.currentTarget.style.opacity = '';
+  e.currentTarget.style.transform = '';
 }
 
 function getFilteredGuestRows(){
@@ -1164,13 +1272,12 @@ function getFilteredGuestRows(){
     .filter(g => tFilter === 'all' || g.tableId === parseInt(tFilter))
     .filter(g => cFilter === 'all' || g.cat === cFilter)
     .sort((a,b) => {
-      const av=getVal(a,glSortCol), bv=getVal(b,glSortCol);
-      if(av<bv) return -glSortDir;
-      if(av>bv) return  glSortDir;
-      // secondary: seq then seat
-      const at=tables.find(t=>t.id===a.tableId), bt=tables.find(t=>t.id===b.tableId);
-      const sd=(at?.seq??9999)-(bt?.seq??9999);
-      return sd!==0?sd:(a.seat??0)-(b.seat??0);
+      for(const {col,dir} of glSortStack){
+        const av=getVal(a,col), bv=getVal(b,col);
+        if(av<bv) return -dir;
+        if(av>bv) return  dir;
+      }
+      return 0;
     });
 
   const unassigned = guests
@@ -1184,11 +1291,39 @@ function renderGuestList(){
   const { seated, unassigned } = getFilteredGuestRows();
   const tFilter = document.getElementById('gl-filter-table').value;
   const TH = `padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.8px;cursor:pointer;user-select:none;white-space:nowrap;`;
-  const sortIco = (col) => glSortCol===col ? (glSortDir===1?' ↑':' ↓') : '';
-  const thActive = (col) => glSortCol===col ? 'color:var(--accent-dk);' : 'color:var(--muted);';
+  const sortIdx = (col) => glSortStack.findIndex(s=>s.col===col);
+  const sortIco = (col) => {
+    const i=sortIdx(col); if(i<0) return '';
+    const dir=glSortStack[i].dir===1?'↑':'↓';
+    return glSortStack.length>1 ? ` <sup style="font-size:8px;opacity:.7">${i+1}</sup>${dir}` : ` ${dir}`;
+  };
+  const thActive = (col) => sortIdx(col)===0 ? 'color:var(--accent-dk);font-weight:800;' :
+                            sortIdx(col)>0  ? 'color:var(--accent);' : 'color:var(--muted);';
 
   document.getElementById('gl-summary').textContent =
     `${seated.length} seated · ${unassigned.length} unassigned`;
+
+  // Sort chips: draggable to reorder, click ↑/↓ to toggle dir, ✕ to remove
+  const sortBar = document.getElementById('gl-sort-bar');
+  if(sortBar){
+    sortBar.innerHTML = glSortStack.map((s,i)=>`
+      <span draggable="true" data-sort-idx="${i}"
+        ondragstart="glChipDragStart(event,${i})"
+        ondragover="glChipDragOver(event)"
+        ondrop="glChipDrop(event,${i})"
+        ondragend="glChipDragEnd(event)"
+        style="display:inline-flex;align-items:center;gap:2px;background:var(--accent-lt);
+        border:1px solid var(--accent);border-radius:10px;padding:2px 4px 2px 7px;font-size:9px;
+        color:var(--accent-dk);font-family:monospace;white-space:nowrap;user-select:none;cursor:grab;
+        transition:opacity .15s,transform .15s;">
+        <span style="opacity:.35;font-size:9px;margin-right:1px;">⠿</span>
+        <b style="opacity:.65">${i+1}</b>&thinsp;${GL_COLS.find(c=>c.id===s.col)?.label||s.col}&thinsp;<span
+          onclick="glSetSort('${s.col}')" title="Toggle direction"
+          style="cursor:pointer;font-size:11px;padding:0 2px;">${s.dir===1?'↑':'↓'}</span><span
+          onclick="glRemoveSort('${s.col}')" title="Remove"
+          style="cursor:pointer;padding:0 3px 0 1px;opacity:.6;font-size:10px;">✕</span>
+      </span>`).join('');
+  }
 
   // Build visible cols list in order
   const visCols = GL_COLS.filter(c => c.always || glVisibleCols.has(c.id));
@@ -1221,8 +1356,7 @@ function renderGuestList(){
         case 'seq':
           return td(`${t?.seq??'—'}`, 'color:var(--muted);font-size:11px;font-family:var(--font-mono);');
         case 'table':
-          return td(isNewTable ? esc(t?.name||'—') : '<span style="color:var(--border2)">╎</span>',
-            `font-weight:${isNewTable?'600':'400'};color:${isNewTable?'var(--accent-dk)':'var(--text2)'};`);
+          return td(esc(t?.name||'—'), 'font-weight:500;color:var(--accent-dk);');
         case 'seat':
           return td(g.seat!=null?g.seat+1:'—', 'color:var(--muted);font-size:11px;');
         case 'lastName':
@@ -1274,44 +1408,39 @@ function renderGuestList(){
   }
 }
 
-function copyGuestListCSV(){
+function exportGuestListCSV(){
   const { seated, unassigned } = getFilteredGuestRows();
-  const visCols = GL_COLS.filter(c => c.always || glVisibleCols.has(c.id));
-  const header = visCols.map(c=>c.label);
-  const rows = [header];
-
-  const buildRow = (g, rowNum, isUnassigned) => {
+  const expCols = GL_COLS.filter(c => c.id !== 'attended');
+  const rows = [expCols.map(c=>c.label)];
+  const buildRow = (g, isUnassigned) => {
     const t = tables.find(x => x.id === g.tableId);
-    return visCols.map(col => {
+    return expCols.map(col => {
       switch(col.id){
         case 'seq':       return t?.seq??'';
-        case 'table':     return isUnassigned ? '(Unassigned)' : (t?.name||'');
-        case 'seat':      return g.seat!=null ? g.seat+1 : '';
+        case 'table':     return isUnassigned?'(Unassigned)':(t?.name||'');
+        case 'seat':      return g.seat!=null?g.seat+1:'';
         case 'lastName':  return g.lastName||'';
         case 'firstName': return g.firstName||g.name||'';
         case 'nickName':  return g.nickName||'';
         case 'cat':       return CAT_FULL[g.cat]||g.cat;
         case 'subCat':    return g.subCat||'';
-        case 'attended':  return '';
         default: return '';
       }
     });
   };
-
-  let rowNum=0;
-  seated.forEach(g => { rowNum++; rows.push(buildRow(g,rowNum,false)); });
-  unassigned.forEach(g => { rowNum++; rows.push(buildRow(g,rowNum,true)); });
-
-  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join('\t')).join('\n');
-  navigator.clipboard.writeText(csv).then(
-    () => toast('Copied! Paste directly into Excel','success'),
-    () => toast('Copy failed — try a different browser','error')
-  );
+  seated.forEach(g=>rows.push(buildRow(g,false)));
+  unassigned.forEach(g=>rows.push(buildRow(g,true)));
+  const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download='guest-list.csv'; a.click();
+  URL.revokeObjectURL(url);
+  toast('Guest list exported as CSV','success');
 }
-
 function printGuestList(){
   const { seated, unassigned } = getFilteredGuestRows();
-  const visCols = GL_COLS.filter(c => c.always || glVisibleCols.has(c.id));
+  const visCols = GL_COLS; // print all columns
   let rowNum=0, lastTableId=null;
   const eventName = document.querySelector('.page-subtitle')?.textContent || 'Wedding Banquet';
   const dateStr = new Date().toLocaleDateString(undefined, {year:'numeric',month:'long',day:'numeric'});
@@ -1377,9 +1506,12 @@ function printGuestList(){
     <table><thead><tr>${thRow}</tr></thead><tbody>${rows}</tbody></table>
   </body></html>`;
 
-  const w=window.open('','_blank','width=1000,height=700');
-  w.document.write(html); w.document.close();
-  setTimeout(()=>w.print(),400);
+  // Use hidden iframe to avoid popup blockers
+  const frame = document.getElementById('print-guest-list');
+  frame.innerHTML = `<iframe id="gl-print-frame" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;"></iframe>`;
+  const iframe = document.getElementById('gl-print-frame');
+  iframe.onload = () => { iframe.contentWindow.focus(); iframe.contentWindow.print(); };
+  iframe.srcdoc = html;
 }
 
 function renderStats(){

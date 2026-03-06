@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wedding Banquet Planner</title>
+<link rel="stylesheet" href="../css/app.css">
+</head>
+<body>
+
+<!-- EDIT GUEST MODAL -->
+<!-- MULTI CONFIRM MODAL -->
+<div class="modal-backdrop hidden" id="modal-multi-confirm">
+  <div class="modal">
+    <h3 id="mc-title">Confirm</h3>
+    <div id="mc-body" style="font-size:12px;color:var(--text2);line-height:1.7;max-height:260px;overflow-y:auto;margin-bottom:4px;"></div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="closeModal('modal-multi-confirm')">Cancel</button>
+      <button class="btn" id="mc-confirm-btn" onclick="execMultiConfirm()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- TABLE SEAT MULTI-SELECT ACTION BAR (floats over canvas) -->
+<div id="table-ms-bar" style="display:none;position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:var(--surface);border:2px solid var(--accent);border-radius:12px;padding:8px 16px;display:none;align-items:center;gap:10px;z-index:400;box-shadow:0 4px 24px var(--shadow-md);">
+  <span id="table-ms-count" style="font-size:11px;font-weight:700;color:var(--accent-dk);font-family:var(--font-mono)">0 seats selected</span>
+  <button class="btn btn-ghost btn-sm" onclick="multiUnassignSeats()">↩ Unassign</button>
+  <button class="btn btn-danger btn-sm" onclick="multiDeleteSeats()">🗑 Delete</button>
+  <button class="btn btn-ghost btn-sm" onclick="clearTableSelection()">✕</button>
+</div>
+
+<div class="modal-backdrop hidden" id="modal-guest">
+  <div class="modal">
+    <h3>✏ Edit Guest</h3>
+    <div class="mfield">
+      <label>Name</label>
+      <div style="display:flex;gap:6px;">
+        <input type="text" id="eg-lastName"  placeholder="Last name…"  style="flex:1"/>
+        <input type="text" id="eg-firstName" placeholder="First name…" style="flex:1"/>
+      </div>
+    </div>
+    <div class="mfield"><label>Nick Name <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+      <input type="text" id="eg-nickName" placeholder="e.g. Uncle Low…"/>
+    </div>
+    <div class="mfield"><label>Category</label>
+      <select id="eg-cat">
+        <option value="bride-family">🌸 Bride Family</option>
+        <option value="bride-rel">🌺 Bride Relative</option>
+        <option value="bride-friend">🪷 Bride Friend</option>
+        <option value="groom-family">💠 Groom Family</option>
+        <option value="groom-rel">🔷 Groom Relative</option>
+        <option value="groom-friend">🫐 Groom Friend</option>
+      </select>
+    </div>
+    <div class="mfield"><label>Sub-Category <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+      <input type="text" id="eg-subCat" placeholder="e.g. 大姑丈…"/>
+    </div>
+    <div class="mfield"><label>Color Tag</label><div class="colors" id="eg-colors"></div></div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="closeModal('modal-guest')">Cancel</button>
+      <button class="btn" onclick="saveGuestEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT TABLE MODAL -->
+<div class="modal-backdrop hidden" id="modal-table">
+  <div class="modal">
+    <h3>✏ Edit Table</h3>
+    <div class="mfield">
+      <label>Sequence <span style="color:var(--muted);font-weight:400">(for sorting)</span></label>
+      <input type="number" id="et-seq" min="1" placeholder="e.g. 1" style="width:100px"/>
+    </div>
+    <div class="mfield"><label>Table Name</label><input type="text" id="et-name" placeholder="e.g. 1 VIP or Table 1"/></div>
+    <div class="mfield"><label>Description <span style="color:var(--muted);font-weight:400">(optional subtitle)</span></label><input type="text" id="et-desc" placeholder="e.g. Groom VIP & Bride"/></div>
+    <div class="mfield">
+      <label>Extra Seats <span style="color:var(--muted);font-weight:400">(0–4 beyond base 10)</span></label>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <input type="range" id="et-extra" min="0" max="4" value="0" style="flex:1" oninput="document.getElementById('et-extra-val').textContent=this.value">
+        <span id="et-extra-val" style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--accent);min-width:16px;text-align:center">0</span>
+      </div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="closeModal('modal-table')">Cancel</button>
+      <button class="btn" onclick="saveTableEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT OBJECT MODAL -->
+<div class="modal-backdrop hidden" id="modal-obj">
+  <div class="modal">
+    <h3>✏ Edit Object</h3>
+    <div class="mfield"><label>Display Name</label><input type="text" id="eo-name" placeholder="e.g. Main Stage"/></div>
+    <div class="mfield"><label>Icon <span style="color:var(--muted);font-weight:400">(emoji)</span></label><input type="text" id="eo-icon" placeholder="e.g. 🎭" style="width:80px;font-size:18px;text-align:center"/></div>
+    <div class="mfield">
+      <label>Size</label>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <label style="font-size:11px;color:var(--muted)">W</label>
+        <input type="number" id="eo-w" min="40" max="600" step="10" style="width:72px"/>
+        <label style="font-size:11px;color:var(--muted)">H</label>
+        <input type="number" id="eo-h" min="40" max="600" step="10" style="width:72px"/>
+      </div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="closeModal('modal-obj')">Cancel</button>
+      <button class="btn" onclick="saveObjEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- BULK ADD MODAL -->
+<div class="modal-backdrop hidden" id="modal-bulk">
+  <div class="modal">
+    <h3>🌸 Bulk Add Guests</h3>
+    <div class="mfield">
+      <label>One guest per line</label>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:5px;line-height:1.6;">
+        Format: <code>LastName FirstName (NickName) [SubCat]</code><br>
+        e.g. <code>Low David (Uncle Low) [大姑丈]</code> &nbsp;·&nbsp; <code>Low David</code> &nbsp;·&nbsp; <code>David (Uncle)</code>
+      </div>
+      <textarea id="bulk-names" placeholder="Low David (Uncle Low) [大姑丈]&#10;Tan Mary&#10;Alice (Auntie Alice)" style="height:140px"></textarea>
+    </div>
+    <div class="mfield"><label>Category</label>
+      <select id="bulk-cat">
+        <option value="bride-family">🌸 Bride Family</option>
+        <option value="bride-rel">🌺 Bride Relative</option>
+        <option value="bride-friend">🪷 Bride Friend</option>
+        <option value="groom-family">💠 Groom Family</option>
+        <option value="groom-rel">🔷 Groom Relative</option>
+        <option value="groom-friend">🫐 Groom Friend</option>
+      </select>
+    </div>
+    <div class="mfield"><label>Color Tag</label><div class="colors" id="bulk-colors"></div></div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="closeModal('modal-bulk')">Cancel</button>
+      <button class="btn" onclick="saveBulkAdd()">Add Guests</button>
+    </div>
+  </div>
+</div>
+
+<!-- ASSIGN TO TABLE MODAL -->
+<div class="modal-backdrop hidden" id="modal-assign">
+  <div class="modal">
+    <h3>📋 Assign to Table</h3>
+    <div class="mfield">
+      <label>Guest</label>
+      <div id="assign-guest-name" style="font-weight:600;font-size:14px;color:var(--text);padding:4px 0;"></div>
+    </div>
+    <div class="mfield">
+      <label>Select Table</label>
+      <select id="assign-table-sel" style="width:100%"></select>
+    </div>
+    <div class="mfield">
+      <label>Select Seat</label>
+      <select id="assign-seat-sel" style="width:100%"></select>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="closeModal('modal-assign')">Cancel</button>
+      <button class="btn" onclick="confirmAssign()">Assign</button>
+    </div>
+  </div>
+</div>
+
+<!-- SWAP MODAL -->
+<div class="modal-backdrop hidden" id="modal-swap">
+  <div class="modal">
+    <h3>🔄 Swap Seats?</h3>
+    <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:4px;">
+      <div>Swap <b id="swap-guest-a"></b></div>
+      <div style="color:var(--muted);">with <b id="swap-guest-b"></b>?</div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="closeModal('modal-swap')">Cancel</button>
+      <button class="btn" onclick="confirmSwap()">Swap</button>
+    </div>
+  </div>
+</div>
+
+<div class="ctx-menu hidden" id="ctx-menu"></div>
+
+<!-- PAGE HEADER -->
+<header class="page-header">
+  <div class="page-title">
+    <h1>💒 <span>Banquet</span> Planner</h1>
+    <span class="page-subtitle">Wedding Table Arrangement</span>
+  </div>
+  <div class="header-right">
+    <div class="stats">
+      <div class="stat-pill">Guests <b id="st-guests">0</b></div>
+      <div class="stat-pill">Seated <b id="st-seated">0</b></div>
+      <div class="stat-pill">Tables <b id="st-tables">0</b></div>
+      <div class="stat-pill">Capacity <b id="st-cap">0</b></div>
+    </div>
+    <div class="file-actions">
+      <button class="btn btn-ghost btn-sm" onclick="exportJSON()">📤 Export</button>
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer">
+        📂 Import
+        <input type="file" id="file-input" accept=".json" onchange="onFileLoad(event)" style="display:none">
+      </label>
+      <button class="btn btn-ghost btn-sm" onclick="openGuestListModal()">📋 Guest List</button>
+      <button class="btn btn-ghost btn-sm" id="grid-toggle-btn" onclick="toggleGrid()" title="Show/hide grid">⊞ Grid</button>
+      <button class="btn btn-sm" onclick="window.print()">🖨 Print</button>
+    </div>
+  </div>
+</header>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-section collapsible" data-collapse-key="wb-add-guest">
+      <div class="sb-title">Add Guest</div>
+      <div class="sb-row">
+        <input type="text" id="g-lastName"  placeholder="Last name…"  style="flex:1"/>
+        <input type="text" id="g-firstName" placeholder="First name…" style="flex:1"/>
+      </div>
+      <div class="sb-row">
+        <input type="text" id="g-nickName" placeholder="Nick name (optional)…"/>
+      </div>
+      <div class="sb-row">
+        <select id="g-cat" style="flex:1">
+          <option value="bride-family">🌸 Bride Family</option>
+          <option value="bride-rel">🌺 Bride Relative</option>
+          <option value="bride-friend">🪷 Bride Friend</option>
+          <option value="groom-family">💠 Groom Family</option>
+          <option value="groom-rel">🔷 Groom Relative</option>
+          <option value="groom-friend">🫐 Groom Friend</option>
+        </select>
+      </div>
+      <div class="sb-row">
+        <input type="text" id="g-subCat" placeholder="Sub-category (optional)…"/>
+      </div>
+      <div class="colors" id="g-colors" style="margin-bottom:8px"></div>
+      <div style="display:flex;gap:5px">
+        <button class="btn" style="flex:1" onclick="addGuest()">＋ Add</button>
+        <button class="btn btn-ghost" onclick="openBulkModal()">📋 Bulk</button>
+      </div>
+    </div>
+    <div class="sb-section collapsible" data-collapse-key="wb-add-table">
+      <div class="sb-title">Add Table</div>
+      <div class="sb-row">
+        <input type="number" id="t-seq" placeholder="Seq #" min="1" style="width:68px;flex-shrink:0" title="Table sequence for sorting"/>
+        <input type="text" id="t-name" placeholder="Name e.g. 1 VIP…" style="flex:1"/>
+      </div>
+      <div class="sb-row"><input type="text" id="t-desc" placeholder="Description (optional)…"/></div>
+      <div style="display:flex;gap:5px;margin-top:4px">
+        <button class="btn" style="flex:1" onclick="addTable()">＋ Add</button>
+        <button class="btn btn-ghost" onclick="openBulkTableModal()">📋 Bulk</button>
+      </div>
+    </div>
+    <div class="sb-section collapsible" data-collapse-key="wb-room-objects">
+      <div class="sb-title">Room Objects</div>
+      <div class="obj-grid">
+        <div class="obj-btn" onclick="addObj('stage')">     <span class="ico">🎭</span>Stage</div>
+        <div class="obj-btn" onclick="addObj('door')">      <span class="ico">🚪</span>Door</div>
+        <div class="obj-btn" onclick="addObj('photo')">     <span class="ico">📸</span>Photo</div>
+        <div class="obj-btn" onclick="addObj('projector')"> <span class="ico">📽</span>Projector</div>
+        <div class="obj-btn" onclick="addObj('washroom')">  <span class="ico">🚻</span>Washroom</div>
+        <div class="obj-btn" onclick="addObj('entrance')">  <span class="ico">🏛</span>Entrance</div>
+      </div>
+    </div>
+    <div class="sb-section" style="padding-bottom:6px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div class="sb-title" style="margin-bottom:0">Unassigned (<span id="u-count">0</span>)</div>
+        <button id="ms-toggle-btn" class="btn btn-ghost btn-sm" onclick="toggleMultiSelect()" title="Toggle multi-select mode">☑ Select</button>
+      </div>
+      <div class="filter-bar" id="filter-bar"></div>
+    </div>
+    <!-- MULTI-SELECT ACTION BAR -->
+    <div id="multi-action-bar" style="display:none;flex-direction:column;gap:0;flex-shrink:0;border-top:2px solid var(--accent);">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 14px;background:var(--accent-lt);gap:8px;">
+        <span id="ms-count" style="font-size:11px;font-weight:700;color:var(--accent-dk);font-family:var(--font-mono)">0 selected</span>
+        <div style="display:flex;gap:5px;">
+          <button class="btn btn-sm" onclick="openMultiAssignModal()" style="padding:4px 10px;font-size:11px">📋 Assign</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmMultiDelete()" style="padding:4px 10px;font-size:11px">🗑 Delete</button>
+        </div>
+      </div>
+    </div>
+    <div class="main" style="padding:0;gap:0;overflow-y:auto">
+      <div style="padding:4px 10px 10px;display:flex;flex-direction:column;gap:4px">
+        <div class="unassigned-zone" id="uzone"
+          ondragover="onDragOverU(event)" ondragleave="onDragLeave(event)" ondrop="onDropU(event)">
+          <div id="u-empty" style="text-align:center;color:var(--muted);font-size:11px;padding:10px 0">🎉 All guests seated!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-wrap">
+    <div id="snap-h" class="snap-guide snap-guide-h"></div>
+    <div id="snap-v" class="snap-guide snap-guide-v"></div>
+    <div id="canvas" onclick="onCanvasClick(event)"></div>
+    <div class="legend">
+      <div class="legend-title">Table Status</div>
+      <div class="legend-row"><div class="l-dot" style="background:#c0607a"></div>Full (10/10)</div>
+      <div class="legend-row"><div class="l-dot" style="background:#5a8f6a"></div>Partially filled</div>
+      <div class="legend-row"><div class="l-dot" style="background:var(--border2)"></div>Empty</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- BULK ADD TABLES MODAL -->
+<div class="modal-backdrop hidden" id="modal-bulk-table">
+  <div class="modal">
+    <h3>📋 Bulk Add Tables</h3>
+    <div class="mfield"><label>One table name per line</label><textarea id="bulk-table-names" placeholder="1 VIP&#10;2&#10;3&#10;Bride Family&#10;Groom Family" style="height:120px"></textarea></div>
+    <div class="mfield"><label>Description for all <span style="color:var(--muted);font-weight:400">(optional)</span></label><input type="text" id="bulk-table-desc" placeholder="Leave blank for individual descriptions…"/></div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="closeModal('modal-bulk-table')">Cancel</button>
+      <button class="btn" onclick="saveBulkTable()">Add Tables</button>
+    </div>
+  </div>
+</div>
+
+<!-- GUEST LIST MODAL -->
+<div class="modal-backdrop hidden" id="modal-guest-list">
+  <div class="modal" style="max-width:820px;width:95vw;max-height:90vh;display:flex;flex-direction:column;">
+    <div style="flex-shrink:0;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <h3 style="margin:0;">📋 Guest Attendance List</h3>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span id="gl-summary" style="font-size:11px;color:var(--muted);font-family:var(--font-mono);margin-right:4px;"></span>
+          <select id="gl-filter-table" class="btn btn-ghost btn-sm" style="padding:4px 8px;font-size:11px;" onchange="renderGuestList()">
+            <option value="all">All Tables</option>
+          </select>
+          <select id="gl-filter-cat" class="btn btn-ghost btn-sm" style="padding:4px 8px;font-size:11px;" onchange="renderGuestList()">
+            <option value="all">All Categories</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="copyGuestListCSV()" title="Copy as CSV for Excel">📊 Copy CSV</button>
+          <button class="btn btn-sm" onclick="printGuestList()" title="Print attendance list">🖨 Print</button>
+          <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-guest-list')">✕</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:6px 8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);">
+        <span style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-right:4px;">Columns:</span>
+        <div id="gl-col-toggles" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
+      </div>
+    </div>
+    <div style="overflow-y:auto;flex:1;">
+      <table id="gl-table" style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead id="gl-thead"></thead>
+        <tbody id="gl-tbody"></tbody>
+      </table>
+      <div id="gl-unassigned" style="margin-top:16px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PRINT FRAME for guest list only -->
+<div id="print-guest-list" style="display:none;"></div>
+
+<script src="../js/shared-nav.js"></script>
+<script src="../js/wedding.js"></script>
+</body>
+</html>

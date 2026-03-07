@@ -81,6 +81,36 @@ function init(){
   render();
 }
 
+// ── SIDEBAR MINI TOGGLE
+let sidebarMini = false;
+function toggleSidebar(){
+  sidebarMini = !sidebarMini;
+  const sb  = document.getElementById('main-sidebar');
+  const btn = document.getElementById('sb-toggle-btn');
+  if(!sb || !btn) return;
+  sb.classList.toggle('mini', sidebarMini);
+  // Arrow: › when mini (pointing right = expand), ‹ when open (pointing left = collapse)
+  btn.textContent = sidebarMini ? '›' : '‹';
+  btn.title       = sidebarMini ? 'Expand sidebar' : 'Collapse sidebar';
+  // Also shift toggle wrap so it stays flush with sidebar edge
+  const wrap = btn.closest('.sb-toggle-wrap');
+  if(wrap) wrap.style.marginLeft = sidebarMini ? '0' : '';
+}
+
+// ── SEAT BORDER WIDTH
+let seatBorderWidth = 2; // px
+function setSeatBorderWidth(val){
+  seatBorderWidth = Math.max(1, Math.min(8, parseInt(val)));
+  document.documentElement.style.setProperty('--seat-bw', seatBorderWidth + 'px');
+  const inp = document.getElementById('seat-bw-input');
+  const lbl = document.getElementById('seat-bw-label');
+  if(inp) inp.value = seatBorderWidth;
+  if(lbl) lbl.textContent = seatBorderWidth + 'px';
+}
+function stepSeatBorderWidth(delta){
+  setSeatBorderWidth(seatBorderWidth + delta);
+}
+
 function toggleGrid(){
   gridVisible=!gridVisible;
   const btn=document.getElementById('grid-toggle-btn');
@@ -797,14 +827,18 @@ function renderTable(t,cv){
 
     seat.appendChild(body);
 
-    // tooltip — richer hover card
+    // tooltip — full details on hover
     if(g){
       const dn=guestDisplayName(g);
       const tip=document.createElement('div');
       tip.className='seat-tip';
-      tip.innerHTML=`<b>${esc(dn)}</b>${g.nickName?` <span style="opacity:.75;font-style:italic;">(${esc(g.nickName)})</span>`:''}<br>`+
-        `<span style="opacity:.8">${esc(cat.short)}</span>${g.subCat?` · <span style="opacity:.7">${esc(g.subCat)}</span>`:''}`+
-        `<span style="opacity:.5;margin-left:6px;">S${s+1}</span>`;
+      const rows=[];
+      rows.push(`<b style="font-size:11px;">${esc(dn)}</b>`);
+      if(g.nickName) rows.push(`<span style="opacity:.7;font-style:italic;">${esc(g.nickName)}</span>`);
+      rows.push(`<span style="opacity:.85;">${esc(cat.short)}</span>`);
+      if(g.subCat) rows.push(`<span style="opacity:.7;">${esc(g.subCat)}</span>`);
+      rows.push(`<span style="opacity:.45;font-size:9px;">Seat ${s+1}</span>`);
+      tip.innerHTML=rows.join('<br>');
       seat.appendChild(tip);
     }
 

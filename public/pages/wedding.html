@@ -193,6 +193,13 @@
       <div class="stat-pill">Capacity <b id="st-cap">0</b></div>
     </div>
     <div class="file-actions">
+      <!-- Seat border width control -->
+      <div style="display:flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;" title="Seat border thickness">
+        <span style="font-size:10px;color:var(--muted);white-space:nowrap;">Border</span>
+        <button onclick="stepSeatBorderWidth(-1)" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:0 2px;line-height:1;" title="Thinner">−</button>
+        <span id="seat-bw-label" style="font-size:10px;font-weight:700;color:var(--accent-dk);min-width:22px;text-align:center;font-family:monospace;">2px</span>
+        <button onclick="stepSeatBorderWidth(1)"  style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:0 2px;line-height:1;" title="Thicker">+</button>
+      </div>
       <button class="btn btn-ghost btn-sm" onclick="exportJSON()">📤 Export</button>
       <label class="btn btn-ghost btn-sm" style="cursor:pointer">
         📂 Import
@@ -207,7 +214,14 @@
 
 <div class="app">
   <!-- SIDEBAR -->
-  <div class="sidebar">
+  <div class="sidebar" id="main-sidebar">
+    <!-- Mini mode icon strip (shown when collapsed) -->
+    <div class="sb-mini-icons">
+      <button class="sb-mini-btn" onclick="toggleSidebar()" title="Expand sidebar">›</button>
+      <button class="sb-mini-btn" title="Add guest" onclick="toggleSidebar()">👤</button>
+      <button class="sb-mini-btn" title="Bulk add" onclick="toggleSidebar()">👥</button>
+      <button class="sb-mini-btn" title="Add table" onclick="toggleSidebar()">🪑</button>
+    </div>
     <div class="sb-section collapsible" data-collapse-key="wb-add-guest">
       <div class="sb-title">Add Guest</div>
       <div class="sb-row">
@@ -284,6 +298,10 @@
         </div>
       </div>
     </div>
+  </div>
+  <!-- Sidebar toggle pill — lives outside sidebar so it's never clipped -->
+  <div class="sb-toggle-wrap">
+    <button class="sb-toggle-btn" id="sb-toggle-btn" onclick="toggleSidebar()" title="Collapse sidebar">‹</button>
   </div>
 
   <!-- CANVAS -->

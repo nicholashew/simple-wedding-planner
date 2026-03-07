@@ -242,7 +242,51 @@ body {
   box-shadow: 1px 0 6px var(--shadow);
   resize: horizontal;
   position: relative;
+  transition: width 0.22s cubic-bezier(.4,0,.2,1), min-width 0.22s;
+  flex-shrink: 0;
 }
+/* ── MINI SIDEBAR ── */
+.sidebar.mini {
+  width: 44px !important; min-width: 44px !important; max-width: 44px !important;
+  resize: none;
+}
+.sidebar.mini .sb-section,
+.sidebar.mini .sb-section-body,
+.sidebar.mini #uzone,
+.sidebar.mini .u-header,
+.sidebar.mini .filter-bar-wrap,
+.sidebar.mini .main { display: none !important; }
+.sidebar.mini .sb-mini-icons { display: flex !important; }
+.sb-mini-icons {
+  display: none; flex-direction: column; align-items: center;
+  gap: 4px; padding: 48px 0 10px; flex-shrink: 0;
+}
+.sb-mini-btn {
+  width: 34px; height: 34px;
+  border: none; background: none; cursor: pointer;
+  border-radius: 7px; font-size: 16px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); transition: background 0.15s, color 0.15s;
+}
+.sb-mini-btn:hover { background: var(--accent-lt); color: var(--accent-dk); }
+
+/* ── SIDEBAR TOGGLE BUTTON  — floats above sidebar, never clipped ── */
+.sb-toggle-wrap {
+  position: relative; width: 0; flex-shrink: 0; z-index: 30;
+}
+.sb-toggle-btn {
+  position: absolute; top: 10px; left: -13px;
+  width: 26px; height: 26px;
+  background: var(--surface);
+  border: 1.5px solid var(--border2);
+  border-radius: 50%; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  box-shadow: 0 2px 6px var(--shadow-md);
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  user-select: none;
+}
+.sb-toggle-btn:hover { background: var(--accent-lt); color: var(--accent-dk); border-color: var(--accent); }
 .sb-section {
   padding: 12px 14px;
   border-bottom: 1px solid var(--border);
@@ -624,17 +668,18 @@ textarea {
 /* SEATS */
 .seat {
   position: absolute; background: var(--surface);
-  border: 2px solid var(--border2); border-radius: 6px;
+  border: var(--seat-bw, 2px) solid var(--border2); border-radius: 6px;
   display: flex; flex-direction: column; align-items: stretch;
   cursor: pointer; overflow: hidden; z-index: 3;
   transition: border-color 0.18s, background 0.18s, box-shadow 0.15s, transform 0.12s;
   box-shadow: 0 1px 4px var(--shadow);
 }
+.seat:hover { overflow: visible; }
 .seat:hover            { box-shadow: 0 4px 14px var(--shadow-md); transform: scale(1.06); z-index: 10; }
 .seat.drag-over        { border-color: var(--accent); background: var(--accent-lt); transform: scale(1.06); }
 .seat.empty-seat       { border-style: dashed; background: var(--surface2); border-color: var(--border); }
 .seat.empty-seat:hover { border-color: var(--green); background: #e4f2e8; }
-.seat.occupied         { border-width: 2px; }
+.seat.occupied         { border-width: var(--seat-bw, 2px); }
 /* category badge — full-width bar at top of card */
 .seat-cat-badge {
   font-size: 7px; font-weight: 700; letter-spacing: 0.1px;
@@ -657,21 +702,25 @@ textarea {
 }
 .seat-num { font-size: 9px; color: var(--muted); text-align: center; }
 .seat-tip {
-  position: absolute; bottom: calc(100% + 7px); left: 50%;
+  position: absolute; bottom: calc(100% + 8px); left: 50%;
   transform: translateX(-50%);
-  background: var(--text); color: var(--bg);
-  border-radius: 7px; padding: 6px 10px; font-size: 10px;
-  white-space: nowrap; pointer-events: none;
-  opacity: 0; transition: opacity 0.18s; z-index: 200;
-  box-shadow: 0 4px 14px var(--shadow-md);
-  line-height: 1.5; text-align: center;
+  background: #1a1a2e; color: #f0f0f0;
+  border-radius: 9px; padding: 9px 13px; font-size: 10.5px;
+  white-space: normal; pointer-events: none;
+  opacity: 0; transition: opacity 0.2s;
+  z-index: 9999;
+  box-shadow: 0 6px 20px rgba(0,0,0,.35);
+  line-height: 1.6; text-align: center;
+  min-width: 130px; max-width: 220px;
+  word-break: break-word;
 }
 .seat-tip::after {
   content: ''; position: absolute; top: 100%; left: 50%;
   transform: translateX(-50%);
-  border: 4px solid transparent; border-top-color: var(--text);
+  border: 5px solid transparent; border-top-color: #1a1a2e;
 }
 .seat:hover .seat-tip { opacity: 1; }
+.seat:hover { z-index: 9990; }
 
 /* ROOM OBJECTS (wedding canvas decorations) */
 .room-obj {
@@ -869,7 +918,7 @@ textarea {
   border-color: #60f0a0;
   background: rgba(96,240,160,0.06);
 }
-[data-theme="dark"] .seat.occupied { border-width: 2px; }
+[data-theme="dark"] .seat.occupied { border-width: var(--seat-bw, 2px); }
 [data-theme="dark"] .seat-num      { color: var(--muted); }
 [data-theme="dark"] .seat-guest-name { color: var(--text); }
 
@@ -1115,6 +1164,8 @@ textarea {
   .ctx-menu, .modal-overlay, .modal-backdrop,
   .undo-bar, .toast,
   .table-actions, .seat-tip, .obj-acts { display: none !important; }
+  .seat { border-width: var(--seat-bw, 2px) !important; }
+  .seat.occupied { border-width: var(--seat-bw, 2px) !important; }
 
   body   { background: white; color: #111; height: auto; overflow: visible; }
   .app   { display: block; height: auto; overflow: visible; }

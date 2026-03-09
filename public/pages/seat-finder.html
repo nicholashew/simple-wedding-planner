@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Find Your Seat</title>
   <style>
@@ -20,150 +21,296 @@
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', PingFang SC, Noto Sans CJK SC, sans-serif;
       background: var(--bg); color: var(--text);
       min-height: 100dvh; display: flex; flex-direction: column;
     }
 
+    /* ---- Banner ---- */
+    #sf-banner { width: 100%; max-height: 200px; object-fit: cover; object-position: center top; display: none; }
+
     /* ---- Header ---- */
     .sf-header {
       background: var(--surface); border-bottom: 1px solid var(--border);
-      padding: 18px 20px 14px; text-align: center;
-      position: sticky; top: 0; z-index: 50;
-      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+      padding: 14px 16px 12px; position: sticky; top: 0; z-index: 50;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
     }
-    .sf-header .event-name { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
-    .sf-header h1 { font-family: Georgia,'Times New Roman',serif; font-size: 26px; font-weight: 400; color: var(--text); }
+    .sf-header-inner { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .sf-header-text { flex: 1; text-align: center; }
+    .sf-header .event-name { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+    .sf-header h1 { font-family: Georgia,'Times New Roman',serif; font-size: 24px; font-weight: 400; color: var(--text); }
     .sf-header h1 em { font-style: italic; color: var(--accent-dk); }
-    .sf-header .subtitle { font-size: 12px; color: var(--text2); margin-top: 3px; }
+    .sf-header .subtitle { font-size: 14px; color: var(--text2); margin-top: 2px; }
+
+    /* Language toggle */
+    .lang-toggle { display: flex; gap: 4px; flex-shrink: 0; padding-top: 2px; }
+    .lang-btn {
+      background: none; border: 1.5px solid var(--border); border-radius: 6px;
+      padding: 5px 9px; font-size: 11px; font-weight: 700; cursor: pointer;
+      color: var(--muted); font-family: inherit; transition: all .15s; line-height: 1;
+    }
+    .lang-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
     /* ---- Main ---- */
-    .sf-main { flex: 1; padding: 20px 16px; max-width: 480px; margin: 0 auto; width: 100%; }
+    .sf-main { flex: 1; padding: 18px 16px 80px; max-width: 500px; margin: 0 auto; width: 100%; }
 
-    .back-btn {
+    /* Top back button (small, inline) */
+    .back-btn-top {
       display: inline-flex; align-items: center; gap: 5px;
-      background: none; border: none; cursor: pointer; font-size: 13px;
+      background: none; border: none; cursor: pointer; font-size: 14px;
       color: var(--text2); padding: 4px 0; margin-bottom: 10px; font-family: inherit;
     }
-    .back-btn:hover { color: var(--accent); }
+    .back-btn-top:hover { color: var(--accent); }
+
+    /* Bottom back button (large, fixed-feel) */
+    .back-btn-bottom {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      margin: 28px auto 0; padding: 14px 28px;
+      background: var(--surface); border: 2px solid var(--border); border-radius: 50px;
+      cursor: pointer; font-size: 16px; font-weight: 600; color: var(--text2);
+      font-family: inherit; transition: all .15s; width: fit-content; min-width: 160px;
+    }
+    .back-btn-bottom:hover, .back-btn-bottom:active { border-color: var(--accent); color: var(--accent); background: var(--accent-lt); }
 
     .screen { display: none; }
     .screen.active { display: block; }
-    .step-label { font-size: 10px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+    .step-label { font-size: 14px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; font-weight: 500; }
 
     /* ---- Category grid ---- */
-    .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .cat-card {
       background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
-      padding: 16px 14px; cursor: pointer; transition: all 0.15s; text-align: center;
+      padding: 18px 14px; cursor: pointer; transition: all 0.15s; text-align: center;
       box-shadow: 0 1px 4px rgba(0,0,0,.04); font-family: inherit;
     }
     .cat-card:hover, .cat-card:active { border-color: var(--gold); background: var(--accent-lt); transform: translateY(-1px); }
-    .cat-card .cat-emoji { font-size: 26px; display: block; margin-bottom: 6px; }
-    .cat-card .cat-name  { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; display: block; }
-    .cat-card .cat-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; display: block; }
+    .cat-card.skip-card { border-style: dashed; color: var(--accent-dk); }
+    .cat-card.skip-card:hover { background: var(--accent-lt); }
+    .cat-card .cat-emoji { font-size: 28px; display: block; margin-bottom: 8px; }
+    .cat-card .cat-name  { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.3; display: block; }
+    .cat-card .cat-sub   { font-size: 12px; color: var(--muted); margin-top: 3px; display: block; }
 
     /* ---- Alphabet grid ---- */
-    .alpha-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+    .alpha-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 9px; }
     .alpha-card {
       background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px;
-      padding: 14px 6px; cursor: pointer; text-align: center; font-size: 16px; font-weight: 700;
+      padding: 16px 6px; cursor: pointer; text-align: center; font-size: 18px; font-weight: 700;
       color: var(--text); font-family: Georgia,serif; transition: all 0.12s;
       box-shadow: 0 1px 4px rgba(0,0,0,.04);
     }
     .alpha-card:hover, .alpha-card:active { border-color: var(--gold); background: var(--accent-lt); transform: translateY(-1px); }
-    .alpha-card.dimmed { opacity: 0.28; cursor: default; pointer-events: none; }
-    .alpha-card .alpha-count { font-size: 9px; font-weight: 400; color: var(--muted); display: block; margin-top: 3px; font-family: sans-serif; }
+    .alpha-card.dimmed { opacity: 0.25; cursor: default; pointer-events: none; }
+    .alpha-card .alpha-count { font-size: 10px; font-weight: 400; color: var(--muted); display: block; margin-top: 4px; font-family: sans-serif; }
 
-    /* ---- Search ---- */
+    /* ---- Search bar ---- */
     .search-bar { position: relative; margin-bottom: 14px; }
     .search-bar input {
-      width: 100%; padding: 12px 14px 12px 40px; border: 1.5px solid var(--border);
-      border-radius: 50px; font-size: 15px; background: var(--surface); color: var(--text);
+      width: 100%; padding: 14px 44px 14px 44px; border: 1.5px solid var(--border);
+      border-radius: 50px; font-size: 16px; background: var(--surface); color: var(--text);
       font-family: inherit; outline: none; transition: border-color .15s;
     }
     .search-bar input:focus { border-color: var(--gold); }
-    .search-bar .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none; }
+    .search-bar .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none; }
     .search-bar .clear-btn {
-      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-      background: none; border: none; cursor: pointer; font-size: 16px; color: var(--muted); display: none;
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; font-size: 18px; color: var(--muted); display: none; padding: 4px;
     }
     .search-bar input:not(:placeholder-shown) ~ .clear-btn { display: block; }
 
-    /* ---- Guest list ---- */
-    .guest-list { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: 0 1px 8px rgba(0,0,0,.05); }
-    .guest-item { display: flex; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--border); gap: 10px; }
+    /* ---- Guest list (selectable) ---- */
+    .guest-list { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: 0 1px 8px rgba(0,0,0,.05); margin-bottom: 8px; }
+    .guest-item {
+      display: flex; align-items: center; padding: 14px 14px; border-bottom: 1px solid var(--border); gap: 10px;
+      cursor: pointer; transition: background .1s; user-select: none; -webkit-user-select: none;
+    }
     .guest-item:last-child { border-bottom: none; }
-    .g-name { flex: 1; font-size: 15px; font-weight: 500; }
-    .g-nick { font-size: 11px; color: var(--muted); font-weight: 400; }
-    .g-table { text-align: right; flex-shrink: 0; }
-    .g-table-name { font-size: 14px; font-weight: 700; color: var(--accent-dk); }
-    .g-seat-num   { font-size: 10px; color: var(--muted); white-space: nowrap; }
-    .g-cat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 1px; }
-    .dot-bride-family { background: #e88aaa; }
-    .dot-bride-rel    { background: #c87898; }
-    .dot-bride-friend { background: #a868b8; }
-    .dot-groom-family { background: #4a8ad4; }
-    .dot-groom-rel    { background: #3a7ac4; }
-    .dot-groom-friend { background: #2a6ab4; }
-    .dot-default      { background: #c8a84a; }
+    .guest-item.selected { background: var(--accent-lt); }
+    .guest-item.selected .g-sel-box { background: var(--accent); border-color: var(--accent); }
+    .guest-item.selected .g-sel-box::after { content: '\2713'; }
 
-    .alpha-section-head { font-family: Georgia,serif; font-size: 32px; font-weight: 400; color: var(--text); padding: 20px 0 8px; }
+    /* Selection checkbox */
+    .g-sel-box {
+      width: 24px; height: 24px; border-radius: 6px; border: 2px solid var(--border);
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; color: #fff; font-weight: 700; transition: all .12s;
+    }
+
+    .g-name { flex: 1; font-size: 16px; font-weight: 500; line-height: 1.3; }
+    .g-nick { font-size: 12px; color: var(--muted); font-weight: 400; }
+    .g-table-col { text-align: right; flex-shrink: 0; }
+    .g-table-badge {
+      display: inline-block; font-size: 11px; font-weight: 700; color: #fff;
+      border-radius: 5px; padding: 3px 8px; margin-bottom: 2px; white-space: nowrap;
+    }
+    .g-seat-num { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .g-table-strip { width: 4px; flex-shrink: 0; border-radius: 3px; align-self: stretch; min-height: 40px; }
+
+    /* ---- Confirm / Find seat button ---- */
+    .find-seat-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      background: var(--surface); border-top: 1px solid var(--border);
+      padding: 12px 16px; display: none;
+      box-shadow: 0 -4px 20px rgba(0,0,0,.08);
+    }
+    .find-seat-bar.visible { display: block; }
+    .find-seat-btn {
+      width: 100%; padding: 16px; border-radius: 50px; border: none; cursor: pointer;
+      background: var(--accent); color: #fff; font-size: 17px; font-weight: 700;
+      font-family: inherit; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .find-seat-btn:hover { background: var(--accent-dk); }
+    .find-seat-count {
+      background: rgba(255,255,255,.25); border-radius: 50px; padding: 2px 10px; font-size: 14px;
+    }
+
+    .alpha-section-head { font-family: Georgia,serif; font-size: 28px; font-weight: 400; color: var(--text); padding: 18px 0 6px; }
 
     .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
-    .empty-state .empty-icon { font-size: 40px; display: block; margin-bottom: 12px; }
-    .empty-state p { font-size: 14px; line-height: 1.6; }
+    .empty-state .empty-icon { font-size: 44px; display: block; margin-bottom: 12px; }
+    .empty-state p { font-size: 15px; line-height: 1.6; }
 
-    /* ---- Error / no-data banner ---- */
+    /* ---- Error banner ---- */
     #no-data-banner {
       background: #fff8e8; border: 1.5px solid var(--gold); border-radius: 10px;
-      padding: 20px; text-align: center; margin: 30px 0; display: none;
+      padding: 20px; text-align: center; margin: 20px 0; display: none;
     }
     #no-data-banner .icon { font-size: 32px; margin-bottom: 8px; }
-    #no-data-banner h3 { font-size: 15px; margin-bottom: 8px; color: var(--accent-dk); }
-    #no-data-banner p  { font-size: 12px; color: var(--text2); line-height: 1.9; text-align: left; }
-    #no-data-banner code { background: #f0ece4; border-radius: 3px; padding: 1px 5px; font-size: 11px; }
+    #no-data-banner h3 { font-size: 16px; margin-bottom: 8px; color: var(--accent-dk); }
+    #no-data-banner p  { font-size: 13px; color: var(--text2); line-height: 1.9; text-align: left; }
+    #no-data-banner code { background: #f0ece4; border-radius: 3px; padding: 1px 5px; font-size: 12px; }
+
+    /* ---- Seat Visualization Screen ---- */
+    #screen-viz { padding-bottom: 20px; }
+    .viz-intro { margin-bottom: 14px; }
+    .viz-intro h2 { font-family: Georgia,serif; font-size: 20px; font-weight: 400; margin-bottom: 4px; }
+    .viz-intro p  { font-size: 14px; color: var(--text2); line-height: 1.5; }
+
+    /* Accordion table block */
+    .viz-table-block {
+      background: var(--surface); border-radius: 14px; border: 1px solid var(--border);
+      margin-bottom: 14px; overflow: hidden; box-shadow: 0 1px 8px rgba(0,0,0,.05);
+    }
+    .viz-table-header {
+      display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer;
+      user-select: none; -webkit-user-select: none;
+    }
+    .viz-table-color-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .viz-table-header-text { flex: 1; }
+    .viz-table-title { font-size: 16px; font-weight: 700; }
+    .viz-table-subtitle { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .viz-table-chevron { font-size: 18px; color: var(--muted); transition: transform .2s; flex-shrink: 0; }
+    .viz-table-block.open .viz-table-chevron { transform: rotate(180deg); }
+    .viz-table-body { display: none; padding: 0 16px 16px; }
+    .viz-table-block.open .viz-table-body { display: block; }
+
+    /* SVG diagram */
+    .viz-svg-wrap { display: block; margin: 0 auto 14px; overflow: visible; }
+
+    /* Guest cards under diagram */
+    .viz-guest-cards { display: flex; flex-direction: column; gap: 8px; }
+    .viz-guest-card {
+      background: var(--bg); border-radius: 10px; border: 1px solid var(--border);
+      padding: 12px 14px; display: flex; align-items: center; gap: 12px;
+      cursor: pointer; transition: background .1s;
+    }
+    .viz-guest-card:hover, .viz-guest-card:active { background: var(--accent-lt); }
+    .viz-seat-circle {
+      width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; font-weight: 800; color: #fff;
+    }
+    .viz-guest-info { flex: 1; min-width: 0; }
+    .viz-guest-name  { font-size: 16px; font-weight: 600; }
+    .viz-table-name  { font-size: 13px; color: var(--text2); margin-top: 1px; }
+    .viz-seat-label  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .viz-tap-hint    { font-size: 11px; color: var(--accent); margin-left: auto; flex-shrink: 0; }
+
+    /* Tooltip modal */
+    #seat-tooltip {
+      display: none; position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,.5); align-items: center; justify-content: center;
+    }
+    #seat-tooltip.visible { display: flex; }
+    #seat-tooltip-inner {
+      background: #fff; border-radius: 20px; padding: 28px 24px; min-width: 240px; max-width: 320px;
+      text-align: center; position: relative; box-shadow: 0 12px 48px rgba(0,0,0,.22);
+      animation: popIn .18s ease;
+    }
+    @keyframes popIn { from { transform: scale(.88); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    #tt-seat-badge {
+      width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; font-weight: 800; color: #fff;
+    }
+    #tt-guest-name  { font-size: 20px; font-weight: 700; color: var(--text); line-height: 1.25; margin-bottom: 6px; }
+    #tt-table-name  { font-size: 14px; color: var(--text2); margin-bottom: 3px; }
+    #tt-seat-label  { font-size: 12px; color: var(--muted); }
+    #tt-empty-label { font-size: 14px; color: var(--muted); font-style: italic; }
+    #tt-close {
+      position: absolute; top: 12px; right: 14px;
+      background: none; border: none; font-size: 22px; color: var(--muted); cursor: pointer; line-height: 1;
+    }
 
     .sf-footer { text-align: center; padding: 16px; font-size: 10px; color: var(--muted); letter-spacing: 0.8px; }
   </style>
 </head>
 <body>
 
+<!-- Optional banner: place banner.jpg in pages/ folder on hosting -->
+<!-- Recommended: 1200×400px, under 300KB. Current: not uploaded yet. -->
+<img id="sf-banner" src="./banner.jpg" alt=""
+  onload="this.style.display='block'"
+  onerror="this.style.display='none'">
+
+<!-- Header -->
 <div class="sf-header">
-  <div class="event-name" id="sf-event-label">Wedding Banquet</div>
-  <h1><em>Find</em> Your Seat</h1>
-  <div class="subtitle">Browse by last name to find your table</div>
+  <div class="sf-header-inner">
+    <div style="width:60px;flex-shrink:0;"></div>
+    <div class="sf-header-text">
+      <div class="event-name" id="sf-event-label">Wedding Banquet</div>
+      <h1><em id="t-find">Find</em> <span id="t-your-seat">Your Seat</span></h1>
+      <div class="subtitle" id="t-subtitle">Browse by last name to find your table</div>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-lang-en" onclick="setLang('en')">EN</button>
+      <button class="lang-btn"        id="btn-lang-zh" onclick="setLang('zh')">&#31616;</button>
+    </div>
+  </div>
 </div>
 
 <div class="sf-main">
 
   <div id="no-data-banner">
     <div class="icon">&#9888;&#65039;</div>
-    <h3>Guest data not available</h3>
-    <p>Please ask the organiser to upload the guest data file.</p>
+    <h3 id="t-err-title">Guest data not available</h3>
+    <p id="t-err-body">Please ask the organiser to upload the guest data file.</p>
   </div>
 
   <!-- Screen 1: Category -->
   <div class="screen active" id="screen-cat">
-    <div class="step-label">Step 1 &mdash; Who are you here for?</div>
+    <div class="step-label" id="t-step1">STEP 1 &mdash; WHO ARE YOU HERE FOR?</div>
     <div class="cat-grid" id="cat-grid"></div>
-    <div style="margin-top:14px;text-align:center;">
-      <button class="back-btn" onclick="showAllAlpha()" style="color:var(--accent);font-size:12px;">
-        Skip &rarr; Browse all names
-      </button>
-    </div>
   </div>
 
   <!-- Screen 2: Alphabet -->
   <div class="screen" id="screen-alpha">
-    <button class="back-btn" onclick="showScreen('cat')">&larr; Back</button>
-    <div class="step-label" id="alpha-step-label">Step 2 &mdash; Choose first letter of last name</div>
+    <button class="back-btn-top" id="t-back-alpha" onclick="showScreen('cat')">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span id="t-back-alpha-txt">Back</span>
+    </button>
+    <div class="step-label" id="alpha-step-label">STEP 2 &mdash; FIRST LETTER OF LAST NAME</div>
     <div class="alpha-grid" id="alpha-grid"></div>
+    <button class="back-btn-bottom" id="alpha-bottom-back" onclick="showScreen('cat')">
+      <span id="alpha-bottom-back-txt">Back</span>
+    </button>
   </div>
 
-  <!-- Screen 3: List + search -->
+  <!-- Screen 3: Guest list + search -->
   <div class="screen" id="screen-list">
-    <button class="back-btn" id="list-back-btn" onclick="showScreen('alpha')">&larr; Back</button>
+    <button class="back-btn-top" id="list-back-btn" onclick="showScreen('alpha')">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span id="list-back-txt">Back</span>
+    </button>
     <div class="search-bar">
       <span class="search-icon">&#128269;</span>
       <input type="text" id="sf-search" placeholder="Search name..."
@@ -171,16 +318,284 @@
       <button class="clear-btn" onclick="clearSFSearch()">&#10005;</button>
     </div>
     <div id="guest-list-area"></div>
+    <button class="back-btn-bottom" id="list-bottom-back" onclick="goBackFromList()">
+      <span id="list-bottom-back-txt">Back</span>
+    </button>
   </div>
 
+  <!-- Screen 4: Seat Visualization -->
+  <div class="screen" id="screen-viz">
+    <button class="back-btn-top" onclick="showScreen('list')">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span id="viz-back-txt">Back</span>
+    </button>
+    <div class="viz-intro">
+      <h2 id="viz-title">Your Table</h2>
+      <p id="viz-desc">Tap any seat or name to see details.</p>
+    </div>
+    <!-- Tables rendered here dynamically (one block per table) -->
+    <div id="viz-tables-container"></div>
+    <button class="back-btn-bottom" onclick="showScreen('list')">
+      <span id="viz-bottom-back-txt">Back to list</span>
+    </button>
+  </div>
+
+</div>
+
+<!-- Seat tooltip overlay -->
+<div id="seat-tooltip" onclick="hideTooltip()">
+  <div id="seat-tooltip-inner" onclick="event.stopPropagation()">
+    <button id="tt-close" onclick="hideTooltip()">&#10005;</button>
+    <div id="tt-seat-badge"></div>
+    <div id="tt-guest-name"></div>
+    <div id="tt-empty-label"></div>
+    <div id="tt-table-name"></div>
+    <div id="tt-seat-label"></div>
+  </div>
+</div>
+
+<!-- Fixed bottom bar: Find My Seat button (shown when >=1 guest selected) -->
+<div class="find-seat-bar" id="find-seat-bar">
+  <button class="find-seat-btn" id="find-seat-btn" onclick="showViz()">
+    <span id="t-find-seat-btn">Find My Seat</span>
+    <span class="find-seat-count" id="find-seat-count">1</span>
+  </button>
 </div>
 
 <div class="sf-footer" id="sf-footer">Powered by Banquet Planner</div>
 
 <script>
+// ================================================================
+// PINYIN TABLE — common Chinese name characters
+// ================================================================
+var PINYIN = (function() {
+  var r = {
+    '\u674e':'li','\u738b':'wang','\u5f20':'zhang','\u5218':'liu','\u9648':'chen',
+    '\u6768':'yang','\u9ec4':'huang','\u8d75':'zhao','\u5434':'wu','\u5468':'zhou',
+    '\u5f90':'xu','\u5b59':'sun','\u9a6c':'ma','\u80e1':'hu','\u6797':'lin',
+    '\u90ed':'guo','\u4f55':'he','\u9ad8':'gao','\u7f57':'luo','\u90d1':'zheng',
+    '\u8881':'yuan','\u9093':'deng','\u8c22':'xie','\u97e9':'han','\u66f9':'cao',
+    '\u8bb8':'xu','\u6c88':'shen','\u5f6d':'peng','\u8521':'cai','\u6643':'zeng',
+    '\u5415':'lv','\u4e01':'ding','\u9b4f':'wei','\u59dc':'jiang','\u51ef':'kai',
+    '\u6c47':'hui','\u8bd7':'shi','\u5510':'tang','\u97e6':'wei','\u8499':'meng',
+    '\u51af':'feng','\u9a86':'lv','\u5e9e':'pang','\u6c42':'qiu','\u5c39':'yin',
+    '\u6f58':'pan','\u6e29':'wen','\u5e84':'zhuang','\u53f6':'ye','\u5c71':'shan',
+    '\u6d2a':'hong','\u53f2':'shi','\u8d3a':'he','\u4eca':'jin','\u8d3e':'jia',
+    '\u5c04':'she','\u590f':'xia','\u529a':'bo','\u5d47':'qi','\u4fe1':'xin',
+    '\u5e0c':'xi','\u611b':'ai','\u5fc3':'xin','\u5584':'shan','\u6e05':'qing',
+    '\u671d':'chao','\u4eae':'liang','\u5bb6':'jia','\u5b89':'an','\u548c':'he',
+    '\u5e73':'ping','\u7b11':'xiao','\u6210':'cheng','\u9f50':'qi','\u6c38':'yong',
+    '\u534e':'hua','\u5b9a':'ding','\u516c':'gong','\u679c':'guo','\u5b50':'zi',
+    '\u5e74':'nian','\u751f':'sheng','\u65e5':'ri','\u65b0':'xin','\u660e':'ming',
+    '\u5149':'guang','\u671b':'wang','\u519b':'jun','\u6c11':'min','\u51b0':'bing',
+    '\u96c6':'ji','\u9752':'qing','\u7ea2':'hong','\u767d':'bai','\u897f':'xi',
+    '\u4e1c':'dong','\u5357':'nan','\u5317':'bei','\u82b3':'fang','\u79cb':'qiu',
+    '\u83b2':'lian','\u74ca':'shuang','\u7d2b':'zi','\u5b9c':'yi','\u5c1a':'shang',
+    '\u6167':'hui','\u601d':'si','\u60f3':'xiang','\u6050':'kong','\u6028':'yuan',
+    '\u6012':'nu','\u6000':'huai','\u60c5':'qing','\u60a8':'nin','\u5fe0':'zhong',
+    '\u5fc6':'yi','\u5fcd':'ren','\u5feb':'kuai','\u5e78':'xing','\u601d':'si',
+    '\u5a07':'jiao','\u96c6':'ji','\u5e86':'qing','\u547d':'ming','\u4e8b':'shi',
+    '\u4ee4':'ling','\u5206':'fen','\u89e3':'jie','\u7406':'li','\u77e5':'zhi',
+    '\u5b66':'xue','\u8bfb':'du','\u4e66':'shu','\u6559':'jiao','\u6728':'mu',
+    '\u706b':'huo','\u6c34':'shui','\u73af':'huan','\u5de5':'gong','\u5546':'shang',
+    '\u519c':'nong','\u738b':'wang','\u5929':'tian','\u5730':'di','\u4eba':'ren',
+    '\u8fc7':'guo','\u516c':'gong','\u4e3b':'zhu','\u529b':'li','\u589e':'zeng',
+    '\u5143':'yuan','\u745e':'rui','\u8299':'fu','\u6d0b':'yang','\u6a61':'xiang',
+    '\u6850':'tong','\u677e':'song','\u67cf':'bai','\u6885':'mei','\u6843':'tao',
+    '\u674f':'xing','\u67da':'you','\u6807':'biao','\u6881':'liang','\u68cb':'qi',
+    '\u5bcc':'fu','\u5eb7':'kang','\u5065':'jian','\u661f':'xing','\u9633':'yang',
+    '\u5b81':'ning','\u6f66':'rong','\u8389':'li','\u7535':'dian','\u6d4b':'ce',
+    '\u5dba':'ling','\u5b81':'ning','\u5a5a':'hun','\u59bb':'qi','\u592b':'fu',
+    '\u5a32':'si','\u5178':'dian','\u660e':'ming','\u8d77':'qi','\u8bfe':'ke',
+    '\u8def':'lu','\u5de5':'gong','\u529f':'gong','\u8d23':'ze','\u793c':'li',
+    '\u4ec1':'ren','\u4e49':'yi','\u667a':'zhi','\u52c7':'yong','\u4fe1':'xin',
+    '\u5c71':'shan','\u6cb3':'he','\u6c5f':'jiang','\u98ce':'feng','\u96ea':'xue',
+    '\u82b1':'hua','\u9f99':'long','\u51e4':'feng','\u864e':'hu','\u7389':'yu',
+    '\u73d0':'qiong','\u5065':'jian','\u8363':'rong','\u65fa':'wang','\u795e':'shen',
+    '\u7f8e':'mei','\u5c0f':'xiao','\u5927':'da','\u4e2d':'zhong','\u591a':'duo',
+    '\u5c11':'shao','\u597d':'hao','\u771f':'zhen','\u5047':'jia','\u8d62':'ying',
+    '\u51e1':'fan','\u5723':'sheng','\u56de':'hui','\u653f':'zheng','\u826f':'liang',
+    '\u5ddd':'chuan','\u6635':'min','\u6d9b':'tao','\u6c60':'chi','\u6ce2':'bo',
+    '\u6cf3':'yong','\u6d4c':'tang','\u6d41':'liu','\u6cfd':'ze','\u7011':'pu',
+    '\u6c6a':'wang','\u6c46':'hong','\u6d53':'nong','\u6d3e':'pai','\u6d69':'hao',
+    '\u6d32':'zhou','\u5dde':'zhou','\u624b':'shou','\u773c':'yan','\u8033':'er',
+    '\u53e3':'kou','\u9f3b':'bi','\u884c':'xing','\u5c45':'ju','\u7acb':'li',
+    '\u9ad8':'gao','\u957f':'chang','\u5fd7':'zhi','\u8fdc':'yuan','\u5fb7':'de',
+    '\u79d1':'ke','\u5c55':'zhan','\u9646':'lu','\u7a7a':'kong','\u98de':'fei',
+    '\u65c5':'lv','\u9759':'jing','\u5229':'li','\u8d22':'cai','\u4ea7':'chan',
+    '\u6001':'tai','\u5ea6':'du','\u989d':'e','\u6b22':'huan','\u559c':'xi',
+    '\u97f3':'yin','\u9499':'gang','\u5e86':'qing','\u5434':'wu','\u53bb':'qu',
+    '\u6765':'lai','\u8fce':'ying','\u9001':'song','\u4e50':'le','\u52a0':'jia',
+    '\u6cb9':'you','\u76d0':'yan','\u9eba':'ma','\u5a18':'niang','\u751a':'shen',
+    '\u5176':'qi','\u4e4b':'zhi','\u4e8e':'yu','\u8003':'kao','\u4e0b':'xia',
+    '\u5148':'xian','\u540e':'hou','\u5185':'nei','\u5916':'wai','\u89c6':'shi',
+    '\u9875':'ye','\u573a':'chang','\u6392':'pai','\u7ec4':'zu','\u8054':'lian',
+    '\u5c55':'zhan','\u5e04':'shuai','\u5e05':'shuai','\u9896':'ying','\u5f20':'zhang',
+    '\u56ed':'yuan','\u7a97':'chuang','\u4e07':'wan','\u4ebf':'yi','\u96f6':'ling',
+    '\u4e00':'yi','\u4e8c':'er','\u4e09':'san','\u56db':'si','\u4e94':'wu',
+    '\u516d':'liu','\u4e03':'qi','\u516b':'ba','\u4e5d':'jiu','\u5341':'shi',
+    '\u767e':'bai','\u5343':'qian','\u4e2a':'ge','\u500b':'ge','\u5f53':'dang',
+    '\u4f1f':'wei','\u79c0':'xiu','\u96ef':'wen','\u6885':'mei','\u5170':'lan',
+    '\u6842':'gui','\u971e':'xia','\u71d5':'yan','\u73cd':'zhen','\u73b2':'ling',
+    '\u840d':'ping','\u96c5':'ya','\u7434':'qin','\u6653':'xiao','\u78ca':'lei',
+    '\u8d85':'chao','\u5f3a':'qiang','\u6770':'jie','\u8c6a':'hao','\u4fca':'jun',
+    '\u5bb8':'chen','\u8f69':'xuan','\u65cb':'xuan','\u60a6':'yue','\u5983':'yan',
+    '\u6615':'xin','\u660a':'hao','\u6168':'chen','\u65ed':'xu','\u61ff':'yi',
+    '\u98a4':'ying','\u7199':'xi','\u66e6':'xu','\u83f2':'fei','\u66fc':'man',
+    '\u73a5':'yue','\u73fa':'jun','\u73ca':'shan','\u6de1':'dan','\u7431':'qi',
+    '\u6da6':'run','\u6d01':'jie','\u6cc9':'quan','\u6eaa':'xi','\u6ee8':'bin',
+    '\u4e91':'yun','\u9704':'xiao','\u96f7':'lei','\u9707':'zhen','\u5764':'kun',
+    '\u4e7e':'qian','\u5943':'ying','\u8431':'shuai','\u59a2':'yan','\u83b9':'ying',
+    '\u598d':'yan','\u5e08':'shi','\u5168':'quan','\u90e8':'bu','\u524d':'qian',
+    '\u518d':'zai','\u7b2c':'di','\u6bcf':'mei','\u4e9b':'xie','\u8d74':'fu',
+    '\u5c71':'shan','\u5b98':'guan','\u5b66':'xue','\u9662':'yuan','\u5173':'guan',
+    '\u6a21':'mo','\u6837':'yang','\u683c':'ge','\u6b63':'zheng','\u5f0f':'shi',
+    '\u54c1':'pin','\u5b9a':'ding','\u5355':'dan','\u590f':'xia','\u51ac':'dong',
+    '\u6625':'chun','\u6d77':'hai','\u5929':'tian','\u4eba':'ren','\u6708':'yue',
+    '\u6587':'wen','\u6b66':'wu','\u5fd7':'zhi','\u7acb':'li','\u95f4':'jian',
+    '\u5b87':'yu','\u6cb3':'he','\u6c5f':'jiang','\u7389':'yu','\u83b2':'lian',
+    '\u83e0':'mei','\u84b2':'pu','\u8587':'wei','\u5a77':'wan','\u5a74':'ying',
+    '\u5a73':'ting','\u5a7f':'ying','\u5a65':'jie','\u5a69':'ya','\u5a4a':'bi',
+    '\u5a49':'wan','\u5a63':'po','\u5a3c':'e','\u5a3b':'qian','\u5a39':'shan',
+    '\u5a2a':'ni','\u5a29':'mian','\u829d':'zhi','\u838e':'she','\u836b':'mi',
+    '\u835a':'su','\u83e9':'ju','\u834e':'lan','\u83ab':'mo','\u82f3':'ling',
+    '\u82f1':'ying','\u82ea':'jing','\u83e8':'shan','\u83cb':'xu','\u5cf0':'feng',
+    '\u6f04':'cheng','\u60e0':'hui','\u5e0c':'xi','\u5e82':'an','\u6715':'mo',
+    '\u5c0a':'zun','\u8fc8':'mai','\u9686':'long','\u5e38':'chang','\u4fbf':'bian',
+    '\u7af9':'zhu','\u8377':'he','\u83ca':'ju','\u5c55':'zhan','\u8574':'yun',
+    '\u5ae9':'nen','\u54aa':'mi','\u7fe0':'cui','\u6746':'gan','\u6897':'mei',
+    '\u6842':'gui','\u69d0':'tang','\u6960':'lou','\u683d':'zai','\u5728':'zai',
+    '\u5a1c':'na','\u5a3c':'e','\u62dc':'bai','\u5ead':'ting'
+  };
+  return r;
+})();
+
+function toPinyin(str) {
+  var r = '';
+  for (var i = 0; i < str.length; i++) { r += PINYIN[str[i]] || str[i].toLowerCase(); }
+  return r;
+}
+function toPinyinInitials(str) {
+  var r = '';
+  for (var i = 0; i < str.length; i++) {
+    var ch = str[i], py = PINYIN[ch];
+    if (py) r += py[0];
+    else if (ch.charCodeAt(0) < 128) r += ch.toLowerCase();
+  }
+  return r;
+}
+
+// ================================================================
+// TABLE COLOR PALETTE
+// ================================================================
+var TABLE_COLORS = [
+  '#c0392b','#e67e22','#d4a017','#27ae60','#16a085',
+  '#2980b9','#8e44ad','#d35400','#1abc9c','#2c3e50',
+  '#e74c3c','#f39c12','#2ecc71','#3498db','#9b59b6',
+  '#e91e63','#607d8b','#795548','#00897b','#5c6bc0'
+];
+var tableColorMap = {};
+
+function initTableColors(guests) {
+  tableColorMap = {};
+  var seqs = [];
+  guests.forEach(function(g) {
+    if (g.assigned && seqs.indexOf(g.tableSeq) === -1) seqs.push(g.tableSeq);
+  });
+  seqs.sort(function(a,b){return a-b;});
+  seqs.forEach(function(seq, idx) { tableColorMap[seq] = TABLE_COLORS[idx % TABLE_COLORS.length]; });
+}
+function getTableColor(tableSeq) {
+  return tableColorMap[tableSeq] || '#9a9590';
+}
+
+// ================================================================
+// TRANSLATIONS
+// ================================================================
+var LANG = 'en';
+var T = {
+  en: {
+    find:'Find', yourSeat:'Your Seat',
+    subtitle:'Browse by last name to find your table',
+    step1:'STEP 1 \u2014 WHO ARE YOU HERE FOR?',
+    step2:'STEP 2 \u2014 FIRST LETTER OF LAST NAME',
+    skipLabel:'All Guests', skipSub:'Browse everyone',
+    back:'Back', backToList:'Back to list',
+    search:'Search name...', seat:'Seat',
+    noGuests:'No guests found. Try searching a name.',
+    errTitle:'Guest data not available',
+    errBody:'Please ask the organiser to upload the guest data file.',
+    guests:'guest', guestsPlural:'guests',
+    unassigned:'Unassigned',
+    findSeatBtn:'Find My Seat',
+    vizTitle:'Your Table', vizDesc:'Your highlighted seat is shown below.',
+    catLabels:{
+      'bride-family':"Bride's Family",'bride-rel':'Bride Relative','bride-friend':"Bride's Friend",
+      'groom-family':"Groom's Family",'groom-rel':'Groom Relative','groom-friend':"Groom's Friend"
+    }
+  },
+  zh: {
+    find:'\u67e5\u627e', yourSeat:'\u60a8\u7684\u5ea7\u4f4d',
+    subtitle:'\u6309\u59d3\u6c0f\u9996\u5b57\u67e5\u627e\u60a8\u7684\u684c\u53f7',
+    step1:'\u7b2c\u4e00\u6b65 \u2014 \u60a8\u662f\u54ea\u4f4d\u5bbe\u5ba2\uff1f',
+    step2:'\u7b2c\u4e8c\u6b65 \u2014 \u9009\u62e9\u59d3\u6c0f\u9996\u5b57\u62fc\u97f3',
+    skipLabel:'\u5168\u90e8\u5bbe\u5ba2', skipSub:'\u6d4f\u89c8\u6240\u6709\u4eba',
+    back:'\u8fd4\u56de', backToList:'\u8fd4\u56de\u5217\u8868',
+    search:'\u641c\u7d22\u59d3\u540d / \u62fc\u97f3\u2026', seat:'\u5ea7\u4f4d',
+    noGuests:'\u672a\u627e\u5230\u5bbe\u5ba2\uff0c\u8bf7\u5c1d\u8bd5\u5176\u4ed6\u59d3\u540d\u3002',
+    errTitle:'\u5bbe\u5ba2\u6570\u636e\u672a\u627e\u5230',
+    errBody:'\u8bf7\u5411\u4e3b\u529e\u65b9\u786e\u8ba4\u5df2\u4e0a\u4f20\u5bbe\u5ba2\u6570\u636e\u3002',
+    guests:'\u4f4d', guestsPlural:'\u4f4d',
+    unassigned:'\u672a\u5206\u914d',
+    findSeatBtn:'\u67e5\u627e\u5ea7\u4f4d',
+    vizTitle:'\u60a8\u7684\u684c\u53f7', vizDesc:'\u60a8\u7684\u9ad8\u4eae\u5ea7\u4f4d\u5982\u4e0b\u56fe\u6240\u793a\u3002',
+    catLabels:{
+      'bride-family':'\u65b0\u5a18\u5bb6\u5c5e','bride-rel':'\u65b0\u5a18\u4eb2\u5c5e','bride-friend':'\u65b0\u5a18\u670b\u53cb',
+      'groom-family':'\u65b0\u90ce\u5bb6\u5c5e','groom-rel':'\u65b0\u90ce\u4eb2\u5c5e','groom-friend':'\u65b0\u90ce\u670b\u53cb'
+    }
+  }
+};
+function t(key) { return (T[LANG]||T.en)[key]||key; }
+
+function setLang(lang) {
+  LANG = lang;
+  document.getElementById('btn-lang-en').classList.toggle('active', lang==='en');
+  document.getElementById('btn-lang-zh').classList.toggle('active', lang==='zh');
+  applyTranslations();
+  var active = document.querySelector('.screen.active');
+  if (active) {
+    if (active.id==='screen-cat') buildCatGrid();
+    if (active.id==='screen-list') onSFSearch(document.getElementById('sf-search').value);
+  }
+}
+
+function applyTranslations() {
+  document.getElementById('t-find').textContent         = t('find');
+  document.getElementById('t-your-seat').textContent    = t('yourSeat');
+  document.getElementById('t-subtitle').textContent     = t('subtitle');
+  document.getElementById('t-step1').textContent        = t('step1');
+  document.getElementById('alpha-step-label').textContent = t('step2');
+  document.getElementById('sf-search').placeholder      = t('search');
+  document.getElementById('t-find-seat-btn').textContent= t('findSeatBtn');
+  document.getElementById('viz-title').textContent      = t('vizTitle');
+  document.getElementById('viz-desc').textContent       = t('vizDesc');
+  // Back button text
+  ['t-back-alpha-txt','alpha-bottom-back-txt','list-back-txt','list-bottom-back-txt','viz-back-txt'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = t('back');
+  });
+  document.getElementById('viz-bottom-back-txt').textContent = t('backToList');
+  var errT = document.getElementById('t-err-title'), errB = document.getElementById('t-err-body');
+  if (errT) errT.textContent = t('errTitle');
+  if (errB) errB.textContent = t('errBody');
+}
+
+// ================================================================
+// APP STATE
+// ================================================================
 var sfData     = null;
 var sfGuests   = [];
 var sfFiltered = [];
+var selectedIds= {};   // guestId -> true
 var selCat     = null;
 var selAlpha   = null;
 var ALPHA_GROUPS = ['AB','CD','EF','GH','IJ','KL','MN','OP','QR','ST','UV','WX','YZ'];
@@ -188,7 +603,7 @@ var ALPHA_GROUPS = ['AB','CD','EF','GH','IJ','KL','MN','OP','QR','ST','UV','WX',
 // ── Boot ─────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', function() {
   var catGrid = document.getElementById('cat-grid');
-  if (catGrid) catGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:28px 0;color:var(--muted);font-size:13px;">Loading...</div>';
+  if (catGrid) catGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px 0;color:var(--muted);font-size:14px;">Loading\u2026</div>';
 
   fetch('./guests.json?v=' + Date.now())
     .then(function(r) {
@@ -198,43 +613,28 @@ window.addEventListener('DOMContentLoaded', function() {
     .then(function(data) {
       sfData   = data;
       sfGuests = data.guests || [];
+      initTableColors(sfGuests);
       document.getElementById('sf-event-label').textContent = data.projectName || 'Wedding Banquet';
       var d = data.exportedAt ? new Date(data.exportedAt).toLocaleDateString() : '';
-      document.getElementById('sf-footer').textContent =
-        (data.projectName || 'Banquet') + (d ? ' - ' + d : '');
+      document.getElementById('sf-footer').textContent = (data.projectName||'Banquet') + (d?' - '+d:'');
       buildCatGrid();
       buildAlphaGrid(sfGuests);
     })
     .catch(function() {
-      var isLocal = location.protocol === 'file:'
-                 || location.hostname === 'localhost'
-                 || location.hostname === '127.0.0.1';
-      var banner = document.getElementById('no-data-banner');
+      var isLocal = location.protocol==='file:' || location.hostname==='localhost' || location.hostname==='127.0.0.1';
+      var banner  = document.getElementById('no-data-banner');
       if (banner) {
         banner.style.display = 'block';
-        if (isLocal) {
-          banner.innerHTML =
-            '<div class="icon">&#128421;</div>'
-          + '<h3>Running on localhost</h3>'
-          + '<p>This page needs to be hosted online so guests can access it from their phones.<br><br>'
-          + '<b>How to deploy (free, takes 2 min):</b><br><br>'
-          + '1. Open the Wedding Planner and click <b>&#128279; Seat Finder</b><br>'
-          + '2. Click <b>Download guests.json</b><br>'
-          + '3. Go to <b>netlify.com/drop</b> and drag your entire<br>'
-          + '&nbsp;&nbsp;&nbsp;&nbsp;<code>planner-app/public/</code> folder onto the page<br>'
-          + '4. Copy the Netlify URL (e.g. <code>my-event.netlify.app</code>)<br>'
-          + '5. Paste it into the Seat Finder modal &mdash; QR code is generated<br>'
-          + '6. Print or display the QR at the venue entrance</p>';
-        } else {
-          banner.innerHTML =
-            '<div class="icon">&#9888;&#65039;</div>'
-          + '<h3>Guest data not found</h3>'
+        banner.innerHTML = isLocal
+          ? '<div class="icon">&#128421;</div><h3>Running on localhost</h3>'
+          + '<p>This page needs to be hosted online so guests can access it.<br><br>'
+          + '<b>Steps:</b><br>1. Click <b>&#128279; Seat Finder</b> in the Wedding Planner<br>'
+          + '2. Download <code>guests.json</code><br>'
+          + '3. Drag <code>planner-app/public/</code> to <b>netlify.com/drop</b><br>'
+          + '4. Paste the Netlify URL into the modal to get the QR code</p>'
+          : '<div class="icon">&#9888;&#65039;</div><h3>'+t('errTitle')+'</h3>'
           + '<p>Could not load <code>guests.json</code>.<br><br>'
-          + 'The organiser needs to:<br>'
-          + '1. Export <code>guests.json</code> from the Wedding Planner<br>'
-          + '2. Upload it to the <code>pages/</code> folder on this hosting site<br>'
-          + '3. Refresh this page after uploading</p>';
-        }
+          + '1. Export from Wedding Planner<br>2. Upload to <code>pages/</code> folder<br>3. Refresh</p>';
       }
       var cg = document.getElementById('cat-grid');
       if (cg) cg.innerHTML = '';
@@ -243,53 +643,91 @@ window.addEventListener('DOMContentLoaded', function() {
 
 // ── Screens ───────────────────────────────────────────────────────
 function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
-  document.getElementById('screen-' + id).classList.add('active');
-  window.scrollTo(0, 0);
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('screen-'+id).classList.add('active');
+  window.scrollTo(0,0);
+  // Hide find-seat bar when not on list
+  if (id !== 'list') {
+    document.getElementById('find-seat-bar').classList.remove('visible');
+  } else {
+    updateFindSeatBar();
+  }
+}
+
+function goBackFromList() {
+  // Clear selections when going back
+  selectedIds = {};
+  updateFindSeatBar();
+  showScreen('alpha');
+}
+
+// ── Selection management ──────────────────────────────────────────
+function toggleSelect(guestId) {
+  if (selectedIds[guestId]) {
+    delete selectedIds[guestId];
+  } else {
+    selectedIds[guestId] = true;
+  }
+  // Update the visual state of the row
+  var item = document.querySelector('.guest-item[data-id="'+guestId+'"]');
+  if (item) item.classList.toggle('selected', !!selectedIds[guestId]);
+  updateFindSeatBar();
+}
+
+function updateFindSeatBar() {
+  var count = Object.keys(selectedIds).length;
+  var bar   = document.getElementById('find-seat-bar');
+  var cnt   = document.getElementById('find-seat-count');
+  bar.classList.toggle('visible', count > 0);
+  if (cnt) cnt.textContent = count;
 }
 
 // ── Category screen ───────────────────────────────────────────────
 var CAT_EMOJI = {
-  'bride-family': '&#127800;', 'bride-rel': '&#127802;', 'bride-friend': '&#128167;',
-  'groom-family': '&#128306;', 'groom-rel': '&#128311;', 'groom-friend': '&#129360;'
+  'bride-family':'&#127800;','bride-rel':'&#127802;','bride-friend':'&#128167;',
+  'groom-family':'&#128306;','groom-rel':'&#128311;','groom-friend':'&#129360;'
 };
 
 function buildCatGrid() {
   var grid = document.getElementById('cat-grid');
   if (!grid) return;
-  var cats = (sfData && sfData.categories) || [];
+  var cats = (sfData&&sfData.categories)||[];
   var html = '';
   cats.forEach(function(c) {
-    var count = sfGuests.filter(function(g) { return g.cat === c.key && g.assigned; }).length;
+    var count = sfGuests.filter(function(g){return g.cat===c.key&&g.assigned;}).length;
     if (!count) return;
-    var label = c.label.replace(/^\S+\s/, '');
-    html += '<button class="cat-card" onclick="selectCat(\'' + esc(c.key) + '\')">'
-          + '<span class="cat-emoji">' + (CAT_EMOJI[c.key] || '&#128101;') + '</span>'
-          + '<span class="cat-name">' + esc(label) + '</span>'
-          + '<span class="cat-sub">' + count + ' guest' + (count !== 1 ? 's' : '') + '</span>'
+    var label = (t('catLabels')[c.key]||c.label.replace(/^\S+\s/,''));
+    html += '<button class="cat-card" onclick="selectCat(\''+esc(c.key)+'\')">'
+          + '<span class="cat-emoji">'+(CAT_EMOJI[c.key]||'&#128101;')+'</span>'
+          + '<span class="cat-name">'+esc(label)+'</span>'
+          + '<span class="cat-sub">'+count+' '+(count!==1?t('guestsPlural'):t('guests'))+'</span>'
           + '</button>';
   });
-  grid.innerHTML = html || '<div style="grid-column:1/-1;color:var(--muted);font-size:13px;padding:20px;text-align:center;">No categories</div>';
+  // Skip card — always normal grid cell, no span
+  html += '<button class="cat-card skip-card" onclick="showAllAlpha()">'
+        + '<span class="cat-emoji">&#128101;</span>'
+        + '<span class="cat-name" id="t-skip-label">'+t('skipLabel')+'</span>'
+        + '<span class="cat-sub" id="t-skip-sub">'+t('skipSub')+'</span>'
+        + '</button>';
+  grid.innerHTML = html;
 }
 
 function selectCat(catKey) {
   selCat = catKey;
-  var pool = sfGuests.filter(function(g) { return g.cat === catKey && g.assigned; });
+  var pool = sfGuests.filter(function(g){return g.cat===catKey&&g.assigned;});
   buildAlphaGrid(pool);
-  var el = document.getElementById('alpha-step-label');
-  if (el) el.textContent = 'Step 2 \u2014 First letter of last name';
-  var btn = document.getElementById('list-back-btn');
-  if (btn) btn.onclick = function() { showScreen('alpha'); };
+  document.getElementById('alpha-step-label').textContent = t('step2');
+  document.getElementById('t-back-alpha-txt').textContent = t('back');
+  document.getElementById('alpha-bottom-back-txt').textContent = t('back');
+  document.getElementById('t-back-alpha').onclick = function(){showScreen('cat');};
+  document.getElementById('alpha-bottom-back').onclick = function(){showScreen('cat');};
   showScreen('alpha');
 }
 
 function showAllAlpha() {
   selCat = null;
-  buildAlphaGrid(sfGuests.filter(function(g) { return g.assigned; }));
-  var el = document.getElementById('alpha-step-label');
-  if (el) el.textContent = 'Choose first letter of last name';
-  var btn = document.getElementById('list-back-btn');
-  if (btn) btn.onclick = function() { showScreen('cat'); };
+  buildAlphaGrid(sfGuests.filter(function(g){return g.assigned;}));
+  document.getElementById('alpha-step-label').textContent = t('step2');
   showScreen('alpha');
 }
 
@@ -298,18 +736,20 @@ function buildAlphaGrid(pool) {
   var grid = document.getElementById('alpha-grid');
   if (!grid) return;
   var existing = {};
-  pool.forEach(function(g) { existing[(g.lastName || '?')[0].toUpperCase()] = true; });
+  pool.forEach(function(g){
+    var ch = (g.lastName||'?')[0], py = PINYIN[ch];
+    existing[py ? py[0].toUpperCase() : ch.toUpperCase()] = true;
+  });
   var html = '';
-  ALPHA_GROUPS.forEach(function(grp) {
+  ALPHA_GROUPS.forEach(function(grp){
     var letters = grp.split('');
-    var hasAny  = letters.some(function(l) { return existing[l]; });
-    var count   = pool.filter(function(g) {
-      return letters.indexOf((g.lastName || '?')[0].toUpperCase()) !== -1;
+    var hasAny  = letters.some(function(l){return existing[l];});
+    var count   = pool.filter(function(g){
+      var ch=(g.lastName||'?')[0], py=PINYIN[ch];
+      return letters.indexOf(py?py[0].toUpperCase():ch.toUpperCase()) !== -1;
     }).length;
-    html += '<button class="alpha-card' + (hasAny ? '' : ' dimmed') + '" onclick="selectAlpha(\'' + grp + '\')">'
-          + grp
-          + '<span class="alpha-count">' + (hasAny ? count : '&ndash;') + '</span>'
-          + '</button>';
+    html += '<button class="alpha-card'+(hasAny?'':' dimmed')+'" onclick="selectAlpha(\''+grp+'\')">'
+          + grp+'<span class="alpha-count">'+(hasAny?count:'&ndash;')+'</span></button>';
   });
   grid.innerHTML = html;
 }
@@ -317,66 +757,73 @@ function buildAlphaGrid(pool) {
 function selectAlpha(grp) {
   selAlpha = grp;
   var letters = grp.split('');
-  var base = selCat
-    ? sfGuests.filter(function(g) { return g.cat === selCat; })
-    : sfGuests;
-  var pool = base.filter(function(g) {
-    return g.assigned && letters.indexOf((g.lastName || '?')[0].toUpperCase()) !== -1;
+  var base = selCat ? sfGuests.filter(function(g){return g.cat===selCat;}) : sfGuests;
+  var pool = base.filter(function(g){
+    if (!g.assigned) return false;
+    var ch=(g.lastName||'?')[0], py=PINYIN[ch];
+    return letters.indexOf(py?py[0].toUpperCase():ch.toUpperCase()) !== -1;
   });
   pool.sort(sortByName);
   sfFiltered = pool;
-  var inp = document.getElementById('sf-search');
-  if (inp) inp.value = '';
+  selectedIds = {};
+  document.getElementById('sf-search').value = '';
   renderGuestList(pool, false);
+  // Set list back button to go to alpha
+  document.getElementById('list-back-btn').onclick = function(){goBackFromList();};
+  document.getElementById('list-back-txt').textContent = t('back');
+  document.getElementById('list-bottom-back-txt').textContent = t('back');
   showScreen('list');
 }
 
 // ── Search ────────────────────────────────────────────────────────
+function matchGuest(g, q) {
+  if (!q) return true;
+  var full = (g.lastName+' '+g.firstName+' '+g.nickName).toLowerCase();
+  if (full.indexOf(q) !== -1) return true;
+  var pyFull = toPinyin(g.lastName+g.firstName+g.nickName);
+  if (pyFull.indexOf(q) !== -1) return true;
+  var pyInit = toPinyinInitials(g.lastName+g.firstName+g.nickName);
+  if (pyInit.indexOf(q) !== -1) return true;
+  if (g.tableName && g.tableName.toLowerCase().indexOf(q) !== -1) return true;
+  return false;
+}
+
 function onSFSearch(val) {
   var q = val.trim().toLowerCase();
   var letters = selAlpha ? selAlpha.split('') : null;
-  var base = selCat
-    ? sfGuests.filter(function(g) { return g.cat === selCat; })
-    : sfGuests;
-  var pool = base.filter(function(g) {
+  var base = selCat ? sfGuests.filter(function(g){return g.cat===selCat;}) : sfGuests;
+  var pool = base.filter(function(g){
     if (!g.assigned) return false;
-    if (letters && letters.indexOf((g.lastName || '?')[0].toUpperCase()) === -1) return false;
+    if (letters) {
+      var ch=(g.lastName||'?')[0], py=PINYIN[ch];
+      if (letters.indexOf(py?py[0].toUpperCase():ch.toUpperCase()) === -1) return false;
+    }
     return true;
   });
-  var results = q
-    ? pool.filter(function(g) {
-        return (g.lastName + ' ' + g.firstName + ' ' + g.nickName).toLowerCase().indexOf(q) !== -1;
-      })
-    : pool;
+  var results = q ? pool.filter(function(g){return matchGuest(g,q);}) : pool;
   results.sort(sortByName);
   sfFiltered = results;
   renderGuestList(results, !!q);
 }
 
 function clearSFSearch() {
-  var inp = document.getElementById('sf-search');
-  if (inp) inp.value = '';
+  document.getElementById('sf-search').value = '';
   onSFSearch('');
 }
 
 function sortByName(a, b) {
-  var la = (a.lastName + a.firstName).toLowerCase();
-  var lb = (b.lastName + b.firstName).toLowerCase();
-  return la < lb ? -1 : la > lb ? 1 : 0;
+  var la = toPinyin((a.lastName+a.firstName).toLowerCase());
+  var lb = toPinyin((b.lastName+b.firstName).toLowerCase());
+  return la<lb ? -1 : la>lb ? 1 : 0;
 }
 
-// ── Render ────────────────────────────────────────────────────────
-var DOT_CLS = {
-  'bride-family':'dot-bride-family','bride-rel':'dot-bride-rel','bride-friend':'dot-bride-friend',
-  'groom-family':'dot-groom-family','groom-rel':'dot-groom-rel','groom-friend':'dot-groom-friend'
-};
-
+// ── Render guest list (selectable) ───────────────────────────────
 function renderGuestList(pool, flat) {
   var area = document.getElementById('guest-list-area');
   if (!area) return;
   if (!pool.length) {
     area.innerHTML = '<div class="empty-state"><span class="empty-icon">&#128269;</span>'
-                   + '<p>No guests found.<br>Try a different name or letter.</p></div>';
+                   + '<p>'+t('noGuests')+'</p></div>';
     return;
   }
   if (flat || selAlpha) {
@@ -384,37 +831,290 @@ function renderGuestList(pool, flat) {
     return;
   }
   var byLetter = {};
-  pool.forEach(function(g) {
-    var l = (g.lastName || '?')[0].toUpperCase();
-    if (!byLetter[l]) byLetter[l] = [];
+  pool.forEach(function(g){
+    var ch=(g.lastName||'?')[0], py=PINYIN[ch];
+    var l = py ? py[0].toUpperCase() : ch.toUpperCase();
+    if (!byLetter[l]) byLetter[l]=[];
     byLetter[l].push(g);
   });
   var html = '';
-  Object.keys(byLetter).sort().forEach(function(l) {
-    html += '<div class="alpha-section-head">' + l + '</div>' + buildListBlock(byLetter[l]);
+  Object.keys(byLetter).sort().forEach(function(l){
+    html += '<div class="alpha-section-head">'+l+'</div>'+buildListBlock(byLetter[l]);
   });
   area.innerHTML = html;
 }
 
 function buildListBlock(list) {
   var html = '<div class="guest-list">';
-  list.forEach(function(g) {
-    var name = esc(g.lastName) + (g.firstName ? ', ' + esc(g.firstName) : '');
-    var nick = g.nickName ? ' <span class="g-nick">(' + esc(g.nickName) + ')</span>' : '';
-    var dot  = DOT_CLS[g.cat] || 'dot-default';
-    html += '<div class="guest-item">'
-          + '<div class="g-cat-dot ' + dot + '"></div>'
-          + '<div class="g-name">' + name + nick + '</div>'
-          + '<div class="g-table">'
-          + '<div class="g-table-name">' + esc(g.tableName || '&mdash;') + '</div>'
-          + '<div class="g-seat-num">Seat ' + esc(String(g.seat)) + '</div>'
+  list.forEach(function(g){
+    var name  = esc(g.lastName)+(g.firstName?', '+esc(g.firstName):'');
+    var nick  = g.nickName?' <span class="g-nick">('+esc(g.nickName)+')</span>':'';
+    var color = g.assigned ? getTableColor(g.tableSeq) : '#ccc';
+    var tname = esc(g.tableName||(t('unassigned')));
+    var isSel = selectedIds[g.id] ? ' selected' : '';
+    var chk   = selectedIds[g.id] ? '&#10003;' : '';
+    html += '<div class="guest-item'+isSel+'" data-id="'+esc(String(g.id))+'" onclick="toggleSelect(\''+esc(String(g.id))+'\')">'
+          + '<div class="g-sel-box">'+chk+'</div>'
+          + '<div class="g-table-strip" style="background:'+color+'"></div>'
+          + '<div class="g-name">'+name+nick+'</div>'
+          + '<div class="g-table-col">'
+          + '<div class="g-table-badge" style="background:'+color+'">'+tname+'</div>'
+          + '<div class="g-seat-num">'+t('seat')+' '+esc(String(g.seat))+'</div>'
           + '</div></div>';
   });
   return html + '</div>';
 }
 
+// ── Seat Visualization — SVG, multi-table accordion ──────────────
+function showViz() {
+  var ids = Object.keys(selectedIds);
+  if (!ids.length) return;
+
+  var selGuests = ids.map(function(id){
+    return sfGuests.find(function(g){ return String(g.id) === id; });
+  }).filter(Boolean);
+  if (!selGuests.length) return;
+
+  // Group selected guests by tableSeq
+  var tableGroups = {};
+  selGuests.forEach(function(g) {
+    var k = g.tableSeq;
+    if (!tableGroups[k]) tableGroups[k] = [];
+    tableGroups[k].push(g);
+  });
+  var tableSeqs = Object.keys(tableGroups).map(Number).sort(function(a,b){return a-b;});
+
+  var isSingle = tableSeqs.length === 1;
+  var container = document.getElementById('viz-tables-container');
+  container.innerHTML = '';
+
+  tableSeqs.forEach(function(seq, idx) {
+    var highlighted = tableGroups[seq];
+    var color       = getTableColor(seq);
+    var tableName   = highlighted[0].tableName || '';
+    var tablemates  = sfGuests.filter(function(g){ return g.tableSeq === seq && g.assigned; });
+
+    // Build the accordion block
+    var block = document.createElement('div');
+    block.className = 'viz-table-block' + (isSingle || idx === 0 ? ' open' : '');
+    block.id = 'vtb-' + seq;
+
+    // Header
+    var hlNames = highlighted.map(function(g){ return (g.lastName||'')+(g.firstName?' '+g.firstName:''); }).join(', ');
+    var headerHTML =
+      '<div class="viz-table-header" onclick="toggleTableBlock(\'vtb-'+seq+'\')">'
+      + '<div class="viz-table-color-dot" style="background:'+color+'"></div>'
+      + '<div class="viz-table-header-text">'
+      + '<div class="viz-table-title">'+esc(tableName||t('unassigned'))+'</div>'
+      + '<div class="viz-table-subtitle">'+esc(hlNames)+' &bull; '+t('seat')+' '+highlighted.map(function(g){return g.seat;}).join(', ')+'</div>'
+      + '</div>'
+      + '<div class="viz-table-chevron">&#8964;</div>'
+      + '</div>';
+
+    // Body: SVG diagram + guest cards
+    var svgSize   = Math.min(window.innerWidth - 64, 320);
+    var svgMarkup = buildTableSVG(tablemates, highlighted, color, svgSize, seq);
+
+    var guestCards = '<div class="viz-guest-cards">';
+    highlighted.forEach(function(g) {
+      var name = (g.lastName||'')+(g.firstName?', '+g.firstName:'');
+      guestCards +=
+        '<div class="viz-guest-card" onclick="showTooltip(\''+esc(String(g.id))+'\')">'
+        + '<div class="viz-seat-circle" style="background:'+color+'">'+esc(String(g.seat))+'</div>'
+        + '<div class="viz-guest-info">'
+        + '<div class="viz-guest-name">'+esc(name)+'</div>'
+        + '<div class="viz-table-name">'+esc(g.tableName||t('unassigned'))+'</div>'
+        + '<div class="viz-seat-label">'+t('seat')+' '+esc(String(g.seat))+'</div>'
+        + '</div>'
+        + '<div class="viz-tap-hint">&#9432;</div>'
+        + '</div>';
+    });
+    guestCards += '</div>';
+
+    var bodyHTML =
+      '<div class="viz-table-body">'
+      + svgMarkup
+      + guestCards
+      + '</div>';
+
+    block.innerHTML = headerHTML + bodyHTML;
+    container.appendChild(block);
+  });
+
+  // Update intro
+  document.getElementById('viz-title').textContent =
+    isSingle
+      ? t('vizTitle') + (selGuests[0].tableName ? ': ' + selGuests[0].tableName : '')
+      : t('vizTitle') + ' (' + tableSeqs.length + ' tables)';
+  document.getElementById('viz-desc').textContent = t('vizDesc');
+
+  showScreen('viz');
+}
+
+function toggleTableBlock(id) {
+  var block = document.getElementById(id);
+  if (block) block.classList.toggle('open');
+}
+
+// Build an SVG table diagram — seats start at 12 o'clock, clockwise, asc
+function buildTableSVG(tablemates, highlighted, color, size, tableSeq) {
+  var MIN_SEATS = 10;
+  var seatCount = Math.max(tablemates.length, MIN_SEATS);
+
+  // Geometry — all relative to inner drawing area
+  // We add a padding zone so name labels outside the seat orbit never clip
+  var pad    = size * 0.14;            // space reserved for name labels on each edge
+  var inner  = size - pad * 2;         // inner area for table + seats
+  var cx     = size / 2;
+  var cy     = size / 2;
+  var tableR = inner * 0.30;           // round table radius
+  var seatR  = inner * 0.094;          // seat bubble radius
+  var orbitR = tableR + seatR + inner * 0.05;  // seat center orbit
+  var labelR = orbitR + seatR + inner * 0.055; // name label orbit (stays inside pad zone)
+
+  // Map seatNum -> guest
+  var seatMap = {};
+  tablemates.forEach(function(g){ seatMap[g.seat] = g; });
+
+  // Highlighted seat numbers
+  var hlSeats = {};
+  highlighted.forEach(function(g){ hlSeats[g.seat] = true; });
+
+  // Table name in center (truncate if needed)
+  var tname = tablemates[0] ? (tablemates[0].tableName || '') : '';
+  if (tname.length > 7) tname = tname.substring(0, 6) + '\u2026';
+
+  var fs = {            // font sizes
+    tableLabel: (inner * 0.105).toFixed(1),
+    seatNum:    (inner * 0.09).toFixed(1),
+    nameLabel:  (inner * 0.075).toFixed(1)
+  };
+
+  var svgParts = [
+    '<svg class="viz-svg-wrap" width="'+size+'" height="'+size+'"'
+    + ' viewBox="0 0 '+size+' '+size+'" xmlns="http://www.w3.org/2000/svg"'
+    + ' style="touch-action:manipulation">',
+    // Table circle fill + ring
+    '<circle cx="'+cx+'" cy="'+cy+'" r="'+tableR.toFixed(1)+'"'
+    + ' fill="'+color+'18" stroke="'+color+'" stroke-width="2.5"/>',
+    // Table name
+    '<text x="'+cx+'" y="'+(cy+0.5)+'" text-anchor="middle" dominant-baseline="middle"'
+    + ' fill="'+color+'" font-weight="700" font-size="'+fs.tableLabel+'">'+escSVG(tname)+'</text>'
+  ];
+
+  // Seats 1..seatCount: seat 1 at 12 o'clock, clockwise
+  for (var i = 1; i <= seatCount; i++) {
+    var angle  = ((i - 1) / seatCount) * Math.PI * 2 - Math.PI / 2;
+    var sx     = cx + orbitR * Math.cos(angle);
+    var sy     = cy + orbitR * Math.sin(angle);
+    var isHL   = !!hlSeats[i];
+    var guest  = seatMap[i] || null;
+    var isEmpty = !guest;
+
+    var onclick = 'onclick="showTooltipForSeat('+tableSeq+','+i+')"';
+
+    if (isHL) {
+      // Highlighted: filled seat with glow halo + name label outside
+      svgParts.push(
+        '<g '+onclick+' style="cursor:pointer">',
+        '<circle cx="'+sx.toFixed(1)+'" cy="'+sy.toFixed(1)+'" r="'+(seatR+5).toFixed(1)+'"'
+          + ' fill="'+color+'28"/>',                                  // glow
+        '<circle cx="'+sx.toFixed(1)+'" cy="'+sy.toFixed(1)+'" r="'+seatR.toFixed(1)+'"'
+          + ' fill="'+color+'" stroke="#fff" stroke-width="2.5"/>',   // seat
+        '<text x="'+sx.toFixed(1)+'" y="'+(sy+0.5).toFixed(1)+'" text-anchor="middle"'
+          + ' dominant-baseline="middle" fill="#fff" font-weight="800"'
+          + ' font-size="'+fs.seatNum+'">'+i+'</text>',
+        '</g>'
+      );
+      // Name label — positioned outside orbit, always readable
+      if (guest) {
+        var label = (guest.lastName || '').substring(0, 4);
+        var lx    = cx + labelR * Math.cos(angle);
+        var ly    = cy + labelR * Math.sin(angle);
+        svgParts.push(
+          '<text x="'+lx.toFixed(1)+'" y="'+(ly+0.5).toFixed(1)+'" text-anchor="middle"'
+          + ' dominant-baseline="middle" fill="'+color+'" font-weight="700"'
+          + ' font-size="'+fs.nameLabel+'" '+onclick+' style="cursor:pointer">'+escSVG(label)+'</text>'
+        );
+      }
+    } else {
+      // Normal seat — white fill with subtle stroke; empty seats slightly greyed
+      var fillCol  = isEmpty ? '#f0efe8' : '#ffffff';
+      var numCol   = isEmpty ? '#c8c4bc' : color + 'aa';
+      var strokeCol= color + '55';
+      svgParts.push(
+        '<g '+onclick+' style="cursor:pointer">',
+        '<circle cx="'+sx.toFixed(1)+'" cy="'+sy.toFixed(1)+'" r="'+seatR.toFixed(1)+'"'
+          + ' fill="'+fillCol+'" stroke="'+strokeCol+'" stroke-width="1.5"/>',
+        '<text x="'+sx.toFixed(1)+'" y="'+(sy+0.5).toFixed(1)+'" text-anchor="middle"'
+          + ' dominant-baseline="middle" fill="'+numCol+'" font-size="'+fs.seatNum+'">'+i+'</text>',
+        '</g>'
+      );
+    }
+  }
+
+  svgParts.push('</svg>');
+  return svgParts.join('\n');
+}
+
+// Show tooltip for a seat (tapped on SVG diagram)
+function showTooltipForSeat(tableSeq, seatNum) {
+  var guest = sfGuests.find(function(g){
+    return g.tableSeq === tableSeq && g.seat === seatNum && g.assigned;
+  });
+  var color = getTableColor(tableSeq);
+  var tableName = '';
+  var tableGuest = sfGuests.find(function(g){ return g.tableSeq === tableSeq; });
+  if (tableGuest) tableName = tableGuest.tableName || '';
+
+  var badge = document.getElementById('tt-seat-badge');
+  var nameEl = document.getElementById('tt-guest-name');
+  var emptyEl = document.getElementById('tt-empty-label');
+  var tableEl = document.getElementById('tt-table-name');
+  var seatEl  = document.getElementById('tt-seat-label');
+
+  badge.style.background = color;
+  badge.textContent = String(seatNum);
+
+  if (guest) {
+    var name = (guest.lastName||'')+(guest.firstName?', '+guest.firstName:'');
+    nameEl.textContent  = name;
+    emptyEl.textContent = '';
+    tableEl.textContent = tableName;
+    seatEl.textContent  = t('seat') + ' ' + seatNum;
+    nameEl.style.display  = 'block';
+    emptyEl.style.display = 'none';
+  } else {
+    nameEl.textContent  = '';
+    emptyEl.textContent = LANG === 'zh' ? '\u7a7a\u5ea7\u4f4d' : 'Empty seat';
+    tableEl.textContent = tableName;
+    seatEl.textContent  = t('seat') + ' ' + seatNum;
+    nameEl.style.display  = 'none';
+    emptyEl.style.display = 'block';
+  }
+
+  var tt = document.getElementById('seat-tooltip');
+  tt.classList.add('visible');
+}
+
+// Show tooltip for a guest (tapped on guest card)
+function showTooltip(guestId) {
+  var guest = sfGuests.find(function(g){ return String(g.id) === guestId; });
+  if (!guest) return;
+  showTooltipForSeat(guest.tableSeq, guest.seat);
+}
+
+function hideTooltip() {
+  document.getElementById('seat-tooltip').classList.remove('visible');
+}
+
+function escSVG(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+
 function esc(s) {
-  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 </script>
 </body>

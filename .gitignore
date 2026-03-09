@@ -141,3 +141,4 @@ vite.config.ts.timestamp-*
 # custom ignores
 data/
 public/pages/guests.json
+public/pages/banner.jpg

@@ -12,6 +12,10 @@ let activeFilter='all', selEl=null, dragGId=null, moving=null;
 // ── CANVAS STATE
 let gridVisible=true;
 
+// ── ZOOM STATE
+let canvasZoom=1.0;
+const ZOOM_MIN=0.25, ZOOM_MAX=3.0, ZOOM_STEP=0.1;
+
 // ── GUEST LIST SORT STATE
 // Multi-sort stack: [{col, dir}]  (first = primary sort)
 let glSortStack=[{col:'table',dir:1}]; // default: sort by table ASC
@@ -23,6 +27,73 @@ let selectedGuests=new Set(); // Set of guest IDs
 // ── TABLE SEAT MULTI-SELECT STATE
 let tableSeatSelectMode=false;   // which tableId is in seat-select mode
 let selectedTableSeats=new Set(); // Set of guest IDs from that table's seats
+
+// ── UNDO/REDO HISTORY
+const MAX_HISTORY = 40;
+let _history = [];      // stack of snapshots [{label, state}]
+let _historyIdx = -1;   // current position in stack
+let _historyOpen = false;
+
+function _snapshot(label) {
+  const state = JSON.stringify({ guests, tables, objects, gId, tId, oId });
+  // Truncate any "future" entries (branching after undo)
+  _history = _history.slice(0, _historyIdx + 1);
+  _history.push({ label, state });
+  if (_history.length > MAX_HISTORY) _history.shift();
+  _historyIdx = _history.length - 1;
+  _renderHistoryPanel();
+}
+function undoHistory() {
+  if (_historyIdx <= 0) { toast('Nothing to undo', ''); return; }
+  _historyIdx--;
+  _applySnapshot(_history[_historyIdx].state);
+  toast('↩ Undid: ' + (_history[_historyIdx + 1]?.label || ''), '');
+}
+function redoHistory() {
+  if (_historyIdx >= _history.length - 1) { toast('Nothing to redo', ''); return; }
+  _historyIdx++;
+  _applySnapshot(_history[_historyIdx].state);
+  toast('↪ Redid: ' + _history[_historyIdx].label, '');
+}
+function _applySnapshot(stateStr) {
+  const d = JSON.parse(stateStr);
+  guests = d.guests || []; tables = d.tables || []; objects = d.objects || [];
+  gId = d.gId || 1; tId = d.tId || 1; oId = d.oId || 1;
+  render();
+  _renderHistoryPanel();
+}
+function toggleHistoryPanel() {
+  _historyOpen = !_historyOpen;
+  const panel = document.getElementById('history-panel');
+  if (panel) { panel.style.display = _historyOpen ? 'flex' : 'none'; }
+  document.body.classList.toggle('history-open', _historyOpen);
+  _renderHistoryPanel();
+}
+function _renderHistoryPanel() {
+  const list = document.getElementById('history-list');
+  if (!list) return;
+  if (!_history.length) { list.innerHTML = '<div style="padding:10px;color:var(--muted);font-size:11px;text-align:center;">No history yet</div>'; return; }
+  list.innerHTML = [..._history].reverse().map((h, ri) => {
+    const i = _history.length - 1 - ri;
+    const isCurrent = i === _historyIdx;
+    return `<div onclick="jumpHistory(${i})" style="padding:7px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:11px;
+      background:${isCurrent ? 'var(--accent-lt)' : 'transparent'};
+      color:${isCurrent ? 'var(--accent-dk)' : 'var(--text2)'};
+      font-weight:${isCurrent ? '700' : '400'};
+      display:flex;align-items:center;gap:8px;"
+      onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='${isCurrent ? 'var(--accent-lt)' : 'transparent'}'">
+      <span style="opacity:.4;font-size:9px;font-family:monospace;min-width:24px;">#${i + 1}</span>
+      <span style="flex:1">${esc(h.label)}</span>
+      ${isCurrent ? '<span style="font-size:9px;opacity:.6">● now</span>' : ''}
+    </div>`;
+  }).join('');
+}
+function jumpHistory(idx) {
+  if (idx < 0 || idx >= _history.length) return;
+  _historyIdx = idx;
+  _applySnapshot(_history[idx].state);
+  toast('Jumped to: ' + _history[idx].label, '');
+}
 
 const COLORS=[
   '#b8923a','#c0607a','#5a8f6a','#4a72c4','#8a5abc','#d07830',
@@ -79,6 +150,7 @@ function init(){
   mkC('g-colors',selColor,'setGC');
   applyGrid();
   render();
+  _snapshot('Initial state');
 }
 
 // ── SIDEBAR MINI TOGGLE
@@ -123,8 +195,566 @@ function applyGrid(){
   if(btn) btn.classList.toggle('active', gridVisible);
 }
 
-function mutate(fn){
+// ══════════════════════════════════════════
+// CANVAS ROOM PRESETS
+// ══════════════════════════════════════════
+const ROOM_PRESETS = {
+  'rectangular': { w: 3000, h: 2400, label: 'Rectangular Hall' },
+  'wide':        { w: 4200, h: 1800, label: 'Wide Hall' },
+  'square':      { w: 2800, h: 2800, label: 'Square Room' },
+  'lshape':      { w: 3600, h: 2400, label: 'L-shaped Hall' },
+  'ballroom':    { w: 3600, h: 3600, label: 'Circular Ballroom' },
+  'custom':      { w: null,  h: null,  label: 'Custom…' },
+};
+function applyRoomPreset(key) {
+  const p = ROOM_PRESETS[key];
+  if (!p) return;
+  if (key === 'custom') {
+    document.getElementById('room-custom-fields').style.display = 'flex';
+    return;
+  }
+  document.getElementById('room-custom-fields').style.display = 'none';
+  document.getElementById('room-w-inp').value = p.w;
+  document.getElementById('room-h-inp').value = p.h;
+}
+function applyRoomSize() {
+  const w = parseInt(document.getElementById('room-w-inp').value) || 3000;
+  const h = parseInt(document.getElementById('room-h-inp').value) || 2400;
+  const cv = document.getElementById('canvas');
+  cv.style.width = w + 'px';
+  cv.style.height = h + 'px';
+  closeModal('modal-room');
+  toast('Canvas resized to ' + w + '×' + h, 'success');
+}
+
+// ══════════════════════════════════════════
+// ZOOM
+// ══════════════════════════════════════════
+function zoomCanvas(delta){
+  canvasZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round((canvasZoom+delta)*100)/100));
+  applyZoom();
+}
+function resetZoom(){ canvasZoom=1.0; applyZoom(); }
+function applyZoom(){
+  const cv=document.getElementById('canvas');
+  if(cv) cv.style.transform=`scale(${canvasZoom})`;
+  const lbl=document.getElementById('zoom-label');
+  if(lbl) lbl.textContent=Math.round(canvasZoom*100)+'%';
+}
+// Scroll-wheel zoom
+document.addEventListener('DOMContentLoaded',()=>{
+  const wrap=document.querySelector('.canvas-wrap');
+  if(!wrap) return;
+  wrap.addEventListener('wheel',e=>{
+    if(e.ctrlKey||e.metaKey){ e.preventDefault(); zoomCanvas(e.deltaY<0?0.1:-0.1); }
+  },{passive:false});
+  let _lp=null;
+  wrap.addEventListener('touchmove',e=>{
+    if(e.touches.length===2){
+      const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      if(_lp!==null) zoomCanvas((d-_lp)*0.005);
+      _lp=d; e.preventDefault();
+    }
+  },{passive:false});
+  wrap.addEventListener('touchend',()=>_lp=null);
+});
+
+// ══════════════════════════════════════════
+// EXPORT INDIVIDUAL TABLE IMAGES
+// ══════════════════════════════════════════
+let _exportSelTables = new Set();
+function openExportTablesModal() {
+  _exportSelTables = new Set(tables.map(t=>t.id));
+  renderExportTablesList();
+  openModal('modal-export-tables');
+}
+function renderExportTablesList() {
+  const list = document.getElementById('export-tables-list');
+  if(!list) return;
+  const sorted = [...tables].sort((a,b)=>(a.seq||0)-(b.seq||0));
+  list.innerHTML = sorted.map(t => {
+    const occ = guests.filter(g=>g.tableId===t.id).length;
+    const sc = seatCount(t);
+    const checked = _exportSelTables.has(t.id);
+    return `<label style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--border);cursor:pointer;font-size:12px;"
+      onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      <input type="checkbox" ${checked?'checked':''} style="width:15px;height:15px;accent-color:var(--accent);"
+        onchange="_exportSelTables[this.checked?'add':'delete'](${t.id})">
+      <span style="color:var(--muted);font-size:10px;font-family:monospace;min-width:24px;">#${t.seq||'—'}</span>
+      <span style="flex:1;font-weight:500;">${esc(t.name)}</span>
+      <span style="font-size:10px;color:var(--muted);font-family:monospace;">${occ}/${sc}</span>
+    </label>`;
+  }).join('');
+}
+// ══════════════════════════════════════════
+// AUTO-ALIGN TABLES (snap to grid, preserve positions)
+// ══════════════════════════════════════════
+function openArrangeModal(){
+  if(!tables.length){toast('No tables to align','error');return;}
+  document.getElementById('modal-arrange').classList.remove('hidden');
+}
+function _syncSlider(sliderId, inputId, labelId, unit) {
+  const s = document.getElementById(sliderId);
+  const i = document.getElementById(inputId);
+  const l = document.getElementById(labelId);
+  if(s) s.oninput = () => {
+    if(i) i.value = s.value;
+    if(l) l.textContent = s.value + unit;
+  };
+  if(i) i.oninput = () => {
+    const v = Math.min(parseInt(i.max||9999), Math.max(parseInt(i.min||0), parseInt(i.value)||0));
+    i.value = v;
+    if(s) s.value = v;
+    if(l) l.textContent = v + unit;
+  };
+}
+document.addEventListener('DOMContentLoaded', () => {
+  // Auto-Align sliders
+  _syncSlider('arrange-row-tol','arrange-row-tol-num','arrange-row-tol-lbl','px');
+  _syncSlider('arrange-h-gap','arrange-h-gap-num','arrange-h-gap-lbl','px');
+  _syncSlider('arrange-v-gap','arrange-v-gap-num','arrange-v-gap-lbl','px');
+  _syncSlider('arrange-margin','arrange-margin-num','arrange-margin-lbl','px');
+  // Auto-Arrange sliders
+  _syncSlider('aa-cols','aa-cols-num','aa-cols-lbl','');
+  _syncSlider('aa-gap','aa-gap-num','aa-gap-lbl','px');
+  _syncSlider('aa-margin','aa-margin-num','aa-margin-lbl','px');
+  // Hide cols field for circle mode
+  document.querySelectorAll('input[name="aa-style"]').forEach(r => {
+    r.addEventListener('change', () => {
+      const colsField = document.getElementById('aa-cols-field');
+      if(colsField) colsField.style.display = r.value === 'circle' ? 'none' : '';
+    });
+  });
+});
+
+// ══════════════════════════════════════════
+// AUTO-ARRANGE (from scratch: grid / circle / rows)
+// ══════════════════════════════════════════
+function openAutoArrangeModal(){
+  if(!tables.length){toast('No tables to arrange','error');return;}
+  document.getElementById('modal-auto-arrange').classList.remove('hidden');
+}
+function applyAutoArrange(){
+  const style  = document.querySelector('input[name="aa-style"]:checked')?.value || 'grid';
+  const cols   = parseInt(document.getElementById('aa-cols').value)   || 4;
+  const gap    = parseInt(document.getElementById('aa-gap').value)    || 60;
+  const margin = parseInt(document.getElementById('aa-margin').value) || 60;
+
+  mutate(()=>{
+    // Sort by seq for deterministic grid order
+    const sorted = [...tables].sort((a,b)=>(a.seq||0)-(b.seq||0));
+    if(style === 'grid'){
+      sorted.forEach((t,i)=>{
+        t.x = margin + (i % cols) * (TW + gap);
+        t.y = margin + Math.floor(i / cols) * (TW + gap);
+      });
+    } else if(style === 'circle'){
+      const n = sorted.length;
+      const radius = Math.max(TW, (TW + gap) * n / (2 * Math.PI));
+      sorted.forEach((t,i)=>{
+        const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+        t.x = Math.round(margin + radius + Math.cos(a) * radius - TW/2);
+        t.y = Math.round(margin + radius + Math.sin(a) * radius - TW/2);
+      });
+    } else { // rows
+      sorted.forEach((t,i)=>{
+        t.x = margin + (i % cols) * (TW + gap);
+        t.y = margin + Math.floor(i / cols) * (TW + gap);
+      });
+    }
+  }, 'Auto-arrange: '+style);
+
+  closeModal('modal-auto-arrange');
+  render();
+  toast(`Arranged ${tables.length} tables (${style})`, 'success');
+}
+
+function applyArrange(){
+  const rowTol = parseInt(document.getElementById('arrange-row-tol').value) || 20;
+  const hGap   = parseInt(document.getElementById('arrange-h-gap').value)   || 60;
+  const vGap   = parseInt(document.getElementById('arrange-v-gap').value)   || 60;
+  const margin = parseInt(document.getElementById('arrange-margin')?.value) ?? 60;
+
+  // 1. Sort tables by current Y centre, then X centre
+  const sorted = [...tables].sort((a,b)=>{
+    const ay=a.y+TW/2, by2=b.y+TW/2;
+    return ay!==by2 ? ay-by2 : (a.x+TW/2)-(b.x+TW/2);
+  });
+
+  // 2. Group into rows: tables whose Y centres are within rowTol of the row's average
+  const rows = [];
+  sorted.forEach(t=>{
+    const cy = t.y + TW/2;
+    const lastRow = rows[rows.length-1];
+    if(!lastRow || cy - lastRow.refY > rowTol){
+      rows.push({ refY: cy, tables: [t] });
+    } else {
+      lastRow.tables.push(t);
+      lastRow.refY = lastRow.tables.reduce((s,x)=>s+x.y+TW/2,0)/lastRow.tables.length;
+    }
+  });
+
+  // 3. Within each row, sort by X
+  rows.forEach(row => row.tables.sort((a,b)=>(a.x+TW/2)-(b.x+TW/2)));
+
+  // 4. Assign positions starting from margin
+  mutate(()=>{
+    let curY = margin;
+    rows.forEach(row=>{
+      let curX = margin;
+      row.tables.forEach(t=>{
+        t.x = curX;
+        t.y = curY;
+        curX += TW + hGap;
+      });
+      curY += TW + vGap;
+    });
+  }, 'Auto-align tables');
+
+  closeModal('modal-arrange');
+  render();
+  toast(`Aligned ${tables.length} tables across ${rows.length} row${rows.length!==1?'s':''}`, 'success');
+}
+
+// ══════════════════════════════════════════
+// EXPORT HELPERS
+// ══════════════════════════════════════════
+
+function _getExportOpts(prefix) {
+  const grid   = document.getElementById(prefix+'-include-grid')?.checked ?? true;
+  const dark   = document.getElementById(prefix+'-dark-theme')?.checked ?? false;
+  const margin = parseInt(document.getElementById(prefix+'-margin')?.value) || 0;
+  const scale  = parseFloat(document.getElementById(prefix+'-scale')?.value) || 2;
+  return { grid, dark, margin, scale };
+}
+
+// Force computed styles inline so html2canvas can capture them
+// (html2canvas can't resolve CSS custom properties or complex selectors)
+function _inlineDiscStyles(root) {
+  root.querySelectorAll('.table-disc').forEach(disc => {
+    const cs = window.getComputedStyle(disc);
+    disc.style.borderRadius      = cs.borderRadius;
+    disc.style.borderWidth       = cs.borderWidth  || '3px';
+    disc.style.borderStyle       = 'solid';
+    // Only override bg/border if NOT already set by renderTable tint logic
+    const hasTintBg = disc.style.backgroundColor && disc.style.backgroundColor !== '';
+    if(!hasTintBg) disc.style.backgroundColor = cs.backgroundColor;
+    const hasTintBorder = disc.style.borderColor && disc.style.borderColor !== '';
+    if(!hasTintBorder) disc.style.borderColor = cs.borderColor;
+  });
+  root.querySelectorAll('.seat').forEach(s => {
+    const cs = window.getComputedStyle(s);
+    s.style.borderColor     = cs.borderColor;
+    s.style.backgroundColor = cs.backgroundColor;
+    s.style.borderRadius    = cs.borderRadius;
+    s.style.borderWidth     = cs.borderWidth;
+    s.style.borderStyle     = 'solid';
+  });
+  root.querySelectorAll('.seat-name,.seat-label,.table-num,.table-desc,.table-status-lbl').forEach(el => {
+    el.style.color = window.getComputedStyle(el).color;
+  });
+}
+
+// Double rAF — ensures full style recalc + paint after class/attribute changes
+function _waitRepaint(fn) {
+  requestAnimationFrame(() => requestAnimationFrame(fn));
+}
+
+// Auto-crop: finds the bounding box of non-background content, adds margin
+function _autoCrop(srcCanvas, marginPx, bgHex) {
+  const ctx = srcCanvas.getContext('2d');
+  const { width, height } = srcCanvas;
+  const data = ctx.getImageData(0, 0, width, height).data;
+
+  // Resolve bg hex to RGB using a temp canvas
+  const tmp = document.createElement('canvas');
+  tmp.width = tmp.height = 1;
+  const tc = tmp.getContext('2d');
+  tc.fillStyle = bgHex || '#edeae2';
+  tc.fillRect(0,0,1,1);
+  const [bgR, bgG, bgB] = tc.getImageData(0,0,1,1).data;
+
+  const THRESH = 24; // pixels within this Δ of bg colour are treated as blank
+  let minX=width, minY=height, maxX=0, maxY=0, found=false;
+  for(let y=0; y<height; y++){
+    for(let x=0; x<width; x++){
+      const i=(y*width+x)*4;
+      if(data[i+3] < 30) continue; // near-transparent
+      if(Math.abs(data[i  ]-bgR) < THRESH &&
+         Math.abs(data[i+1]-bgG) < THRESH &&
+         Math.abs(data[i+2]-bgB) < THRESH) continue; // background colour
+      if(x<minX) minX=x; if(x>maxX) maxX=x;
+      if(y<minY) minY=y; if(y>maxY) maxY=y;
+      found=true;
+    }
+  }
+  if(!found) return srcCanvas;
+
+  const cx = Math.max(0, minX - marginPx);
+  const cy = Math.max(0, minY - marginPx);
+  const cw = Math.min(width,  maxX + marginPx + 1) - cx;
+  const ch = Math.min(height, maxY + marginPx + 1) - cy;
+
+  const out = document.createElement('canvas');
+  out.width = cw; out.height = ch;
+  out.getContext('2d').drawImage(srcCanvas, cx, cy, cw, ch, 0, 0, cw, ch);
+  return out;
+}
+
+// Apply theme + grid overrides, wait two frames for full repaint, call fn(restore)
+function _withExportEnv(opts, fn) {
+  const html = document.documentElement;
+  const origTheme = html.getAttribute('data-theme') || 'light';
+  const cv = document.getElementById('canvas');
+
+  if(opts.dark)  html.setAttribute('data-theme','dark');
+  if(!opts.grid) cv.classList.add('no-grid');
+
+  _waitRepaint(() => {
+    _inlineDiscStyles(cv);
+    fn(() => {
+      html.setAttribute('data-theme', origTheme);
+      cv.classList.remove('no-grid');
+    });
+  });
+}
+
+// ─── Full canvas export (with auto-crop)
+function doExportCanvasImage() {
+  if(!window.html2canvas){toast('Image library not loaded','error');return;}
+  const opts = _getExportOpts('full');
+  closeModal('modal-export-full');
+  toast('Rendering image…','');
+
+  const savedZoom = canvasZoom; canvasZoom = 1; applyZoom();
+
+  _withExportEnv(opts, (restore) => {
+    const cv    = document.getElementById('canvas');
+    const bgHex = opts.dark ? '#0a0c10' : '#edeae2';
+
+    html2canvas(cv, {
+      backgroundColor: bgHex,
+      scale:     opts.scale,
+      useCORS:   true,
+      logging:   false,
+      width:     cv.scrollWidth,
+      height:    cv.scrollHeight,
+      ignoreElements: el => el.classList?.contains('table-actions'),
+    }).then(canvas => {
+      canvasZoom = savedZoom; applyZoom(); restore();
+      const marginPx = Math.round(opts.margin * opts.scale);
+      const cropped  = _autoCrop(canvas, marginPx, bgHex);
+      const a = document.createElement('a');
+      a.href     = cropped.toDataURL('image/png');
+      a.download = 'banquet-layout-' + new Date().toISOString().slice(0,10) + '.png';
+      a.click();
+      toast('Canvas exported ✓','success');
+    }).catch(err => {
+      console.error('Export error:', err);
+      canvasZoom = savedZoom; applyZoom(); restore();
+      toast('Export failed — check console','error');
+    });
+  });
+}
+
+// Legacy alias (toolbar button now opens the options modal instead)
+function exportCanvasImage(){ openModal('modal-export-full'); }
+
+// ─── Individual table exports
+function exportSelectedTableImages() {
+  if(!window.html2canvas){toast('Image library not loaded','error');return;}
+  const opts    = _getExportOpts('exp');
+  const selTbls = [...tables]
+    .filter(t => _exportSelTables.has(t.id))
+    .sort((a,b) => (a.seq||0)-(b.seq||0));
+  if(!selTbls.length){toast('Select at least one table','error');return;}
+
+  toast('Rendering '+selTbls.length+' image'+(selTbls.length>1?'s…':'…'),'');
+  closeModal('modal-export-tables');
+
+  const savedZoom = canvasZoom; canvasZoom = 1; applyZoom();
+  const date   = new Date().toISOString().slice(0,10);
+  const bgHex  = opts.dark ? '#0a0c10' : '#edeae2';
+
+  _withExportEnv(opts, (restore) => {
+    const captureNext = (i) => {
+      if(i >= selTbls.length){
+        canvasZoom = savedZoom; applyZoom(); restore();
+        toast('Exported '+selTbls.length+' table image'+(selTbls.length>1?'s ✓':'✓'),'success');
+        return;
+      }
+      const t  = selTbls[i];
+      const el = document.querySelector(`.table-wrap[data-id="${t.id}"]`);
+      if(!el){ captureNext(i+1); return; }
+
+      _inlineDiscStyles(el);
+
+      html2canvas(el, {
+        backgroundColor: bgHex,
+        scale:   opts.scale,
+        useCORS: true,
+        logging: false,
+        ignoreElements: el2 => el2.classList?.contains('table-actions'),
+      }).then(canvas => {
+        const marginPx = Math.round(opts.margin * opts.scale);
+        const cropped  = _autoCrop(canvas, marginPx, bgHex);
+        const a = document.createElement('a');
+        a.href     = cropped.toDataURL('image/png');
+        a.download = 'table-'
+          + String(t.seq||t.id).padStart(2,'0') + '-'
+          + t.name.replace(/[^a-zA-Z0-9]/g,'-') + '-' + date + '.png';
+        a.click();
+        setTimeout(() => captureNext(i+1), 500);
+      }).catch(() => captureNext(i+1));
+    };
+    setTimeout(() => captureNext(0), 150);
+  });
+}
+// ══════════════════════════════════════════
+// CSV TEMPLATE DOWNLOAD
+// ══════════════════════════════════════════
+function downloadCSVTemplate() {
+  const headers = ['LastName','FirstName','NickName','Category','SubCategory','Notes','Group','Color'];
+  const examples = [
+    ['Low','David','Uncle Low','Bride Family','大姑丈','Vegetarian','Low Family','#b8923a'],
+    ['Tan','Mary','Auntie Mary','Groom Relative','','VIP seat','','#c0607a'],
+    ['Smith','Alice','','Bride Friend','College','','Smith Couple',''],
+  ];
+  const rows = [headers, ...examples];
+  const csv  = rows.map(r => r.map(v => v.includes(',') ? `"${v}"` : v).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'guests-template.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Template downloaded','success');
+}
+
+// ══════════════════════════════════════════
+// CSV IMPORT
+// ══════════════════════════════════════════
+let _csvRows=[], _csvHeaders=[], _csvColMap={};
+function onCSVLoad(ev){
+  const file=ev.target.files[0]; if(!file) return;
+  ev.target.value='';
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='xlsx'||ext==='xls'){toast('Please export Excel as CSV first (.csv)','error');return;}
+  const reader=new FileReader();
+  reader.onload=e=>parseCSVAndShow(e.target.result);
+  reader.readAsText(file);
+}
+function parseCSVAndShow(text){
+  const fl=text.split('\n')[0];
+  const delim=fl.includes('\t')?'\t':fl.includes(';')?';':',';
+  const parseRow=line=>{
+    const cols=[]; let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
+      else if(c===delim&&!inQ){cols.push(cur.trim());cur='';}
+      else cur+=c;
+    }
+    cols.push(cur.trim()); return cols;
+  };
+  const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
+  if(lines.length<2){toast('CSV needs header + at least one row','error');return;}
+  _csvHeaders=parseRow(lines[0]);
+  _csvRows=lines.slice(1).map(parseRow).filter(r=>r.some(c=>c));
+  const autoMap=kws=>{
+    const idx=_csvHeaders.findIndex(h=>kws.some(k=>h.toLowerCase().includes(k)));
+    return idx>=0?idx:'';
+  };
+  _csvColMap={
+    lastName: autoMap(['last','surname','family']),
+    firstName:autoMap(['first','given','name']),
+    nickName: autoMap(['nick','alias','preferred']),
+    cat:      autoMap(['cat','relationship','rel','type']),
+    subCat:   autoMap(['sub','group']),
+    notes:    autoMap(['note','dietary','remark','comment']),
+    group:    autoMap(['group','couple','family','link']),
+  };
+  renderCSVMapUI(); openModal('modal-csv-import');
+}
+function renderCSVMapUI(){
+  const fields=[
+    {key:'lastName',label:'Last Name',req:true},{key:'firstName',label:'First Name',req:true},
+    {key:'nickName',label:'Nick Name',req:false},{key:'cat',label:'Relationship',req:false},
+    {key:'subCat',label:'Sub-Cat',req:false},{key:'notes',label:'Notes',req:false},{key:'group',label:'Group',req:false},
+  ];
+  const optNone='<option value="">— skip —</option>';
+  const opts=_csvHeaders.map((h,i)=>`<option value="${i}">${esc(h)}</option>`).join('');
+  document.getElementById('csv-map-area').innerHTML=`
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px;">${_csvRows.length} rows detected. Map columns:</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      ${fields.map(f=>`<div style="display:flex;align-items:center;gap:6px;">
+        <label style="font-size:11px;font-weight:600;min-width:80px;color:var(--text2);">${f.label}${f.req?'<span style="color:var(--danger)">*</span>':''}</label>
+        <select id="csv-map-${f.key}" style="flex:1;font-size:11px;padding:4px 6px;" onchange="refreshCSVPreview()">
+          ${optNone}${opts}</select></div>`).join('')}
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--muted);">Default category:
+      <select id="csv-default-cat" style="font-size:11px;padding:3px 6px;" onchange="refreshCSVPreview()">
+        ${Object.entries(CAT).map(([k,v])=>`<option value="${k}">${v.short}</option>`).join('')}
+      </select></div>`;
+  fields.forEach(f=>{const s=document.getElementById('csv-map-'+f.key);if(s&&_csvColMap[f.key]!=='')s.value=_csvColMap[f.key];});
+  refreshCSVPreview();
+}
+const CAT_IMPORT_MAP={'bride family':'bride-family','bridefamily':'bride-family','bride relative':'bride-rel','briderel':'bride-rel','bride friend':'bride-friend','bridefriend':'bride-friend','groom family':'groom-family','groomfamily':'groom-family','groom relative':'groom-rel','groomrel':'groom-rel','groom friend':'groom-friend','groomfriend':'groom-friend'};
+function mapCat(raw,def){if(!raw)return def;const k=raw.toLowerCase().trim();return CAT_IMPORT_MAP[k]||(CAT[k]?k:def);}
+function getCSVMapping(){
+  const get=id=>{const v=document.getElementById('csv-map-'+id)?.value;return v===''||v===undefined?null:parseInt(v);};
+  return{lastName:get('lastName'),firstName:get('firstName'),nickName:get('nickName'),cat:get('cat'),subCat:get('subCat'),notes:get('notes'),group:get('group'),defaultCat:document.getElementById('csv-default-cat')?.value||'bride-family'};
+}
+function refreshCSVPreview(){
+  const m=getCSVMapping();
+  const rows=_csvRows.slice(0,8).map(r=>({
+    lastName: m.lastName!==null?r[m.lastName]||'':'',
+    firstName:m.firstName!==null?r[m.firstName]||'':'',
+    nickName: m.nickName!==null?r[m.nickName]||'':'',
+    cat:      mapCat(m.cat!==null?r[m.cat]:'',m.defaultCat),
+    subCat:   m.subCat!==null?r[m.subCat]||'':'',
+    notes:    m.notes!==null?r[m.notes]||'':'',
+  }));
+  document.getElementById('csv-preview-area').innerHTML=`
+    <table style="width:100%;border-collapse:collapse;font-size:11px;">
+      <thead style="background:var(--surface2);position:sticky;top:0;">
+        <tr>${['Last','First','Nick','Category','Sub-Cat','Notes'].map(h=>`<th style="padding:6px 8px;text-align:left;color:var(--muted);font-size:10px;border-bottom:1px solid var(--border);">${h}</th>`).join('')}</tr>
+      </thead><tbody>
+        ${rows.map(r=>`<tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:5px 8px;font-weight:500;">${esc(r.lastName)}</td>
+          <td style="padding:5px 8px;">${esc(r.firstName)}</td>
+          <td style="padding:5px 8px;font-style:italic;color:var(--text2);">${esc(r.nickName)}</td>
+          <td style="padding:5px 8px;">${esc(CAT[r.cat]?.short||r.cat)}</td>
+          <td style="padding:5px 8px;color:var(--text2);">${esc(r.subCat)}</td>
+          <td style="padding:5px 8px;color:var(--text2);">${esc(r.notes)}</td>
+        </tr>`).join('')}
+        ${_csvRows.length>8?`<tr><td colspan="6" style="padding:6px 8px;color:var(--muted);font-style:italic;">…and ${_csvRows.length-8} more rows</td></tr>`:''}
+      </tbody></table>`;
+}
+function confirmCSVImport(){
+  const m=getCSVMapping(); let added=0,skipped=0;
+  mutate(()=>{
+    _csvRows.forEach(r=>{
+      const ln=m.lastName!==null?(r[m.lastName]||'').trim():'';
+      const fn=m.firstName!==null?(r[m.firstName]||'').trim():'';
+      if(!ln&&!fn){skipped++;return;}
+      guests.push({id:gId++,firstName:fn,lastName:ln,
+        nickName:m.nickName!==null?(r[m.nickName]||'').trim():'',
+        subCat:m.subCat!==null?(r[m.subCat]||'').trim():'',
+        notes:m.notes!==null?(r[m.notes]||'').trim():'',
+        group:m.group!==null?(r[m.group]||'').trim():'',
+        cat:mapCat(m.cat!==null?r[m.cat]:'',m.defaultCat),
+        color:COLORS[gId%COLORS.length],tableId:null,seat:null});
+      added++;
+    });
+  });
+  closeModal('modal-csv-import'); render();
+  toast('Imported '+added+' guest'+(added!==1?'s':'')+(skipped?' ('+skipped+' skipped)':''),'success');
+}
+
+function mutate(fn, label='Action'){
   fn();
+  _snapshot(label);
   if(typeof markUnsaved==='function') markUnsaved();
 }
 
@@ -139,7 +769,46 @@ function guestShortName(g){
   return g.nickName||guestDisplayName(g);
 }
 
-// ── COLOR PICKERS
+// ── COLOR HELPERS
+function _blendTint(hex, alpha) {
+  // Blend hex color at alpha over white — returns inline-safe rgb() string
+  let h = (hex||'').replace('#','');
+  if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  if(h.length!==6) return '';
+  const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
+  return `rgb(${Math.round(r*alpha+255*(1-alpha))},${Math.round(g*alpha+255*(1-alpha))},${Math.round(b*alpha+255*(1-alpha))})`;
+}
+
+// ── TINT HELPERS
+function syncTintHex(rawVal) {
+  let val = (rawVal||'').trim().replace(/^#+/, '');  // strip leading #(s)
+  // Accept both 3-char and 6-char hex
+  if(val.length === 3) val = val[0]+val[0]+val[1]+val[1]+val[2]+val[2];
+  const hex = val ? '#'+val : '';
+  const valid = /^#[0-9a-fA-F]{6}$/.test(hex);
+
+  const picker = document.getElementById('et-tint');
+  const inp    = document.getElementById('et-tint-hex');
+
+  if(valid && picker) {
+    picker.value = hex;
+    if(picker.dataset) picker.dataset.cleared = ''; // has a valid tint
+  }
+  if(inp) {
+    inp.style.borderColor = valid || !val ? '' : '#e05050';
+    inp.style.outline     = valid ? '2px solid var(--accent)' : '';
+  }
+}
+function clearTableTint() {
+  const picker = document.getElementById('et-tint');
+  const hexInp = document.getElementById('et-tint-hex');
+  if(picker) picker.value = '#b8923a';
+  if(hexInp) hexInp.value = '';
+  // Store empty string — no tint
+  if(picker) picker.dataset.cleared = '1';
+}
+
+
 function mkC(cid,cur,fn){
   document.getElementById(cid).innerHTML=COLORS.map(c=>`<div class="color-dot ${c===cur?'selected':''}" style="background:${c}" onclick="${fn}('${c}')"></div>`).join('');
 }
@@ -156,13 +825,14 @@ function addGuest(){
   if(!firstName&&!lastName){toast('Enter at least a first or last name','error');return;}
   const disp=guestDisplayName({firstName,lastName});
   mutate(()=>guests.push({id:gId++,firstName,lastName,nickName,subCat,
-    cat:document.getElementById('g-cat').value,color:selColor,tableId:null,seat:null}));
+    cat:document.getElementById('g-cat').value,color:selColor,tableId:null,seat:null}),'Add guest: '+guestDisplayName({firstName,lastName}));
   ['g-firstName','g-lastName','g-nickName','g-subCat'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
   render();toast(`"${disp}" added`,'success');
 }
-function delGuest(id){mutate(()=>guests=guests.filter(g=>g.id!==id));render();}
+function delGuest(id){const _dg=guests.find(x=>x.id===id);
+  mutate(()=>guests=guests.filter(g=>g.id!==id),'Delete guest: '+(_dg?guestDisplayName(_dg):id));render();}
 function openGuestModal(id){
   const g=guests.find(x=>x.id===id);if(!g)return;
   egId=id;egColor=g.color;
@@ -171,6 +841,8 @@ function openGuestModal(id){
   document.getElementById('eg-nickName').value=g.nickName||'';
   document.getElementById('eg-subCat').value=g.subCat||'';
   document.getElementById('eg-cat').value=g.cat||'bride-family';
+  document.getElementById('eg-notes').value=g.notes||'';
+  document.getElementById('eg-group').value=g.group||'';
   mkC('eg-colors',g.color,'setEGC');
   openModal('modal-guest');
   setTimeout(()=>document.getElementById('eg-firstName').focus(),50);
@@ -181,13 +853,15 @@ function saveGuestEdit(){
   if(!firstName&&!lastName){toast('Enter at least a first or last name','error');return;}
   const nickName=(document.getElementById('eg-nickName')?.value||'').trim();
   const subCat=(document.getElementById('eg-subCat')?.value||'').trim();
+  const notes=(document.getElementById('eg-notes')?.value||'').trim();
+  const group=(document.getElementById('eg-group')?.value||'').trim();
   const g=guests.find(x=>x.id===egId);
   if(g){mutate(()=>{
     g.firstName=firstName; g.lastName=lastName;
-    g.nickName=nickName; g.subCat=subCat;
-    delete g.name; // remove legacy field
+    g.nickName=nickName; g.subCat=subCat; g.notes=notes; g.group=group;
+    delete g.name;
     g.cat=document.getElementById('eg-cat').value; g.color=egColor;
-  });}
+  },'Edit guest: '+guestDisplayName({firstName,lastName}));}
   closeModal('modal-guest');render();toast('Guest updated','info');
 }
 function openBulkModal(){
@@ -241,7 +915,7 @@ function addTable(){
   const row=Math.floor((tId-1)/4);
   const x=60+col*(TW+50);
   const y=60+row*(TW+50);
-  mutate(()=>tables.push({id:tId++,seq,name,desc,extraSeats:0,x,y}));
+  mutate(()=>tables.push({id:tId++,seq,name,desc,extraSeats:0,x,y,shape:'round',tint:null}),'Add table: '+name);
   inp.value='';
   if(seqInp) seqInp.value='';
   if(document.getElementById('t-desc'))document.getElementById('t-desc').value='';
@@ -265,6 +939,13 @@ function openTableModal(id){
   const extra=t.extraSeats||0;
   document.getElementById('et-extra').value=extra;
   document.getElementById('et-extra-val').textContent=extra;
+  document.querySelectorAll('input[name="et-shape-r"]').forEach(r=>r.checked=(r.value===(t.shape||'round')));
+  // Tint: sync color picker and hex text input
+  const _tintVal = t.tint || '';
+  const _tintPicker = document.getElementById('et-tint');
+  const _tintHex = document.getElementById('et-tint-hex');
+  if(_tintPicker){ _tintPicker.value = _tintVal || '#b8923a'; _tintPicker.dataset.cleared = _tintVal ? '' : '1'; }
+  if(_tintHex) _tintHex.value = _tintVal;
   openModal('modal-table');setTimeout(()=>document.getElementById('et-seq').focus(),50);
 }
 function saveTableEdit(){
@@ -275,12 +956,28 @@ function saveTableEdit(){
   const t=tables.find(x=>x.id===etId);
   if(t){
     const seq=parseInt(document.getElementById('et-seq').value)||nextTableSeq();
+    const shape=document.querySelector('input[name="et-shape-r"]:checked')?.value||'round';
+    // Read tint — hex text input is source of truth (supports paste).
+    // Fall back to color picker only if hex input is empty AND user hasn't cleared.
+    const _tintPicker = document.getElementById('et-tint');
+    const _tintHex    = document.getElementById('et-tint-hex');
+    let tint = null;
+    const hexRaw = (_tintHex?.value||'').trim().replace(/^#+/,'');
+    if(hexRaw) {
+      const hex3or6 = hexRaw.length===3
+        ? hexRaw[0]+hexRaw[0]+hexRaw[1]+hexRaw[1]+hexRaw[2]+hexRaw[2]
+        : hexRaw;
+      const h = '#'+hex3or6;
+      tint = /^#[0-9a-fA-F]{6}$/.test(h) ? h : null;
+    } else if(_tintPicker && !_tintPicker.dataset.cleared) {
+      const pv = _tintPicker.value||'';
+      tint = /^#[0-9a-fA-F]{6}$/.test(pv) ? pv : null;
+    }
     mutate(()=>{
-      t.seq=seq; t.name=name; t.desc=desc; t.extraSeats=extra;
-      // unassign guests in seats that no longer exist after reducing extra seats
+      t.seq=seq; t.name=name; t.desc=desc; t.extraSeats=extra; t.shape=shape; t.tint=tint||null;
       const cap=SEAT_COUNT+extra;
       guests.forEach(g=>{if(g.tableId===t.id&&g.seat>=cap){g.tableId=null;g.seat=null;}});
-    });
+    },'Edit table: '+name);
   }
   closeModal('modal-table');render();
 }
@@ -345,8 +1042,9 @@ function saveObjEdit(){
 // ── MODAL HELPERS
 function openModal(id){document.getElementById(id).classList.remove('hidden');}
 function closeModal(id){document.getElementById(id).classList.add('hidden');}
-['modal-guest','modal-table','modal-obj','modal-bulk','modal-bulk-table','modal-assign','modal-swap','modal-multi-confirm','modal-guest-list'].forEach(id=>{
-  document.getElementById(id).addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal(id);});
+['modal-guest','modal-table','modal-obj','modal-bulk','modal-bulk-table','modal-assign','modal-swap','modal-multi-confirm','modal-guest-list','modal-arrange','modal-auto-arrange','modal-csv-import','modal-export-tables','modal-export-full','modal-room'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal(id);});
 });
 
 // ── SEAT ASSIGNMENT
@@ -367,7 +1065,7 @@ function seatGuest(guestId,tableId,seatIdx){
     }
     return;
   }
-  mutate(()=>{g.tableId=tableId;g.seat=seatIdx;});render();
+  mutate(()=>{g.tableId=tableId;g.seat=seatIdx;},'Seat: '+guestDisplayName(g));render();
 }
 
 function confirmSwap(){
@@ -388,7 +1086,7 @@ function confirmSwap(){
 
 function unseatGuest(guestId){
   const g=guests.find(x=>x.id===guestId);if(!g)return;
-  mutate(()=>{g.tableId=null;g.seat=null;});render();
+  mutate(()=>{g.tableId=null;g.seat=null;},'Unseat: '+guestDisplayName(g));render();
 }
 
 // ── ASSIGN TO TABLE (from unassigned context menu)
@@ -643,7 +1341,7 @@ function showCtxAt(x,y){
 function hideCtx(){document.getElementById('ctx-menu').classList.add('hidden');}
 document.addEventListener('click',hideCtx);
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){hideCtx();['modal-guest','modal-table','modal-obj','modal-bulk','modal-assign','modal-swap'].forEach(closeModal);}
+  if(e.key==='Escape'){hideCtx();['modal-guest','modal-table','modal-obj','modal-bulk','modal-assign','modal-swap','modal-arrange','modal-auto-arrange','modal-csv-import','modal-export-tables','modal-export-full','modal-room'].forEach(closeModal);}
 });
 
 // ── FILTER
@@ -695,12 +1393,15 @@ function mkChip(g){
   const dispName=guestDisplayName(g);
   const nick=g.nickName?`<span class="g-nick">${esc(g.nickName)}</span>`:'';
   const sc=g.subCat?`<span class="g-subcat">${esc(g.subCat)}</span>`:'';
+  const notesBadge = g.notes ? `<span class="g-notes-ico" title="${esc(g.notes)}">📝</span>` : '';
+  const groupBadge = g.group ? `<span class="g-group-ico" title="${esc(g.group)}">👥</span>` : '';
   div.innerHTML=`
     <div class="g-colorbar" style="background:${g.color}"></div>
     <div class="g-info">
       <div class="g-name-row">
         <span class="g-name">${esc(dispName)}</span>
         <span class="cat-badge ${cat.cls}">${cat.short}</span>
+        ${notesBadge}${groupBadge}
       </div>
       ${nick||sc?`<div class="g-meta">${nick}${sc}</div>`:''}
     </div>
@@ -745,7 +1446,8 @@ function renderTable(t,cv){
   const sc=seatCount(t); // base + extra seats
   const here=guests.filter(g=>g.tableId===t.id);
   const occ=here.length,isFull=occ>=sc;
-  const discCls=isFull?'full':(occ>0?'ok':'empty');
+  const pct=sc>0?occ/sc:0;
+  const discCls=isFull?'full':(pct>=0.6?'ok':(occ>0?'low':'empty'));
   const hw=TW/2,hh=TW/2;
 
   const wrap=document.createElement('div');
@@ -761,13 +1463,30 @@ function renderTable(t,cv){
     <button class="ta-btn" onclick="event.stopPropagation();selEl=null;renderSel()">✕</button>`;
   wrap.appendChild(acts);
 
+  const shape = t.shape || 'round';
+  const tint  = t.tint  || null;
+
   const disc=document.createElement('div');
-  disc.className=`table-disc ${discCls}`;
+  disc.className=`table-disc ${discCls} shape-${shape}`;
   disc.style.cssText=`left:${hw-DISC_R}px;top:${hh-DISC_R}px;width:${DISC_R*2}px;height:${DISC_R*2}px;`;
-  // Display name as-is; use desc field for subtitle
+
+  // Apply tint inline (bypasses CSS custom props, so html2canvas can capture it)
+  if(tint){
+    disc.style.backgroundColor = _blendTint(tint, 0.15); // 15% tint over white
+    disc.style.borderColor     = tint;                    // raw hex for a strong ring
+  }
+
   const desc=t.desc||'';
   const extraSeats=t.extraSeats||0;
-  disc.innerHTML=`<div class="table-num" style="font-size:${t.name.length>6?'18px':'30px'}">${esc(t.name)}</div>${desc?`<div class="table-sublabel">${esc(desc)}</div>`:''}<div class="table-count">${occ}/${sc}</div>${extraSeats>0?`<div class="table-extra-label">+${extraSeats} extra seat${extraSeats>1?'s':''}</div>`:''}`;
+  // Status label
+  const statusLabel = isFull ? '● Full' : (pct>=0.6 ? '● Filling' : (occ>0 ? '⚠ Low' : '○ Empty'));
+  const statusColor = isFull ? '#c0607a' : (pct>=0.6 ? '#5a8f6a' : (occ>0 ? '#d4a020' : 'var(--muted)'));
+  disc.innerHTML=`
+    <div class="table-num" style="font-size:${t.name.length>6?'18px':'30px'}">${esc(t.name)}</div>
+    ${desc?`<div class="table-sublabel">${esc(desc)}</div>`:''}
+    <div class="table-count">${occ}/${sc}</div>
+    <div class="table-status-lbl" style="color:${statusColor}">${statusLabel}</div>
+    ${extraSeats>0?`<div class="table-extra-label">+${extraSeats} extra seat${extraSeats>1?'s':''}</div>`:''}`;
   wrap.appendChild(disc);
 
   for(let s=0;s<sc;s++){
@@ -827,18 +1546,27 @@ function renderTable(t,cv){
 
     seat.appendChild(body);
 
-    // tooltip — full details on hover
+    // compact tooltip on hover
     if(g){
       const dn=guestDisplayName(g);
       const tip=document.createElement('div');
       tip.className='seat-tip';
-      const rows=[];
-      rows.push(`<b style="font-size:11px;">${esc(dn)}</b>`);
-      if(g.nickName) rows.push(`<span style="opacity:.7;font-style:italic;">${esc(g.nickName)}</span>`);
-      rows.push(`<span style="opacity:.85;">${esc(cat.short)}</span>`);
-      if(g.subCat) rows.push(`<span style="opacity:.7;">${esc(g.subCat)}</span>`);
-      rows.push(`<span style="opacity:.45;font-size:9px;">Seat ${s+1}</span>`);
-      tip.innerHTML=rows.join('<br>');
+      // Line 1: name + seat#
+      // Line 2: cat badge + subcat
+      // Line 3 (optional): notes / group icons
+      const extras=[];
+      if(g.notes) extras.push(`📝 ${esc(g.notes.slice(0,40))}${g.notes.length>40?'…':''}`);
+      if(g.group) extras.push(`👥 ${esc(g.group)}`);
+      tip.innerHTML=`<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;">
+        <b style="font-size:11px;white-space:nowrap;">${esc(dn)}</b>
+        <span style="opacity:.4;font-size:9px;white-space:nowrap;">#${s+1}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;margin-top:2px;flex-wrap:wrap;">
+        <span class="seat-tip-badge ${cat.cls}" style="font-size:9px;padding:1px 5px;border-radius:10px;">${esc(cat.short)}</span>
+        ${g.nickName?`<span style="opacity:.65;font-style:italic;font-size:9px;">${esc(g.nickName)}</span>`:''}
+        ${g.subCat?`<span style="opacity:.65;font-size:9px;">· ${esc(g.subCat)}</span>`:''}
+      </div>
+      ${extras.length?`<div style="margin-top:3px;opacity:.65;font-size:9px;line-height:1.4;">${extras.join('<br>')}</div>`:''}`;
       seat.appendChild(tip);
     }
 
@@ -1140,10 +1868,12 @@ const GL_COLS = [
   {id:'lastName', label:'Last Name',    always:false},
   {id:'firstName',label:'First Name',   always:false},
   {id:'nickName', label:'Nick Name',    always:false},
+  {id:'group',    label:'Group',        always:false},
+  {id:'notes',    label:'Notes',        always:false},
   {id:'attended', label:'Attended',     always:true},
 ];
 // Default visible cols
-let glVisibleCols = new Set(['seq','table','seat','cat','subCat','lastName','firstName','nickName','attended']);
+let glVisibleCols = new Set(['seq','table','seat','cat','subCat','lastName','firstName','nickName','notes','group','attended']);
 
 function openGuestListModal(){
   const tSel = document.getElementById('gl-filter-table');
@@ -1290,14 +2020,17 @@ function getFilteredGuestRows(){
     const t = tables.find(x => x.id === g.tableId);
     switch(col){
       case 'seq':       return t?.seq ?? 9999;
-      case 'table':     return t?.name||'';
+      case 'table':     return (t?.name||'').toLowerCase();
       case 'seat':      return g.seat ?? 999;
       case 'lastName':  return (g.lastName||'').toLowerCase();
       case 'firstName': return (g.firstName||g.name||'').toLowerCase();
       case 'nickName':  return (g.nickName||'').toLowerCase();
       case 'cat':       return g.cat||'';
       case 'subCat':    return (g.subCat||'').toLowerCase();
-      default: return '';
+      case 'group':     return (g.group||'').toLowerCase();
+      case 'notes':     return (g.notes||'').toLowerCase();
+      case 'attended':  return g.attended ? 0 : 1; // attended first
+      default:          return '';
     }
   };
 
@@ -1403,6 +2136,10 @@ function renderGuestList(){
           return td(esc(CAT_FULL[g.cat]||g.cat), 'color:var(--text2);');
         case 'subCat':
           return td(esc(g.subCat||''), 'color:var(--text2);');
+        case 'notes':
+          return td(esc(g.notes||''), 'color:var(--text2);font-size:11px;max-width:160px;');
+        case 'group':
+          return td(esc(g.group||''), 'color:var(--text2);font-size:11px;');
         case 'attended':
           return td('<input type="checkbox" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;">', 'text-align:center;');
         default: return td('');
@@ -1430,6 +2167,8 @@ function renderGuestList(){
             case 'nickName': return td(esc(g.nickName||''), 'color:var(--text2);font-style:italic;');
             case 'cat': return td(esc(CAT_FULL[g.cat]||g.cat), 'color:var(--text2);');
             case 'subCat': return td(esc(g.subCat||''), 'color:var(--text2);');
+            case 'notes': return td(esc(g.notes||''), 'color:var(--text2);font-size:11px;max-width:160px;');
+            case 'group': return td(esc(g.group||''), 'color:var(--text2);font-size:11px;');
             case 'attended': return td('<input type="checkbox" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;">', 'text-align:center;');
             default: return td('');
           }
@@ -1458,6 +2197,8 @@ function exportGuestListCSV(){
         case 'nickName':  return g.nickName||'';
         case 'cat':       return CAT_FULL[g.cat]||g.cat;
         case 'subCat':    return g.subCat||'';
+        case 'notes':     return g.notes||'';
+        case 'group':     return g.group||'';
         default: return '';
       }
     });
@@ -1493,6 +2234,8 @@ function printGuestList(){
         case 'nickName':  return `<td class="nick">${esc(g.nickName||'')}</td>`;
         case 'cat':       return `<td class="rel">${esc(CAT_FULL[g.cat]||g.cat)}</td>`;
         case 'subCat':    return `<td class="sub">${esc(g.subCat||'')}</td>`;
+        case 'notes':     return `<td class="notes">${esc(g.notes||'')}</td>`;
+        case 'group':     return `<td class="grp">${esc(g.group||'')}</td>`;
         case 'attended':  return `<td class="cb"><span class="box"></span></td>`;
         default: return '<td></td>';
       }

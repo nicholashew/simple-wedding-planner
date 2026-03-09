@@ -149,8 +149,7 @@ body {
    PAGE HEADER
    ════════════════════════════════════════════ */
 .page-header {
-  padding: 0 20px;
-  height: 52px;
+  padding: 6px 16px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   display: flex;
@@ -161,9 +160,11 @@ body {
   z-index: 100;
   flex-shrink: 0;
   box-shadow: 0 1px 6px var(--shadow);
+  min-height: 52px;
 }
 .page-header .page-title {
   display: flex; align-items: baseline; gap: 9px;
+  flex-shrink: 0;
 }
 .page-header h1 {
   font-family: var(--font-display);
@@ -205,14 +206,47 @@ body {
 .search-clear.visible { display: block; }
 
 /* header right cluster */
-.header-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.header-right {
+  display: flex; flex-direction: column; gap: 5px;
+  margin-left: auto; align-items: flex-end;
+}
+
+/* ── TOOLBAR ROWS ── */
+.toolbar-row {
+  display: flex; align-items: center; gap: 5px; flex-wrap: nowrap;
+}
+.toolbar-sep {
+  width: 1px; height: 18px; background: var(--border); flex-shrink: 0;
+}
+
+/* ── INLINE WIDGET (border / zoom) ── */
+.tb-widget {
+  display: flex; align-items: center; gap: 2px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 3px 6px;
+  white-space: nowrap;
+}
+.tb-widget-lbl {
+  font-size: 9px; color: var(--muted); text-transform: uppercase;
+  letter-spacing: 0.5px; margin-right: 2px;
+}
+.tb-widget-val {
+  font-size: 10px; font-weight: 700; color: var(--accent-dk);
+  min-width: 28px; text-align: center; font-family: var(--font-mono);
+}
+.tb-icon-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text2); font-size: 14px; padding: 0 2px;
+  line-height: 1; border-radius: 3px; transition: color .15s;
+}
+.tb-icon-btn:hover { color: var(--accent); }
 
 /* ── STAT PILLS ── */
-.stats { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.stats { display: flex; gap: 6px; align-items: center; }
 .stat-pill {
   display: flex; align-items: center; gap: 5px;
   background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 20px; padding: 3px 10px;
+  border-radius: 20px; padding: 2px 8px;
   font-size: 11px; color: var(--muted);
   font-family: var(--font-mono);
 }
@@ -228,8 +262,8 @@ body {
   display: flex;
   flex: 1;
   overflow: hidden;
-  /* subtract nav (44px) + page-header (52px) */
-  height: calc(100vh - 44px - 52px);
+  /* subtract nav (44px) + page-header (~68px two-row) */
+  height: calc(100vh - 44px - 68px);
 }
 
 /* ── SIDEBAR ── */
@@ -312,7 +346,6 @@ body {
   flex: 1; position: relative;
   overflow: auto; background: var(--canvas-bg, var(--bg));
 }
-
 /* ════════════════════════════════════════════
    FORM ELEMENTS
    ════════════════════════════════════════════ */
@@ -606,6 +639,8 @@ textarea {
 #canvas {
   width: 3000px; height: 2400px;
   position: relative; overflow: visible; cursor: default;
+  transform-origin: 0 0;
+  transition: transform 0.12s ease;
 }
 #canvas::before {
   content: ''; position: absolute; inset: 0; pointer-events: none;
@@ -633,6 +668,7 @@ textarea {
 }
 .table-disc.full  { border-color: #c0607a; }
 .table-disc.ok    { border-color: #5a8f6a; }
+.table-disc.low   { border-color: #d4a020; box-shadow: 0 0 0 2px rgba(212,160,32,.15); }
 .table-disc.empty { border-color: var(--border2); }
 .table-num {
   font-family: var(--font-display);
@@ -772,6 +808,7 @@ textarea {
   letter-spacing: 1px; text-transform: uppercase; font-size: 9px; margin-bottom: 2px;
 }
 .legend-row { display: flex; align-items: center; gap: 6px; }
+.legend-row.warn { color: #d4a020; font-weight: 600; }
 .l-dot      { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
 /* ════════════════════════════════════════════
@@ -901,6 +938,7 @@ textarea {
 }
 [data-theme="dark"] .table-disc.empty { border-color: #4a5878; }
 [data-theme="dark"] .table-disc.ok    { border-color: #60f0a0; box-shadow: 0 0 12px rgba(96,240,160,0.2); }
+[data-theme="dark"] .table-disc.low   { border-color: #e0b030; box-shadow: 0 0 12px rgba(224,176,48,0.2); }
 [data-theme="dark"] .table-disc.full  { border-color: #f06060; box-shadow: 0 0 12px rgba(240,96,96,0.2); }
 [data-theme="dark"] .table-num        { color: var(--accent); }
 [data-theme="dark"] .table-count      { color: var(--text2); }
@@ -997,6 +1035,10 @@ textarea {
 }
 .sb-section.collapsible.open > .sb-section-body {
   max-height: 500px; opacity: 1; margin-top: 9px;
+}
+/* Unassigned section needs to scroll & fill remaining sidebar space */
+[data-collapse-key="wb-unassigned"].collapsible.open > .sb-section-body {
+  max-height: none; flex: 1; display: flex; flex-direction: column; overflow: hidden;
 }
 
 /* ════════════════════════════════════════════
@@ -1096,6 +1138,7 @@ textarea {
   font-size: 9px; color: var(--accent-dk);
   background: var(--accent-lt); border-radius: 3px; padding: 1px 4px;
 }
+.g-notes-ico, .g-group-ico { font-size: 11px; opacity: .6; cursor: default; }
 
 /* ════════════════════════════════════════════
    SEAT CARD — nick name + sub-cat lines
@@ -1179,4 +1222,63 @@ textarea {
   .room-header { background: #f0f0f0; }
   .person-card, .guest-chip { background: #f8f8f8; border: 1px solid #ddd; }
   .icon-btn { display: none; }
+}
+/* ════════════════════════════════════════════
+   TABLE SHAPES
+   ════════════════════════════════════════════ */
+.table-disc.shape-round { border-radius: 50%; }
+.table-disc.shape-oval  { border-radius: 50% / 35%; }
+.table-disc.shape-rect  { border-radius: 12px; }
+
+/* Per-table color tint — applied inline by JS for html2canvas compatibility */
+
+/* Table status label inside disc */
+.table-status-lbl {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.4px;
+  margin-top: 1px; text-transform: uppercase;
+}
+
+/* ════════════════════════════════════════════
+   SLIDER + NUMBER INPUT ROW
+   ════════════════════════════════════════════ */
+.slider-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.slider-num {
+  width: 76px; padding: 4px 8px; font-size: 12px;
+  text-align: center; flex-shrink: 0;
+  border: 1px solid var(--border2); border-radius: 6px;
+  background: var(--surface2); color: var(--text);
+  font-family: var(--font-mono);
+}
+.slider-lbl {
+  font-family: monospace; font-weight: 700;
+  color: var(--accent-dk); min-width: 36px; font-size: 10px;
+}
+
+/* ════════════════════════════════════════════
+   COMPACT SEAT TOOLTIP
+   ════════════════════════════════════════════ */
+.seat-tip-badge {
+  display: inline-block; font-size: 9px; border-radius: 10px;
+  padding: 1px 5px; font-weight: 600;
+}
+
+/* ════════════════════════════════════════════
+   HISTORY PANEL — canvas shift when open
+   ════════════════════════════════════════════ */
+body.history-open .canvas-wrap { margin-right: 260px; }
+
+/* ════════════════════════════════════════════
+   ARRANGE STYLE OPTION BUTTONS
+   ════════════════════════════════════════════ */
+.arrange-style-opt {
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer; padding: 7px 12px;
+  border: 1.5px solid var(--border2); border-radius: 8px;
+  font-size: 12px; flex: 1; transition: border-color .15s, background .15s;
+}
+.arrange-style-opt:has(input:checked) {
+  border-color: var(--accent); background: var(--accent-lt);
+  color: var(--accent-dk); font-weight: 600;
 }

@@ -30,7 +30,7 @@
 </div>
 
 <div class="modal-backdrop hidden" id="modal-guest">
-  <div class="modal">
+  <div class="modal" style="max-width:500px;">
     <h3>✏ Edit Guest</h3>
     <div class="mfield">
       <label>Name</label>
@@ -55,6 +55,13 @@
     <div class="mfield"><label>Sub-Category <span style="color:var(--muted);font-weight:400">(optional)</span></label>
       <input type="text" id="eg-subCat" placeholder="e.g. 大姑丈…"/>
     </div>
+    <div class="mfield"><label>Notes <span style="color:var(--muted);font-weight:400">(dietary, VIP, mobility…)</span></label>
+      <textarea id="eg-notes" placeholder="e.g. Vegetarian, wheelchair accessible seat, VIP…" rows="2" style="resize:vertical;min-height:44px;"></textarea>
+    </div>
+    <div class="mfield"><label>Group / Family <span style="color:var(--muted);font-weight:400">(free-text label for grouping &amp; sorting)</span></label>
+      <input type="text" id="eg-group" placeholder="e.g. Smith Family, Groom Side VIP…"/>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.5;">Guests with the same group name appear together when sorting by Group in the Guest List. Free text — no automatic seating logic.</div>
+    </div>
     <div class="mfield"><label>Color Tag</label><div class="colors" id="eg-colors"></div></div>
     <div class="mfooter">
       <button class="btn btn-ghost" onclick="closeModal('modal-guest')">Cancel</button>
@@ -78,6 +85,33 @@
       <div style="display:flex;align-items:center;gap:8px;">
         <input type="range" id="et-extra" min="0" max="4" value="0" style="flex:1" oninput="document.getElementById('et-extra-val').textContent=this.value">
         <span id="et-extra-val" style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--accent);min-width:16px;text-align:center">0</span>
+      </div>
+    </div>
+    <div class="mfield"><label>Table Shape</label>
+      <div style="display:flex;gap:8px;">
+        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;padding:6px 10px;border:1.5px solid var(--border2);border-radius:8px;flex:1;">
+          <input type="radio" name="et-shape-r" id="et-shape" value="round" checked style="accent-color:var(--accent)"> ⭕ Round
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;padding:6px 10px;border:1.5px solid var(--border2);border-radius:8px;flex:1;">
+          <input type="radio" name="et-shape-r" value="rect" style="accent-color:var(--accent)"> ▭ Rectangular
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;padding:6px 10px;border:1.5px solid var(--border2);border-radius:8px;flex:1;">
+          <input type="radio" name="et-shape-r" value="oval" style="accent-color:var(--accent)"> 🥚 Oval
+        </label>
+      </div>
+    </div>
+    <div class="mfield"><label>Table Color Tint <span style="color:var(--muted);font-weight:400">(optional background colour)</span></label>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <input type="color" id="et-tint" value="#b8923a"
+          style="width:40px;height:32px;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:2px;"
+          oninput="document.getElementById('et-tint-hex').value=this.value">
+        <input type="text" id="et-tint-hex" placeholder="#rrggbb" maxlength="7"
+          style="width:88px;font-family:var(--font-mono);font-size:12px;padding:5px 8px;border:1.5px solid var(--border2);border-radius:6px;letter-spacing:1px;"
+          oninput="syncTintHex(this.value)"
+          onpaste="setTimeout(()=>syncTintHex(document.getElementById('et-tint-hex').value),0)"
+          onchange="syncTintHex(this.value)">
+        <button onclick="clearTableTint()" class="btn btn-ghost btn-sm" style="font-size:11px;">✕ No tint</button>
+        <span style="font-size:11px;color:var(--muted);">Adds a soft tint to the table disc</span>
       </div>
     </div>
     <div class="mfooter">
@@ -186,29 +220,69 @@
     <span class="page-subtitle">Wedding Table Arrangement</span>
   </div>
   <div class="header-right">
-    <div class="stats">
-      <div class="stat-pill">Guests <b id="st-guests">0</b></div>
-      <div class="stat-pill">Seated <b id="st-seated">0</b></div>
-      <div class="stat-pill">Tables <b id="st-tables">0</b></div>
-      <div class="stat-pill">Capacity <b id="st-cap">0</b></div>
-    </div>
-    <div class="file-actions">
-      <!-- Seat border width control -->
-      <div style="display:flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;" title="Seat border thickness">
-        <span style="font-size:10px;color:var(--muted);white-space:nowrap;">Border</span>
-        <button onclick="stepSeatBorderWidth(-1)" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:0 2px;line-height:1;" title="Thinner">−</button>
-        <span id="seat-bw-label" style="font-size:10px;font-weight:700;color:var(--accent-dk);min-width:22px;text-align:center;font-family:monospace;">2px</span>
-        <button onclick="stepSeatBorderWidth(1)"  style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:0 2px;line-height:1;" title="Thicker">+</button>
+
+    <!-- ROW 1: stats + canvas controls -->
+    <div class="toolbar-row">
+      <div class="stats">
+        <div class="stat-pill">Guests <b id="st-guests">0</b></div>
+        <div class="stat-pill">Seated <b id="st-seated">0</b></div>
+        <div class="stat-pill">Tables <b id="st-tables">0</b></div>
+        <div class="stat-pill">Capacity <b id="st-cap">0</b></div>
       </div>
-      <button class="btn btn-ghost btn-sm" onclick="exportJSON()">📤 Export</button>
-      <label class="btn btn-ghost btn-sm" style="cursor:pointer">
+      <div class="toolbar-sep"></div>
+      <!-- Border width -->
+      <div class="tb-widget" title="Seat border thickness">
+        <span class="tb-widget-lbl">Border</span>
+        <button class="tb-icon-btn" onclick="stepSeatBorderWidth(-1)" title="Thinner">−</button>
+        <span id="seat-bw-label" class="tb-widget-val">2px</span>
+        <button class="tb-icon-btn" onclick="stepSeatBorderWidth(1)" title="Thicker">+</button>
+      </div>
+      <!-- Zoom -->
+      <div class="tb-widget" title="Canvas zoom (Ctrl+scroll)">
+        <span class="tb-widget-lbl">Zoom</span>
+        <button class="tb-icon-btn" onclick="zoomCanvas(-0.1)" title="Zoom out">−</button>
+        <span id="zoom-label" class="tb-widget-val">100%</span>
+        <button class="tb-icon-btn" onclick="zoomCanvas(0.1)" title="Zoom in">+</button>
+        <button class="tb-icon-btn" onclick="resetZoom()" title="Reset zoom" style="font-size:9px;">↺</button>
+      </div>
+      <div class="toolbar-sep"></div>
+      <!-- Canvas actions -->
+      <button class="btn btn-ghost btn-sm" onclick="undoHistory()" title="Undo" style="font-family:monospace;">↩ Undo</button>
+      <button class="btn btn-ghost btn-sm" onclick="redoHistory()" title="Redo" style="font-family:monospace;">↪ Redo</button>
+      <div class="toolbar-sep"></div>
+      <button class="btn btn-ghost btn-sm" onclick="openArrangeModal()" title="Auto-align tables: snaps each table to a clean grid while preserving its current row/column position">⊞ Align</button>
+      <button class="btn btn-ghost btn-sm" onclick="openAutoArrangeModal()" title="Auto-arrange all tables from scratch: grid, circle or rows layout">⊞ Arrange</button>
+      <button class="btn btn-ghost btn-sm" id="grid-toggle-btn" onclick="toggleGrid()" title="Show/hide grid">⊞ Grid</button>
+    </div>
+
+    <!-- ROW 2: file + guest actions -->
+    <div class="toolbar-row">
+      <!-- Guests group -->
+      <button class="btn btn-ghost btn-sm" onclick="openGuestListModal()">📋 Guest List</button>
+      <div class="toolbar-sep"></div>
+      <!-- Data in/out group -->
+      <button class="btn btn-ghost btn-sm" onclick="exportJSON()" title="Export layout as JSON">📤 Export</button>
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer" title="Import layout JSON">
         📂 Import
         <input type="file" id="file-input" accept=".json" onchange="onFileLoad(event)" style="display:none">
       </label>
-      <button class="btn btn-ghost btn-sm" onclick="openGuestListModal()">📋 Guest List</button>
-      <button class="btn btn-ghost btn-sm" id="grid-toggle-btn" onclick="toggleGrid()" title="Show/hide grid">⊞ Grid</button>
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer" title="Import guests from CSV — upload a filled-in CSV file">
+        📊 Import CSV
+        <input type="file" id="csv-file-input" accept=".csv,.txt" onchange="onCSVLoad(event)" style="display:none">
+      </label>
+      <button class="btn btn-ghost btn-sm" onclick="downloadCSVTemplate()" title="Download a blank CSV template to fill in and import">⬇ CSV Template</button>
+      <div class="toolbar-sep"></div>
+      <!-- Image exports -->
+      <button class="btn btn-ghost btn-sm" onclick="openModal('modal-export-full')" title="Export full canvas as PNG image (auto-cropped)">🖼 Full Image</button>
+      <button class="btn btn-ghost btn-sm" onclick="openExportTablesModal()" title="Export selected tables as individual PNG images">🖼 Table Images</button>
+      <div class="toolbar-sep"></div>
+      <!-- Room + history -->
+      <button class="btn btn-ghost btn-sm" onclick="openModal('modal-room')" title="Set canvas / room size">🏛 Room</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleHistoryPanel()" title="View undo/redo history panel">⏪ History</button>
+      <div class="toolbar-sep"></div>
       <button class="btn btn-sm" onclick="window.print()">🖨 Print</button>
     </div>
+
   </div>
 </header>
 
@@ -273,25 +347,24 @@
         <div class="obj-btn" onclick="addObj('entrance')">  <span class="ico">🏛</span>Entrance</div>
       </div>
     </div>
-    <div class="sb-section" style="padding-bottom:6px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <div class="sb-title" style="margin-bottom:0">Unassigned (<span id="u-count">0</span>)</div>
-        <button id="ms-toggle-btn" class="btn btn-ghost btn-sm" onclick="toggleMultiSelect()" title="Toggle multi-select mode">☑ Select</button>
+    <div class="sb-section collapsible" data-collapse-key="wb-unassigned" style="padding-bottom:0;flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;">
+      <div class="sb-title" style="display:flex;align-items:center;justify-content:space-between;padding-right:4px;">
+        <span>Unassigned (<span id="u-count">0</span>)</span>
+        <button id="ms-toggle-btn" class="btn btn-ghost btn-sm" onclick="event.stopPropagation();toggleMultiSelect()" title="Toggle multi-select mode" style="font-size:10px;padding:2px 7px;">☑ Select</button>
       </div>
+      <!-- filter bar, multi-select bar, and guest chips — all collapsible -->
       <div class="filter-bar" id="filter-bar"></div>
-    </div>
-    <!-- MULTI-SELECT ACTION BAR -->
-    <div id="multi-action-bar" style="display:none;flex-direction:column;gap:0;flex-shrink:0;border-top:2px solid var(--accent);">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 14px;background:var(--accent-lt);gap:8px;">
-        <span id="ms-count" style="font-size:11px;font-weight:700;color:var(--accent-dk);font-family:var(--font-mono)">0 selected</span>
-        <div style="display:flex;gap:5px;">
-          <button class="btn btn-sm" onclick="openMultiAssignModal()" style="padding:4px 10px;font-size:11px">📋 Assign</button>
-          <button class="btn btn-danger btn-sm" onclick="confirmMultiDelete()" style="padding:4px 10px;font-size:11px">🗑 Delete</button>
+      <!-- MULTI-SELECT ACTION BAR -->
+      <div id="multi-action-bar" style="display:none;flex-direction:column;gap:0;flex-shrink:0;border-top:2px solid var(--accent);">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 14px;background:var(--accent-lt);gap:8px;">
+          <span id="ms-count" style="font-size:11px;font-weight:700;color:var(--accent-dk);font-family:var(--font-mono)">0 selected</span>
+          <div style="display:flex;gap:5px;">
+            <button class="btn btn-sm" onclick="openMultiAssignModal()" style="padding:4px 10px;font-size:11px">📋 Assign</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmMultiDelete()" style="padding:4px 10px;font-size:11px">🗑 Delete</button>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="main" style="padding:0;gap:0;overflow-y:auto">
-      <div style="padding:4px 10px 10px;display:flex;flex-direction:column;gap:4px">
+      <div style="padding:4px 10px 10px;display:flex;flex-direction:column;gap:4px;overflow-y:auto;flex:1;">
         <div class="unassigned-zone" id="uzone"
           ondragover="onDragOverU(event)" ondragleave="onDragLeave(event)" ondrop="onDropU(event)">
           <div id="u-empty" style="text-align:center;color:var(--muted);font-size:11px;padding:10px 0">🎉 All guests seated!</div>
@@ -311,8 +384,9 @@
     <div id="canvas" onclick="onCanvasClick(event)"></div>
     <div class="legend">
       <div class="legend-title">Table Status</div>
-      <div class="legend-row"><div class="l-dot" style="background:#c0607a"></div>Full (10/10)</div>
-      <div class="legend-row"><div class="l-dot" style="background:#5a8f6a"></div>Partially filled</div>
+      <div class="legend-row"><div class="l-dot" style="background:#c0607a"></div>Full</div>
+      <div class="legend-row"><div class="l-dot" style="background:#5a8f6a"></div>≥60% filled</div>
+      <div class="legend-row warn"><div class="l-dot" style="background:#d4a020"></div>&lt;60% filled</div>
       <div class="legend-row"><div class="l-dot" style="background:var(--border2)"></div>Empty</div>
     </div>
   </div>
@@ -402,7 +476,250 @@
 <!-- PRINT FRAME for guest list only -->
 <div id="print-guest-list" style="display:none;"></div>
 
+<!-- AUTO-ARRANGE MODAL -->
+<div class="modal-backdrop hidden" id="modal-arrange">
+  <div class="modal" style="max-width:460px;">
+    <h3>⊞ Auto-Align Tables</h3>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px;">
+      Snaps every table to a clean grid based on its <b>current position</b> — tables stay in their existing rows and columns, only nudged to align. Seating is untouched.
+    </p>
+
+    <div class="mfield">
+      <label>Row sensitivity <span style="color:var(--muted);font-weight:400;font-size:10px;">— vertical distance to count as same row</span></label>
+      <div class="slider-row">
+        <input type="range"  id="arrange-row-tol"     min="5" max="50" value="20" style="flex:1">
+        <input type="number" id="arrange-row-tol-num" min="5" max="50" value="20" class="slider-num">
+        <span id="arrange-row-tol-lbl" class="slider-lbl">20px</span>
+      </div>
+    </div>
+    <div class="mfield">
+      <label>Horizontal gap <span style="color:var(--muted);font-weight:400;font-size:10px;">— spacing between tables in a row</span></label>
+      <div class="slider-row">
+        <input type="range"  id="arrange-h-gap"     min="20" max="400" value="60" style="flex:1">
+        <input type="number" id="arrange-h-gap-num" min="20" max="400" value="60" class="slider-num">
+        <span id="arrange-h-gap-lbl" class="slider-lbl">60px</span>
+      </div>
+    </div>
+    <div class="mfield">
+      <label>Vertical gap <span style="color:var(--muted);font-weight:400;font-size:10px;">— spacing between rows</span></label>
+      <div class="slider-row">
+        <input type="range"  id="arrange-v-gap"     min="20" max="400" value="60" style="flex:1">
+        <input type="number" id="arrange-v-gap-num" min="20" max="400" value="60" class="slider-num">
+        <span id="arrange-v-gap-lbl" class="slider-lbl">60px</span>
+      </div>
+    </div>
+    <div class="mfield">
+      <label>Margin from top-left <span style="color:var(--muted);font-weight:400;font-size:10px;">— offset of the entire layout</span></label>
+      <div class="slider-row">
+        <input type="range"  id="arrange-margin"     min="0" max="300" value="60" style="flex:1">
+        <input type="number" id="arrange-margin-num" min="0" max="300" value="60" class="slider-num">
+        <span id="arrange-margin-lbl" class="slider-lbl">60px</span>
+      </div>
+    </div>
+
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="closeModal('modal-arrange')">Cancel</button>
+      <button class="btn" onclick="applyArrange()">Align</button>
+    </div>
+  </div>
+</div>
+
+<!-- AUTO-ARRANGE FROM-SCRATCH MODAL -->
+<div class="modal-backdrop hidden" id="modal-auto-arrange">
+  <div class="modal" style="max-width:480px;">
+    <h3>⊞ Auto-Arrange Tables</h3>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px;">
+      Repositions <b>all tables</b> from scratch into a clean layout. Seating is kept.
+    </p>
+    <div class="mfield"><label>Layout Style</label>
+      <div style="display:flex;gap:8px;">
+        <label class="arrange-style-opt" id="aaopt-grid">
+          <input type="radio" name="aa-style" value="grid" checked style="accent-color:var(--accent)"> 📐 Grid
+        </label>
+        <label class="arrange-style-opt" id="aaopt-circle">
+          <input type="radio" name="aa-style" value="circle" style="accent-color:var(--accent)"> ⭕ Circle
+        </label>
+        <label class="arrange-style-opt" id="aaopt-rows">
+          <input type="radio" name="aa-style" value="rows" style="accent-color:var(--accent)"> ═ Rows
+        </label>
+      </div>
+    </div>
+    <div class="mfield" id="aa-cols-field">
+      <label>Columns <span style="color:var(--muted);font-weight:400;font-size:10px;">— tables per row (grid / rows)</span></label>
+      <div class="slider-row">
+        <input type="range"  id="aa-cols"     min="1" max="10" value="4" style="flex:1">
+        <input type="number" id="aa-cols-num" min="1" max="10" value="4" class="slider-num">
+        <span id="aa-cols-lbl" class="slider-lbl">4</span>
+      </div>
+    </div>
+    <div class="mfield">
+      <label>Gap between tables</label>
+      <div class="slider-row">
+        <input type="range"  id="aa-gap"     min="20" max="300" value="60" style="flex:1">
+        <input type="number" id="aa-gap-num" min="20" max="300" value="60" class="slider-num">
+        <span id="aa-gap-lbl" class="slider-lbl">60px</span>
+      </div>
+    </div>
+    <div class="mfield">
+      <label>Margin (from top-left)</label>
+      <div class="slider-row">
+        <input type="range"  id="aa-margin"     min="20" max="300" value="60" style="flex:1">
+        <input type="number" id="aa-margin-num" min="20" max="300" value="60" class="slider-num">
+        <span id="aa-margin-lbl" class="slider-lbl">60px</span>
+      </div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="closeModal('modal-auto-arrange')">Cancel</button>
+      <button class="btn" onclick="applyAutoArrange()">Arrange</button>
+    </div>
+  </div>
+</div>
+
+<!-- CSV IMPORT MODAL -->
+<div class="modal-backdrop hidden" id="modal-csv-import">
+  <div class="modal" style="max-width:640px;max-height:85vh;display:flex;flex-direction:column;">
+    <h3 style="margin:0 0 8px;">📊 Import Guests from CSV</h3>
+    <p style="font-size:11px;color:var(--muted);margin:0 0 10px;line-height:1.6;">
+      Columns are matched automatically. For best results use the <b>⬇ CSV Template</b> button in the toolbar — it has the exact headers. Supported: <code>LastName, FirstName, NickName, Category, SubCategory, Notes, Group, Color</code>.
+    </p>
+    <div id="csv-map-area" style="flex-shrink:0;"></div>
+    <div id="csv-preview-area" style="overflow-y:auto;flex:1;max-height:320px;margin-top:10px;border:1px solid var(--border);border-radius:8px;"></div>
+    <div class="mfooter" style="margin-top:12px;flex-shrink:0;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-csv-import')">Cancel</button>
+      <button class="btn" id="csv-import-btn" onclick="confirmCSVImport()">Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT INDIVIDUAL TABLES MODAL -->
+<div class="modal-backdrop hidden" id="modal-export-tables">
+  <div class="modal" style="max-width:480px;max-height:88vh;display:flex;flex-direction:column;">
+    <h3>🖼 Export Table Images</h3>
+
+    <!-- Export Options -->
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px;flex-shrink:0;">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:10px;">Export Options</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:12px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" id="exp-include-grid" checked style="accent-color:var(--accent);width:14px;height:14px;">
+          Show grid lines
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" id="exp-dark-theme" style="accent-color:var(--accent);width:14px;height:14px;">
+          Dark theme
+        </label>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <label style="white-space:nowrap;color:var(--text2);">Margin:</label>
+          <input type="number" id="exp-margin" value="40" min="0" max="200"
+            style="width:60px;padding:3px 6px;font-size:11px;font-family:var(--font-mono);border:1px solid var(--border2);border-radius:5px;background:var(--surface);color:var(--text);">
+          <span style="font-size:10px;color:var(--muted);">px</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <label style="white-space:nowrap;color:var(--text2);">Scale:</label>
+          <select id="exp-scale" style="padding:3px 6px;font-size:11px;border:1px solid var(--border2);border-radius:5px;background:var(--surface);color:var(--text);">
+            <option value="1">1×</option>
+            <option value="2" selected>2× (HD)</option>
+            <option value="3">3× (print)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <p style="font-size:12px;color:var(--text2);margin-bottom:6px;flex-shrink:0;">Select tables to export as individual PNG images:</p>
+    <div style="display:flex;gap:6px;margin-bottom:8px;flex-shrink:0;">
+      <button class="btn btn-ghost btn-sm" onclick="_exportSelTables=new Set(tables.map(t=>t.id));renderExportTablesList()">✓ All</button>
+      <button class="btn btn-ghost btn-sm" onclick="_exportSelTables.clear();renderExportTablesList()">✗ None</button>
+    </div>
+    <div id="export-tables-list" style="overflow-y:auto;flex:1;border:1px solid var(--border);border-radius:8px;"></div>
+    <div class="mfooter" style="margin-top:12px;flex-shrink:0;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-export-tables')">Cancel</button>
+      <button class="btn" onclick="exportSelectedTableImages()">Export Selected</button>
+    </div>
+  </div>
+</div>
+
+<!-- FULL IMAGE EXPORT OPTIONS MODAL -->
+<div class="modal-backdrop hidden" id="modal-export-full">
+  <div class="modal" style="max-width:380px;">
+    <h3>🖼 Export Full Canvas Image</h3>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:14px;">Exports the entire canvas as a PNG. Blank borders are auto-cropped to the content area.</p>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:4px;">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:10px;">Export Options</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:12px;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" id="full-include-grid" checked style="accent-color:var(--accent);width:14px;height:14px;">
+          Show grid lines
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" id="full-dark-theme" style="accent-color:var(--accent);width:14px;height:14px;">
+          Dark theme
+        </label>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <label style="white-space:nowrap;color:var(--text2);">Margin:</label>
+          <input type="number" id="full-margin" value="60" min="0" max="300"
+            style="width:60px;padding:3px 6px;font-size:11px;font-family:var(--font-mono);border:1px solid var(--border2);border-radius:5px;background:var(--surface);color:var(--text);">
+          <span style="font-size:10px;color:var(--muted);">px around content</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <label style="white-space:nowrap;color:var(--text2);">Scale:</label>
+          <select id="full-scale" style="padding:3px 6px;font-size:11px;border:1px solid var(--border2);border-radius:5px;background:var(--surface);color:var(--text);">
+            <option value="1">1×</option>
+            <option value="2" selected>2× (HD)</option>
+            <option value="3">3× (print)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="closeModal('modal-export-full')">Cancel</button>
+      <button class="btn" onclick="doExportCanvasImage()">Export PNG</button>
+    </div>
+  </div>
+</div>
+
+<!-- ROOM SIZE PRESETS MODAL -->
+<div class="modal-backdrop hidden" id="modal-room">
+  <div class="modal" style="max-width:420px;">
+    <h3>🏛 Room / Canvas Size</h3>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px;">Choose a preset or enter a custom canvas size. This only affects the canvas area — tables and guests are unchanged.</p>
+    <div class="mfield"><label>Preset</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="applyRoomPreset('rectangular')" style="text-align:left;">📐 Rectangular Hall<br><span style="font-size:10px;color:var(--muted);">3000 × 2400</span></button>
+        <button class="btn btn-ghost btn-sm" onclick="applyRoomPreset('wide')" style="text-align:left;">📐 Wide Hall<br><span style="font-size:10px;color:var(--muted);">4200 × 1800</span></button>
+        <button class="btn btn-ghost btn-sm" onclick="applyRoomPreset('square')" style="text-align:left;">⬜ Square Room<br><span style="font-size:10px;color:var(--muted);">2800 × 2800</span></button>
+        <button class="btn btn-ghost btn-sm" onclick="applyRoomPreset('ballroom')" style="text-align:left;">🔵 Circular Ballroom<br><span style="font-size:10px;color:var(--muted);">3600 × 3600</span></button>
+        <button class="btn btn-ghost btn-sm" onclick="applyRoomPreset('lshape')" style="text-align:left;">📐 L-shaped Hall<br><span style="font-size:10px;color:var(--muted);">3600 × 2400</span></button>
+        <button class="btn btn-ghost btn-sm" onclick="applyRoomPreset('custom')" style="text-align:left;">✏ Custom…<br><span style="font-size:10px;color:var(--muted);">Enter own size</span></button>
+      </div>
+    </div>
+    <div id="room-custom-fields" class="mfield" style="display:none;align-items:center;gap:10px;">
+      <label style="font-size:11px;color:var(--muted);white-space:nowrap;">W (px)</label>
+      <input type="number" id="room-w-inp" value="3000" min="800" max="10000" step="100" style="width:90px;">
+      <label style="font-size:11px;color:var(--muted);white-space:nowrap;">H (px)</label>
+      <input type="number" id="room-h-inp" value="2400" min="600" max="10000" step="100" style="width:90px;">
+    </div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="closeModal('modal-room')">Cancel</button>
+      <button class="btn" onclick="applyRoomSize()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY PANEL (fixed overlay) -->
+<div id="history-panel" style="display:none;flex-direction:column;position:fixed;right:0;top:114px;width:260px;height:calc(100vh - 114px);background:var(--surface);border-left:1px solid var(--border);z-index:300;box-shadow:-4px 0 16px var(--shadow);">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;">
+    <span style="font-size:12px;font-weight:700;color:var(--accent-dk);">⏪ Action History</span>
+    <div style="display:flex;gap:5px;">
+      <button class="btn btn-ghost btn-sm" onclick="undoHistory()" title="Undo" style="font-size:10px;">↩ Undo</button>
+      <button class="btn btn-ghost btn-sm" onclick="redoHistory()" title="Redo" style="font-size:10px;">↪ Redo</button>
+      <button onclick="toggleHistoryPanel()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:0 3px;line-height:1;">✕</button>
+    </div>
+  </div>
+  <div id="history-list" style="overflow-y:auto;flex:1;font-size:12px;"></div>
+</div>
+
 <script src="../js/shared-nav.js"></script>
 <script src="../js/wedding.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </body>
 </html>

@@ -74,6 +74,17 @@
 <header class="page-header">
   <div class="page-title">
     <h1>🏠 <span>Homestay</span> Planner</h1>
+    <input type="text" id="page-subtitle-input" class="page-subtitle-editable"
+      value="Homestay Room Assignment"
+      title="Click to rename — used as filename when exporting"
+      onkeydown="if(event.key==='Enter'||event.key==='Escape')this.blur()">
+    <div class="project-file-actions">
+      <button class="btn btn-ghost btn-sm" onclick="saveJSON()" title="Export layout project as JSON file">📤 Export Layout Project</button>
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer" title="Import a previously exported layout project">
+        📂 Import Layout Project
+        <input type="file" id="file-input" accept=".json" onchange="onFileLoad(event)" style="display:none">
+      </label>
+    </div>
   </div>
   <div class="header-search">
     <div class="search-wrap">
@@ -90,21 +101,11 @@
       <div class="stat-pill">Cap <b id="stat-capacity">0</b></div>
     </div>
     <div class="file-actions">
-      <button class="btn btn-ghost btn-sm" onclick="saveJSON()">📤 Export</button>
-      <label class="btn btn-ghost btn-sm" style="cursor:pointer">
-        📂 Import
-        <input type="file" id="file-input" accept=".json" onchange="onFileLoad(event)" style="display:none">
-      </label>
       <button class="btn btn-sm" onclick="window.print()">🖨 Print</button>
     </div>
-    <!-- <div class="file-actions">
-      <button class="btn btn-ghost btn-sm" onclick="loadJSON()" title="Load JSON">📂</button>
-      <button class="btn btn-green btn-sm" onclick="saveJSON()" title="Export JSON">📤</button>
-      <button class="btn btn-ghost btn-sm" onclick="window.print()" title="Print">🖨️</button>
-    </div> -->
   </div>
 </header>
-<input type="file" id="file-input" accept=".json" onchange="onFileLoad(event)" />
+<input type="file" id="file-input-legacy" accept=".json" style="display:none" />
 
 <div class="app">
   <!-- SIDEBAR -->

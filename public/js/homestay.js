@@ -251,13 +251,22 @@ document.getElementById('edit-room-modal'  ).addEventListener('click',e=>{if(e.t
 document.getElementById('bulk-modal'       ).addEventListener('click',e=>{if(e.target===e.currentTarget)closeBulkModal();});
 
 // ── SAVE / LOAD JSON  (export / import file)
+function _getProjectName(){
+  return (document.getElementById('page-subtitle-input')?.value||'').trim() || 'Homestay Room Assignment';
+}
+function _setProjectName(name){
+  const el = document.getElementById('page-subtitle-input');
+  if(el && name) el.value = name;
+}
 function saveJSON() {
-  const data = { version:1, savedAt:new Date().toISOString(), personIdCounter, roomIdCounter, persons, rooms };
+  const name = _getProjectName();
+  const slug = name.replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase() || 'homestay';
+  const data = { version:1, savedAt:new Date().toISOString(), projectName:name, personIdCounter, roomIdCounter, persons, rooms };
   const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href = url;
-  a.download = `homestay-${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `${slug}.json`;
   a.click();
   URL.revokeObjectURL(url);
   toast(`Exported — ${rooms.length} rooms, ${persons.length} persons`, 'success');
@@ -277,6 +286,7 @@ function onFileLoad(event) {
         personIdCounter = data.personIdCounter||(Math.max(0,...persons.map(p=>p.id),0)+1);
         roomIdCounter   = data.roomIdCounter  ||(Math.max(0,...rooms.map(r=>r.id),0)+1);
       });
+      if(data.projectName) _setProjectName(data.projectName);
       render();
       toast(`Loaded: ${rooms.length} rooms, ${persons.length} persons`, 'success');
     } catch(_) { toast('Invalid or corrupted JSON file!','error'); }

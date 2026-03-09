@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Find Your Seat</title>
+  <style>
+    :root {
+      --bg:        #faf9f6;
+      --surface:   #ffffff;
+      --border:    #e8e4dc;
+      --text:      #1a1512;
+      --text2:     #5a5550;
+      --muted:     #9a9590;
+      --accent:    #b8923a;
+      --accent-lt: #fdf5e6;
+      --accent-dk: #8a6a20;
+      --gold:      #c8a84a;
+      --radius:    14px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100dvh; display: flex; flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .sf-header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 18px 20px 14px; text-align: center;
+      position: sticky; top: 0; z-index: 50;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    }
+    .sf-header .event-name { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+    .sf-header h1 { font-family: Georgia,'Times New Roman',serif; font-size: 26px; font-weight: 400; color: var(--text); }
+    .sf-header h1 em { font-style: italic; color: var(--accent-dk); }
+    .sf-header .subtitle { font-size: 12px; color: var(--text2); margin-top: 3px; }
+
+    /* ---- Main ---- */
+    .sf-main { flex: 1; padding: 20px 16px; max-width: 480px; margin: 0 auto; width: 100%; }
+
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: none; border: none; cursor: pointer; font-size: 13px;
+      color: var(--text2); padding: 4px 0; margin-bottom: 10px; font-family: inherit;
+    }
+    .back-btn:hover { color: var(--accent); }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .step-label { font-size: 10px; letter-spacing: 1.8px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+
+    /* ---- Category grid ---- */
+    .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .cat-card {
+      background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+      padding: 16px 14px; cursor: pointer; transition: all 0.15s; text-align: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,.04); font-family: inherit;
+    }
+    .cat-card:hover, .cat-card:active { border-color: var(--gold); background: var(--accent-lt); transform: translateY(-1px); }
+    .cat-card .cat-emoji { font-size: 26px; display: block; margin-bottom: 6px; }
+    .cat-card .cat-name  { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; display: block; }
+    .cat-card .cat-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; display: block; }
+
+    /* ---- Alphabet grid ---- */
+    .alpha-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+    .alpha-card {
+      background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 14px 6px; cursor: pointer; text-align: center; font-size: 16px; font-weight: 700;
+      color: var(--text); font-family: Georgia,serif; transition: all 0.12s;
+      box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    }
+    .alpha-card:hover, .alpha-card:active { border-color: var(--gold); background: var(--accent-lt); transform: translateY(-1px); }
+    .alpha-card.dimmed { opacity: 0.28; cursor: default; pointer-events: none; }
+    .alpha-card .alpha-count { font-size: 9px; font-weight: 400; color: var(--muted); display: block; margin-top: 3px; font-family: sans-serif; }
+
+    /* ---- Search ---- */
+    .search-bar { position: relative; margin-bottom: 14px; }
+    .search-bar input {
+      width: 100%; padding: 12px 14px 12px 40px; border: 1.5px solid var(--border);
+      border-radius: 50px; font-size: 15px; background: var(--surface); color: var(--text);
+      font-family: inherit; outline: none; transition: border-color .15s;
+    }
+    .search-bar input:focus { border-color: var(--gold); }
+    .search-bar .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none; }
+    .search-bar .clear-btn {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; font-size: 16px; color: var(--muted); display: none;
+    }
+    .search-bar input:not(:placeholder-shown) ~ .clear-btn { display: block; }
+
+    /* ---- Guest list ---- */
+    .guest-list { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: 0 1px 8px rgba(0,0,0,.05); }
+    .guest-item { display: flex; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--border); gap: 10px; }
+    .guest-item:last-child { border-bottom: none; }
+    .g-name { flex: 1; font-size: 15px; font-weight: 500; }
+    .g-nick { font-size: 11px; color: var(--muted); font-weight: 400; }
+    .g-table { text-align: right; flex-shrink: 0; }
+    .g-table-name { font-size: 14px; font-weight: 700; color: var(--accent-dk); }
+    .g-seat-num   { font-size: 10px; color: var(--muted); white-space: nowrap; }
+    .g-cat-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 1px; }
+    .dot-bride-family { background: #e88aaa; }
+    .dot-bride-rel    { background: #c87898; }
+    .dot-bride-friend { background: #a868b8; }
+    .dot-groom-family { background: #4a8ad4; }
+    .dot-groom-rel    { background: #3a7ac4; }
+    .dot-groom-friend { background: #2a6ab4; }
+    .dot-default      { background: #c8a84a; }
+
+    .alpha-section-head { font-family: Georgia,serif; font-size: 32px; font-weight: 400; color: var(--text); padding: 20px 0 8px; }
+
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+    .empty-state .empty-icon { font-size: 40px; display: block; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; line-height: 1.6; }
+
+    /* ---- Error / no-data banner ---- */
+    #no-data-banner {
+      background: #fff8e8; border: 1.5px solid var(--gold); border-radius: 10px;
+      padding: 20px; text-align: center; margin: 30px 0; display: none;
+    }
+    #no-data-banner .icon { font-size: 32px; margin-bottom: 8px; }
+    #no-data-banner h3 { font-size: 15px; margin-bottom: 8px; color: var(--accent-dk); }
+    #no-data-banner p  { font-size: 12px; color: var(--text2); line-height: 1.9; text-align: left; }
+    #no-data-banner code { background: #f0ece4; border-radius: 3px; padding: 1px 5px; font-size: 11px; }
+
+    .sf-footer { text-align: center; padding: 16px; font-size: 10px; color: var(--muted); letter-spacing: 0.8px; }
+  </style>
+</head>
+<body>
+
+<div class="sf-header">
+  <div class="event-name" id="sf-event-label">Wedding Banquet</div>
+  <h1><em>Find</em> Your Seat</h1>
+  <div class="subtitle">Browse by last name to find your table</div>
+</div>
+
+<div class="sf-main">
+
+  <div id="no-data-banner">
+    <div class="icon">&#9888;&#65039;</div>
+    <h3>Guest data not available</h3>
+    <p>Please ask the organiser to upload the guest data file.</p>
+  </div>
+
+  <!-- Screen 1: Category -->
+  <div class="screen active" id="screen-cat">
+    <div class="step-label">Step 1 &mdash; Who are you here for?</div>
+    <div class="cat-grid" id="cat-grid"></div>
+    <div style="margin-top:14px;text-align:center;">
+      <button class="back-btn" onclick="showAllAlpha()" style="color:var(--accent);font-size:12px;">
+        Skip &rarr; Browse all names
+      </button>
+    </div>
+  </div>
+
+  <!-- Screen 2: Alphabet -->
+  <div class="screen" id="screen-alpha">
+    <button class="back-btn" onclick="showScreen('cat')">&larr; Back</button>
+    <div class="step-label" id="alpha-step-label">Step 2 &mdash; Choose first letter of last name</div>
+    <div class="alpha-grid" id="alpha-grid"></div>
+  </div>
+
+  <!-- Screen 3: List + search -->
+  <div class="screen" id="screen-list">
+    <button class="back-btn" id="list-back-btn" onclick="showScreen('alpha')">&larr; Back</button>
+    <div class="search-bar">
+      <span class="search-icon">&#128269;</span>
+      <input type="text" id="sf-search" placeholder="Search name..."
+        oninput="onSFSearch(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="clear-btn" onclick="clearSFSearch()">&#10005;</button>
+    </div>
+    <div id="guest-list-area"></div>
+  </div>
+
+</div>
+
+<div class="sf-footer" id="sf-footer">Powered by Banquet Planner</div>
+
+<script>
+var sfData     = null;
+var sfGuests   = [];
+var sfFiltered = [];
+var selCat     = null;
+var selAlpha   = null;
+var ALPHA_GROUPS = ['AB','CD','EF','GH','IJ','KL','MN','OP','QR','ST','UV','WX','YZ'];
+
+// ── Boot ─────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  var catGrid = document.getElementById('cat-grid');
+  if (catGrid) catGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:28px 0;color:var(--muted);font-size:13px;">Loading...</div>';
+
+  fetch('./guests.json?v=' + Date.now())
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(data) {
+      sfData   = data;
+      sfGuests = data.guests || [];
+      document.getElementById('sf-event-label').textContent = data.projectName || 'Wedding Banquet';
+      var d = data.exportedAt ? new Date(data.exportedAt).toLocaleDateString() : '';
+      document.getElementById('sf-footer').textContent =
+        (data.projectName || 'Banquet') + (d ? ' - ' + d : '');
+      buildCatGrid();
+      buildAlphaGrid(sfGuests);
+    })
+    .catch(function() {
+      var isLocal = location.protocol === 'file:'
+                 || location.hostname === 'localhost'
+                 || location.hostname === '127.0.0.1';
+      var banner = document.getElementById('no-data-banner');
+      if (banner) {
+        banner.style.display = 'block';
+        if (isLocal) {
+          banner.innerHTML =
+            '<div class="icon">&#128421;</div>'
+          + '<h3>Running on localhost</h3>'
+          + '<p>This page needs to be hosted online so guests can access it from their phones.<br><br>'
+          + '<b>How to deploy (free, takes 2 min):</b><br><br>'
+          + '1. Open the Wedding Planner and click <b>&#128279; Seat Finder</b><br>'
+          + '2. Click <b>Download guests.json</b><br>'
+          + '3. Go to <b>netlify.com/drop</b> and drag your entire<br>'
+          + '&nbsp;&nbsp;&nbsp;&nbsp;<code>planner-app/public/</code> folder onto the page<br>'
+          + '4. Copy the Netlify URL (e.g. <code>my-event.netlify.app</code>)<br>'
+          + '5. Paste it into the Seat Finder modal &mdash; QR code is generated<br>'
+          + '6. Print or display the QR at the venue entrance</p>';
+        } else {
+          banner.innerHTML =
+            '<div class="icon">&#9888;&#65039;</div>'
+          + '<h3>Guest data not found</h3>'
+          + '<p>Could not load <code>guests.json</code>.<br><br>'
+          + 'The organiser needs to:<br>'
+          + '1. Export <code>guests.json</code> from the Wedding Planner<br>'
+          + '2. Upload it to the <code>pages/</code> folder on this hosting site<br>'
+          + '3. Refresh this page after uploading</p>';
+        }
+      }
+      var cg = document.getElementById('cat-grid');
+      if (cg) cg.innerHTML = '';
+    });
+});
+
+// ── Screens ───────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('screen-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── Category screen ───────────────────────────────────────────────
+var CAT_EMOJI = {
+  'bride-family': '&#127800;', 'bride-rel': '&#127802;', 'bride-friend': '&#128167;',
+  'groom-family': '&#128306;', 'groom-rel': '&#128311;', 'groom-friend': '&#129360;'
+};
+
+function buildCatGrid() {
+  var grid = document.getElementById('cat-grid');
+  if (!grid) return;
+  var cats = (sfData && sfData.categories) || [];
+  var html = '';
+  cats.forEach(function(c) {
+    var count = sfGuests.filter(function(g) { return g.cat === c.key && g.assigned; }).length;
+    if (!count) return;
+    var label = c.label.replace(/^\S+\s/, '');
+    html += '<button class="cat-card" onclick="selectCat(\'' + esc(c.key) + '\')">'
+          + '<span class="cat-emoji">' + (CAT_EMOJI[c.key] || '&#128101;') + '</span>'
+          + '<span class="cat-name">' + esc(label) + '</span>'
+          + '<span class="cat-sub">' + count + ' guest' + (count !== 1 ? 's' : '') + '</span>'
+          + '</button>';
+  });
+  grid.innerHTML = html || '<div style="grid-column:1/-1;color:var(--muted);font-size:13px;padding:20px;text-align:center;">No categories</div>';
+}
+
+function selectCat(catKey) {
+  selCat = catKey;
+  var pool = sfGuests.filter(function(g) { return g.cat === catKey && g.assigned; });
+  buildAlphaGrid(pool);
+  var el = document.getElementById('alpha-step-label');
+  if (el) el.textContent = 'Step 2 \u2014 First letter of last name';
+  var btn = document.getElementById('list-back-btn');
+  if (btn) btn.onclick = function() { showScreen('alpha'); };
+  showScreen('alpha');
+}
+
+function showAllAlpha() {
+  selCat = null;
+  buildAlphaGrid(sfGuests.filter(function(g) { return g.assigned; }));
+  var el = document.getElementById('alpha-step-label');
+  if (el) el.textContent = 'Choose first letter of last name';
+  var btn = document.getElementById('list-back-btn');
+  if (btn) btn.onclick = function() { showScreen('cat'); };
+  showScreen('alpha');
+}
+
+// ── Alphabet screen ───────────────────────────────────────────────
+function buildAlphaGrid(pool) {
+  var grid = document.getElementById('alpha-grid');
+  if (!grid) return;
+  var existing = {};
+  pool.forEach(function(g) { existing[(g.lastName || '?')[0].toUpperCase()] = true; });
+  var html = '';
+  ALPHA_GROUPS.forEach(function(grp) {
+    var letters = grp.split('');
+    var hasAny  = letters.some(function(l) { return existing[l]; });
+    var count   = pool.filter(function(g) {
+      return letters.indexOf((g.lastName || '?')[0].toUpperCase()) !== -1;
+    }).length;
+    html += '<button class="alpha-card' + (hasAny ? '' : ' dimmed') + '" onclick="selectAlpha(\'' + grp + '\')">'
+          + grp
+          + '<span class="alpha-count">' + (hasAny ? count : '&ndash;') + '</span>'
+          + '</button>';
+  });
+  grid.innerHTML = html;
+}
+
+function selectAlpha(grp) {
+  selAlpha = grp;
+  var letters = grp.split('');
+  var base = selCat
+    ? sfGuests.filter(function(g) { return g.cat === selCat; })
+    : sfGuests;
+  var pool = base.filter(function(g) {
+    return g.assigned && letters.indexOf((g.lastName || '?')[0].toUpperCase()) !== -1;
+  });
+  pool.sort(sortByName);
+  sfFiltered = pool;
+  var inp = document.getElementById('sf-search');
+  if (inp) inp.value = '';
+  renderGuestList(pool, false);
+  showScreen('list');
+}
+
+// ── Search ────────────────────────────────────────────────────────
+function onSFSearch(val) {
+  var q = val.trim().toLowerCase();
+  var letters = selAlpha ? selAlpha.split('') : null;
+  var base = selCat
+    ? sfGuests.filter(function(g) { return g.cat === selCat; })
+    : sfGuests;
+  var pool = base.filter(function(g) {
+    if (!g.assigned) return false;
+    if (letters && letters.indexOf((g.lastName || '?')[0].toUpperCase()) === -1) return false;
+    return true;
+  });
+  var results = q
+    ? pool.filter(function(g) {
+        return (g.lastName + ' ' + g.firstName + ' ' + g.nickName).toLowerCase().indexOf(q) !== -1;
+      })
+    : pool;
+  results.sort(sortByName);
+  sfFiltered = results;
+  renderGuestList(results, !!q);
+}
+
+function clearSFSearch() {
+  var inp = document.getElementById('sf-search');
+  if (inp) inp.value = '';
+  onSFSearch('');
+}
+
+function sortByName(a, b) {
+  var la = (a.lastName + a.firstName).toLowerCase();
+  var lb = (b.lastName + b.firstName).toLowerCase();
+  return la < lb ? -1 : la > lb ? 1 : 0;
+}
+
+// ── Render ────────────────────────────────────────────────────────
+var DOT_CLS = {
+  'bride-family':'dot-bride-family','bride-rel':'dot-bride-rel','bride-friend':'dot-bride-friend',
+  'groom-family':'dot-groom-family','groom-rel':'dot-groom-rel','groom-friend':'dot-groom-friend'
+};
+
+function renderGuestList(pool, flat) {
+  var area = document.getElementById('guest-list-area');
+  if (!area) return;
+  if (!pool.length) {
+    area.innerHTML = '<div class="empty-state"><span class="empty-icon">&#128269;</span>'
+                   + '<p>No guests found.<br>Try a different name or letter.</p></div>';
+    return;
+  }
+  if (flat || selAlpha) {
+    area.innerHTML = buildListBlock(pool);
+    return;
+  }
+  var byLetter = {};
+  pool.forEach(function(g) {
+    var l = (g.lastName || '?')[0].toUpperCase();
+    if (!byLetter[l]) byLetter[l] = [];
+    byLetter[l].push(g);
+  });
+  var html = '';
+  Object.keys(byLetter).sort().forEach(function(l) {
+    html += '<div class="alpha-section-head">' + l + '</div>' + buildListBlock(byLetter[l]);
+  });
+  area.innerHTML = html;
+}
+
+function buildListBlock(list) {
+  var html = '<div class="guest-list">';
+  list.forEach(function(g) {
+    var name = esc(g.lastName) + (g.firstName ? ', ' + esc(g.firstName) : '');
+    var nick = g.nickName ? ' <span class="g-nick">(' + esc(g.nickName) + ')</span>' : '';
+    var dot  = DOT_CLS[g.cat] || 'dot-default';
+    html += '<div class="guest-item">'
+          + '<div class="g-cat-dot ' + dot + '"></div>'
+          + '<div class="g-name">' + name + nick + '</div>'
+          + '<div class="g-table">'
+          + '<div class="g-table-name">' + esc(g.tableName || '&mdash;') + '</div>'
+          + '<div class="g-seat-num">Seat ' + esc(String(g.seat)) + '</div>'
+          + '</div></div>';
+  });
+  return html + '</div>';
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

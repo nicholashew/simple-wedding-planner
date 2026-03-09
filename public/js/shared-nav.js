@@ -105,6 +105,7 @@
       <div class="nav-links">
         <a class="nav-link" href="${resolveHref('homestay')}">🏠 Homestay</a>
         <a class="nav-link" href="${resolveHref('wedding')}">💒 Wedding</a>
+        <a class="nav-link" href="${resolveHref('seat-finder')}" target="_blank">🔗 Seat Finder</a>
       </div>
       <div class="nav-save-status">
         <button class="theme-toggle" id="theme-toggle-btn" title="Toggle theme">

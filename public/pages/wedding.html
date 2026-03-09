@@ -217,7 +217,17 @@
 <header class="page-header">
   <div class="page-title">
     <h1>💒 <span>Banquet</span> Planner</h1>
-    <span class="page-subtitle">Wedding Table Arrangement</span>
+    <input type="text" id="page-subtitle-input" class="page-subtitle-editable"
+      value="Wedding Table Arrangement"
+      title="Click to rename — used as filename when exporting"
+      onkeydown="if(event.key==='Enter'||event.key==='Escape')this.blur()">
+    <div class="project-file-actions">
+      <button class="btn btn-ghost btn-sm" onclick="exportJSON()" title="Export layout as JSON file">📤 Export Layout Project</button>
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer" title="Import a previously exported layout project">
+        📂 Import Layout Project
+        <input type="file" id="file-input" accept=".json" onchange="onFileLoad(event)" style="display:none">
+      </label>
+    </div>
   </div>
   <div class="header-right">
 
@@ -246,39 +256,29 @@
         <button class="tb-icon-btn" onclick="resetZoom()" title="Reset zoom" style="font-size:9px;">↺</button>
       </div>
       <div class="toolbar-sep"></div>
-      <!-- Canvas actions -->
       <button class="btn btn-ghost btn-sm" onclick="undoHistory()" title="Undo" style="font-family:monospace;">↩ Undo</button>
       <button class="btn btn-ghost btn-sm" onclick="redoHistory()" title="Redo" style="font-family:monospace;">↪ Redo</button>
       <div class="toolbar-sep"></div>
-      <button class="btn btn-ghost btn-sm" onclick="openArrangeModal()" title="Auto-align tables: snaps each table to a clean grid while preserving its current row/column position">⊞ Align</button>
-      <button class="btn btn-ghost btn-sm" onclick="openAutoArrangeModal()" title="Auto-arrange all tables from scratch: grid, circle or rows layout">⊞ Arrange</button>
+      <button class="btn btn-ghost btn-sm" onclick="openArrangeModal()" title="Auto-align tables to a clean grid based on current positions">⊞ Align</button>
+      <button class="btn btn-ghost btn-sm" onclick="openAutoArrangeModal()" title="Auto-arrange all tables from scratch: grid, circle or rows">⊞ Arrange</button>
       <button class="btn btn-ghost btn-sm" id="grid-toggle-btn" onclick="toggleGrid()" title="Show/hide grid">⊞ Grid</button>
     </div>
 
-    <!-- ROW 2: file + guest actions -->
+    <!-- ROW 2: guest + image actions -->
     <div class="toolbar-row">
-      <!-- Guests group -->
-      <button class="btn btn-ghost btn-sm" onclick="openGuestListModal()">📋 Guest List</button>
+      <button class="btn btn-ghost btn-sm" onclick="openGuestListModal()" title="View and manage guest attendance">📋 Guest Attendance List</button>
       <div class="toolbar-sep"></div>
-      <!-- Data in/out group -->
-      <button class="btn btn-ghost btn-sm" onclick="exportJSON()" title="Export layout as JSON">📤 Export</button>
-      <label class="btn btn-ghost btn-sm" style="cursor:pointer" title="Import layout JSON">
-        📂 Import
-        <input type="file" id="file-input" accept=".json" onchange="onFileLoad(event)" style="display:none">
-      </label>
-      <label class="btn btn-ghost btn-sm" style="cursor:pointer" title="Import guests from CSV — upload a filled-in CSV file">
-        📊 Import CSV
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer" title="Import guests from a filled-in CSV file">
+        📊 Import Guest CSV
         <input type="file" id="csv-file-input" accept=".csv,.txt" onchange="onCSVLoad(event)" style="display:none">
       </label>
-      <button class="btn btn-ghost btn-sm" onclick="downloadCSVTemplate()" title="Download a blank CSV template to fill in and import">⬇ CSV Template</button>
+      <button class="btn btn-ghost btn-sm" onclick="downloadCSVTemplate()" title="Download a blank CSV template to fill in">⬇ Guest CSV Template</button>
       <div class="toolbar-sep"></div>
-      <!-- Image exports -->
-      <button class="btn btn-ghost btn-sm" onclick="openModal('modal-export-full')" title="Export full canvas as PNG image (auto-cropped)">🖼 Full Image</button>
-      <button class="btn btn-ghost btn-sm" onclick="openExportTablesModal()" title="Export selected tables as individual PNG images">🖼 Table Images</button>
+      <button class="btn btn-ghost btn-sm" onclick="openModal('modal-export-full')" title="Export entire canvas as PNG image">🖼 Export Full Image</button>
+      <button class="btn btn-ghost btn-sm" onclick="openExportTablesModal()" title="Export each table as a separate PNG image">🖼 Export Tables Images</button>
       <div class="toolbar-sep"></div>
-      <!-- Room + history -->
-      <button class="btn btn-ghost btn-sm" onclick="openModal('modal-room')" title="Set canvas / room size">🏛 Room</button>
-      <button class="btn btn-ghost btn-sm" onclick="toggleHistoryPanel()" title="View undo/redo history panel">⏪ History</button>
+      <button class="btn btn-ghost btn-sm" onclick="openSeatFinderShare()" title="Share / open mobile seat finder page">🔗 Seat Finder</button>
+      <button class="btn btn-ghost btn-sm" onclick="toggleHistoryPanel()" title="View undo/redo history">⏪ History</button>
       <div class="toolbar-sep"></div>
       <button class="btn btn-sm" onclick="window.print()">🖨 Print</button>
     </div>
@@ -292,9 +292,10 @@
     <!-- Mini mode icon strip (shown when collapsed) -->
     <div class="sb-mini-icons">
       <button class="sb-mini-btn" onclick="toggleSidebar()" title="Expand sidebar">›</button>
-      <button class="sb-mini-btn" title="Add guest" onclick="toggleSidebar()">👤</button>
-      <button class="sb-mini-btn" title="Bulk add" onclick="toggleSidebar()">👥</button>
-      <button class="sb-mini-btn" title="Add table" onclick="toggleSidebar()">🪑</button>
+      <button class="sb-mini-btn" title="Add Guest" onclick="toggleSidebar()">👤</button>
+      <button class="sb-mini-btn" title="Add Table" onclick="toggleSidebar()">🪑</button>
+      <button class="sb-mini-btn" title="Room Objects" onclick="toggleSidebar()">🎭</button>
+      <button class="sb-mini-btn" title="Unassigned Guests" onclick="toggleSidebar()">📋</button>
     </div>
     <div class="sb-section collapsible" data-collapse-key="wb-add-guest">
       <div class="sb-title">Add Guest</div>
@@ -509,11 +510,19 @@
       </div>
     </div>
     <div class="mfield">
-      <label>Margin from top-left <span style="color:var(--muted);font-weight:400;font-size:10px;">— offset of the entire layout</span></label>
+      <label>Margin top <span style="color:var(--muted);font-weight:400;font-size:10px;">— distance from the top edge</span></label>
       <div class="slider-row">
-        <input type="range"  id="arrange-margin"     min="0" max="300" value="60" style="flex:1">
-        <input type="number" id="arrange-margin-num" min="0" max="300" value="60" class="slider-num">
-        <span id="arrange-margin-lbl" class="slider-lbl">60px</span>
+        <input type="range"  id="arrange-margin-top"     min="0" max="300" value="60" style="flex:1">
+        <input type="number" id="arrange-margin-top-num" min="0" max="300" value="60" class="slider-num">
+        <span id="arrange-margin-top-lbl" class="slider-lbl">60px</span>
+      </div>
+    </div>
+    <div class="mfield">
+      <label>Margin left <span style="color:var(--muted);font-weight:400;font-size:10px;">— distance from the left edge</span></label>
+      <div class="slider-row">
+        <input type="range"  id="arrange-margin-left"     min="0" max="300" value="60" style="flex:1">
+        <input type="number" id="arrange-margin-left-num" min="0" max="300" value="60" class="slider-num">
+        <span id="arrange-margin-left-lbl" class="slider-lbl">60px</span>
       </div>
     </div>
 
@@ -677,30 +686,66 @@
   </div>
 </div>
 
-<!-- ROOM SIZE PRESETS MODAL -->
-<div class="modal-backdrop hidden" id="modal-room">
-  <div class="modal" style="max-width:420px;">
-    <h3>🏛 Room / Canvas Size</h3>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:12px;">Choose a preset or enter a custom canvas size. This only affects the canvas area — tables and guests are unchanged.</p>
-    <div class="mfield"><label>Preset</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-        <button class="btn btn-ghost btn-sm" onclick="applyRoomPreset('rectangular')" style="text-align:left;">📐 Rectangular Hall<br><span style="font-size:10px;color:var(--muted);">3000 × 2400</span></button>
-        <button class="btn btn-ghost btn-sm" onclick="applyRoomPreset('wide')" style="text-align:left;">📐 Wide Hall<br><span style="font-size:10px;color:var(--muted);">4200 × 1800</span></button>
-        <button class="btn btn-ghost btn-sm" onclick="applyRoomPreset('square')" style="text-align:left;">⬜ Square Room<br><span style="font-size:10px;color:var(--muted);">2800 × 2800</span></button>
-        <button class="btn btn-ghost btn-sm" onclick="applyRoomPreset('ballroom')" style="text-align:left;">🔵 Circular Ballroom<br><span style="font-size:10px;color:var(--muted);">3600 × 3600</span></button>
-        <button class="btn btn-ghost btn-sm" onclick="applyRoomPreset('lshape')" style="text-align:left;">📐 L-shaped Hall<br><span style="font-size:10px;color:var(--muted);">3600 × 2400</span></button>
-        <button class="btn btn-ghost btn-sm" onclick="applyRoomPreset('custom')" style="text-align:left;">✏ Custom…<br><span style="font-size:10px;color:var(--muted);">Enter own size</span></button>
+<!-- SEAT FINDER SHARE MODAL -->
+<div class="modal-backdrop hidden" id="modal-seat-finder">
+  <div class="modal" style="max-width:500px;">
+    <h3>🔗 Seat Finder — Guest Page</h3>
+
+    <!-- Step 1: Hosting URL -->
+    <div class="mfield">
+      <label>Step 1 — Your Netlify (or other hosting) URL
+        <span style="color:var(--muted);font-weight:400;font-size:10px;"> — free at netlify.com</span>
+      </label>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="text" id="sf-host-url" placeholder="https://my-wedding.netlify.app"
+          style="flex:1;font-size:12px;"
+          oninput="onSFHostChange(this.value)"
+          onblur="saveSFHostUrl(this.value)">
+        <a id="sf-open-link" href="#" target="_blank" class="btn btn-ghost btn-sm" style="white-space:nowrap;">↗ Test</a>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.6;">
+        👉 Go to <b>netlify.com</b> → drag &amp; drop your <code>planner-app/public</code> folder → copy the URL here.
+        The full guest page URL will be: <code id="sf-full-url-preview" style="color:var(--accent-dk);">—</code>
       </div>
     </div>
-    <div id="room-custom-fields" class="mfield" style="display:none;align-items:center;gap:10px;">
-      <label style="font-size:11px;color:var(--muted);white-space:nowrap;">W (px)</label>
-      <input type="number" id="room-w-inp" value="3000" min="800" max="10000" step="100" style="width:90px;">
-      <label style="font-size:11px;color:var(--muted);white-space:nowrap;">H (px)</label>
-      <input type="number" id="room-h-inp" value="2400" min="600" max="10000" step="100" style="width:90px;">
+
+    <!-- Step 2: Export JSON -->
+    <div class="mfield">
+      <label>Step 2 — Export guest data file</label>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="btn" onclick="exportGuestsJson()" style="gap:6px;">
+          ⬇ Download guests.json
+        </button>
+        <span style="font-size:11px;color:var(--muted);" id="sf-export-status">—</span>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:5px;line-height:1.6;">
+        After downloading, upload <code>guests.json</code> into the <code>pages/</code> folder on Netlify
+        (drag it onto your existing site deploy, or re-deploy the whole folder).
+      </div>
     </div>
+
+    <!-- Step 3: QR Code -->
+    <div class="mfield">
+      <label>Step 3 — Print or display the QR code at the venue entrance</label>
+      <div style="display:flex;gap:16px;align-items:flex-start;">
+        <div style="text-align:center;flex-shrink:0;">
+          <canvas id="sf-qr-canvas" style="border:4px solid white;border-radius:8px;width:150px;height:150px;display:block;"></canvas>
+          <div style="font-size:10px;color:var(--muted);margin-top:5px;">Scan to open on mobile</div>
+        </div>
+        <div style="flex:1;font-size:11px;color:var(--text2);line-height:1.7;padding-top:4px;">
+          QR code updates as you type the URL above.<br><br>
+          <b>Full guest workflow:</b><br>
+          1. Guest scans QR<br>
+          2. Choose relationship (Bride/Groom side)<br>
+          3. Choose first letter of last name<br>
+          4. Find name → see table &amp; seat<br>
+          5. Live search also available
+        </div>
+      </div>
+    </div>
+
     <div class="mfooter">
-      <button class="btn btn-ghost" onclick="closeModal('modal-room')">Cancel</button>
-      <button class="btn" onclick="applyRoomSize()">Apply</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-seat-finder')">Close</button>
     </div>
   </div>
 </div>
@@ -721,5 +766,6 @@
 <script src="../js/shared-nav.js"></script>
 <script src="../js/wedding.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </body>
 </html>

@@ -196,38 +196,6 @@ function applyGrid(){
 }
 
 // ══════════════════════════════════════════
-// CANVAS ROOM PRESETS
-// ══════════════════════════════════════════
-const ROOM_PRESETS = {
-  'rectangular': { w: 3000, h: 2400, label: 'Rectangular Hall' },
-  'wide':        { w: 4200, h: 1800, label: 'Wide Hall' },
-  'square':      { w: 2800, h: 2800, label: 'Square Room' },
-  'lshape':      { w: 3600, h: 2400, label: 'L-shaped Hall' },
-  'ballroom':    { w: 3600, h: 3600, label: 'Circular Ballroom' },
-  'custom':      { w: null,  h: null,  label: 'Custom…' },
-};
-function applyRoomPreset(key) {
-  const p = ROOM_PRESETS[key];
-  if (!p) return;
-  if (key === 'custom') {
-    document.getElementById('room-custom-fields').style.display = 'flex';
-    return;
-  }
-  document.getElementById('room-custom-fields').style.display = 'none';
-  document.getElementById('room-w-inp').value = p.w;
-  document.getElementById('room-h-inp').value = p.h;
-}
-function applyRoomSize() {
-  const w = parseInt(document.getElementById('room-w-inp').value) || 3000;
-  const h = parseInt(document.getElementById('room-h-inp').value) || 2400;
-  const cv = document.getElementById('canvas');
-  cv.style.width = w + 'px';
-  cv.style.height = h + 'px';
-  closeModal('modal-room');
-  toast('Canvas resized to ' + w + '×' + h, 'success');
-}
-
-// ══════════════════════════════════════════
 // ZOOM
 // ══════════════════════════════════════════
 function zoomCanvas(delta){
@@ -313,7 +281,8 @@ document.addEventListener('DOMContentLoaded', () => {
   _syncSlider('arrange-row-tol','arrange-row-tol-num','arrange-row-tol-lbl','px');
   _syncSlider('arrange-h-gap','arrange-h-gap-num','arrange-h-gap-lbl','px');
   _syncSlider('arrange-v-gap','arrange-v-gap-num','arrange-v-gap-lbl','px');
-  _syncSlider('arrange-margin','arrange-margin-num','arrange-margin-lbl','px');
+  _syncSlider('arrange-margin-top','arrange-margin-top-num','arrange-margin-top-lbl','px');
+  _syncSlider('arrange-margin-left','arrange-margin-left-num','arrange-margin-left-lbl','px');
   // Auto-Arrange sliders
   _syncSlider('aa-cols','aa-cols-num','aa-cols-lbl','');
   _syncSlider('aa-gap','aa-gap-num','aa-gap-lbl','px');
@@ -373,7 +342,8 @@ function applyArrange(){
   const rowTol = parseInt(document.getElementById('arrange-row-tol').value) || 20;
   const hGap   = parseInt(document.getElementById('arrange-h-gap').value)   || 60;
   const vGap   = parseInt(document.getElementById('arrange-v-gap').value)   || 60;
-  const margin = parseInt(document.getElementById('arrange-margin')?.value) ?? 60;
+  const marginTop  = parseInt(document.getElementById('arrange-margin-top')?.value)  ?? 60;
+  const marginLeft = parseInt(document.getElementById('arrange-margin-left')?.value) ?? 60;
 
   // 1. Sort tables by current Y centre, then X centre
   const sorted = [...tables].sort((a,b)=>{
@@ -399,9 +369,9 @@ function applyArrange(){
 
   // 4. Assign positions starting from margin
   mutate(()=>{
-    let curY = margin;
+    let curY = marginTop;
     rows.forEach(row=>{
-      let curX = margin;
+      let curX = marginLeft;
       row.tables.forEach(t=>{
         t.x = curX;
         t.y = curY;
@@ -2217,7 +2187,7 @@ function printGuestList(){
   const { seated, unassigned } = getFilteredGuestRows();
   const visCols = GL_COLS; // print all columns
   let rowNum=0, lastTableId=null;
-  const eventName = document.querySelector('.page-subtitle')?.textContent || 'Wedding Banquet';
+  const eventName = _getProjectName();
   const dateStr = new Date().toLocaleDateString(undefined, {year:'numeric',month:'long',day:'numeric'});
 
   const thRow = visCols.map(c=>`<th>${c.label}</th>`).join('');
@@ -2300,12 +2270,22 @@ function renderStats(){
 }
 
 // ── EXPORT / IMPORT JSON
+function _getProjectName(){
+  return (document.getElementById('page-subtitle-input')?.value||'').trim() || 'Wedding Table Arrangement';
+}
+function _setProjectName(name){
+  const el = document.getElementById('page-subtitle-input');
+  if(el && name) el.value = name;
+}
 function exportJSON(){
-  const data={v:3,at:new Date().toISOString(),gId,tId,oId,guests,tables,objects};
+  const name = _getProjectName();
+  const slug = name.replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase() || 'banquet';
+  const data={v:3,at:new Date().toISOString(),projectName:name,gId,tId,oId,guests,tables,objects};
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
-  a.download=`banquet-${new Date().toISOString().slice(0,10)}.json`;a.click();
-  toast('Layout exported!','success');
+  a.download=`${slug}.json`;a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Layout project exported!','success');
 }
 function onFileLoad(ev){
   const file=ev.target.files[0];if(!file)return;
@@ -2324,11 +2304,124 @@ function onFileLoad(ev){
         });
         gId=d.gId||1;tId=d.tId||1;oId=d.oId||1;
       });
-      render();toast('Layout imported!','success');
+      if(d.projectName) _setProjectName(d.projectName);
+      render();toast('Layout project imported!','success');
     }catch{toast('Invalid file','error');}
   };
   reader.readAsText(file);ev.target.value='';
 }
+
+// ══════════════════════════════════════════
+// SEAT FINDER — export guests.json + QR
+// ══════════════════════════════════════════
+const SF_HOST_KEY = 'sf-host-url';
+
+function _sfGuestFinderUrl(hostUrl) {
+  const base = (hostUrl || '').replace(/\/+$/, '');
+  return base ? base + '/pages/seat-finder.html' : '';
+}
+
+function openSeatFinderShare() {
+  const savedHost = localStorage.getItem(SF_HOST_KEY) || '';
+  const hostEl = document.getElementById('sf-host-url');
+  if (hostEl) hostEl.value = savedHost;
+  _updateSFPreview(savedHost);
+  _drawSFQR(_sfGuestFinderUrl(savedHost));
+  // Show export status
+  const statusEl = document.getElementById('sf-export-status');
+  const lastTs = localStorage.getItem('sf-export-time');
+  if (statusEl) statusEl.textContent = lastTs ? '✅ Last exported ' + new Date(lastTs).toLocaleString() : 'Not yet exported';
+  openModal('modal-seat-finder');
+}
+
+function onSFHostChange(val) {
+  _updateSFPreview(val);
+  _drawSFQR(_sfGuestFinderUrl(val));
+  const link = document.getElementById('sf-open-link');
+  if (link) link.href = _sfGuestFinderUrl(val) || '#';
+}
+
+function saveSFHostUrl(val) {
+  localStorage.setItem(SF_HOST_KEY, val.trim());
+}
+
+function _updateSFPreview(hostUrl) {
+  const el = document.getElementById('sf-full-url-preview');
+  if (!el) return;
+  const full = _sfGuestFinderUrl(hostUrl);
+  el.textContent = full || '— enter URL above —';
+}
+
+function _sfBuildPayload() {
+  return {
+    projectName : _getProjectName(),
+    exportedAt  : new Date().toISOString(),
+    categories  : Object.entries(CAT_FULL).map(([k,v]) => ({ key:k, label:v })),
+    guests      : guests.map(g => {
+      const t = tables.find(x => x.id === g.tableId);
+      return {
+        id        : g.id,
+        lastName  : g.lastName  || '',
+        firstName : g.firstName || '',
+        nickName  : g.nickName  || '',
+        cat       : g.cat       || '',
+        group     : g.group     || '',
+        tableName : t ? t.name  : '',
+        tableSeq  : t ? (t.seq || 0) : 9999,
+        seat      : g.tableId ? (g.seat !== undefined ? g.seat + 1 : '—') : '—',
+        assigned  : !!g.tableId,
+      };
+    }),
+  };
+}
+
+function exportGuestsJson() {
+  const payload = _sfBuildPayload();
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'guests.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  const now = new Date().toISOString();
+  localStorage.setItem('sf-export-time', now);
+  const statusEl = document.getElementById('sf-export-status');
+  if (statusEl) statusEl.textContent = '✅ Exported at ' + new Date(now).toLocaleString();
+  toast('guests.json downloaded — upload it to your Netlify pages/ folder', 'success');
+}
+
+function _drawSFQR(url) {
+  const canvas = document.getElementById('sf-qr-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  if (!url || !window.QRCode) {
+    ctx.fillStyle = '#ddd';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Enter URL above', canvas.width/2, canvas.height/2);
+    return;
+  }
+  const tmp = document.createElement('div');
+  tmp.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+  document.body.appendChild(tmp);
+  new QRCode(tmp, { text: url, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
+  setTimeout(() => {
+    const img = tmp.querySelector('img');
+    const qc  = tmp.querySelector('canvas');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (img) {
+      const draw = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      if (img.complete) draw(); else img.onload = draw;
+    } else if (qc) {
+      ctx.drawImage(qc, 0, 0, canvas.width, canvas.height);
+    }
+    tmp.remove();
+  }, 150);
+}
+
 
 // ── UTILS
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}

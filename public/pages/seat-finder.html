@@ -211,9 +211,7 @@
     .viz-guest-card {
       background: var(--bg); border-radius: 10px; border: 1px solid var(--border);
       padding: 12px 14px; display: flex; align-items: center; gap: 12px;
-      cursor: pointer; transition: background .1s;
     }
-    .viz-guest-card:hover, .viz-guest-card:active { background: var(--accent-lt); }
     .viz-seat-circle {
       width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
@@ -221,9 +219,9 @@
     }
     .viz-guest-info { flex: 1; min-width: 0; }
     .viz-guest-name  { font-size: 16px; font-weight: 600; }
+    .viz-guest-name--full { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .viz-table-name  { font-size: 13px; color: var(--text2); margin-top: 1px; }
     .viz-seat-label  { font-size: 11px; color: var(--muted); margin-top: 1px; }
-    .viz-tap-hint    { font-size: 11px; color: var(--accent); margin-left: auto; flex-shrink: 0; }
 
     /* Tooltip modal */
     #seat-tooltip {
@@ -852,9 +850,8 @@ function buildListBlock(list) {
     var color = g.assigned ? getTableColor(g.tableSeq) : '#ccc';
     var tname = esc(g.tableName||(t('unassigned')));
     var isSel = selectedIds[g.id] ? ' selected' : '';
-    var chk   = selectedIds[g.id] ? '&#10003;' : '';
     html += '<div class="guest-item'+isSel+'" data-id="'+esc(String(g.id))+'" onclick="toggleSelect(\''+esc(String(g.id))+'\')">'
-          + '<div class="g-sel-box">'+chk+'</div>'
+          + '<div class="g-sel-box"></div>'
           + '<div class="g-table-strip" style="background:'+color+'"></div>'
           + '<div class="g-name">'+name+nick+'</div>'
           + '<div class="g-table-col">'
@@ -894,9 +891,9 @@ function showViz() {
     var tableName   = highlighted[0].tableName || '';
     var tablemates  = sfGuests.filter(function(g){ return g.tableSeq === seq && g.assigned; });
 
-    // Build the accordion block
+    // Build the accordion block — all open by default
     var block = document.createElement('div');
-    block.className = 'viz-table-block' + (isSingle || idx === 0 ? ' open' : '');
+    block.className = 'viz-table-block open';
     block.id = 'vtb-' + seq;
 
     // Header
@@ -911,22 +908,21 @@ function showViz() {
       + '<div class="viz-table-chevron">&#8964;</div>'
       + '</div>';
 
-    // Body: SVG diagram + guest cards
+    // Body: SVG diagram + guest cards (no tooltip — info is self-evident in the card)
     var svgSize   = Math.min(window.innerWidth - 64, 320);
     var svgMarkup = buildTableSVG(tablemates, highlighted, color, svgSize, seq);
 
     var guestCards = '<div class="viz-guest-cards">';
     highlighted.forEach(function(g) {
-      var name = (g.lastName||'')+(g.firstName?', '+g.firstName:'');
+      var fullName = (g.lastName||'')+(g.firstName?' '+g.firstName:'');
       guestCards +=
-        '<div class="viz-guest-card" onclick="showTooltip(\''+esc(String(g.id))+'\')">'
+        '<div class="viz-guest-card">'
         + '<div class="viz-seat-circle" style="background:'+color+'">'+esc(String(g.seat))+'</div>'
         + '<div class="viz-guest-info">'
-        + '<div class="viz-guest-name">'+esc(name)+'</div>'
+        + '<div class="viz-guest-name viz-guest-name--full">'+esc(fullName)+'</div>'
         + '<div class="viz-table-name">'+esc(g.tableName||t('unassigned'))+'</div>'
         + '<div class="viz-seat-label">'+t('seat')+' '+esc(String(g.seat))+'</div>'
         + '</div>'
-        + '<div class="viz-tap-hint">&#9432;</div>'
         + '</div>';
     });
     guestCards += '</div>';
@@ -1028,13 +1024,15 @@ function buildTableSVG(tablemates, highlighted, color, size, tableSeq) {
       );
       // Name label — positioned outside orbit, always readable
       if (guest) {
-        var label = (guest.lastName || '').substring(0, 4);
+        var fullLbl = (guest.lastName||'') + (guest.firstName ? ' '+guest.firstName : '');
+        // Max chars that fit comfortably in the label zone
+        if (fullLbl.length > 6) fullLbl = fullLbl.substring(0, 5) + '\u2026';
         var lx    = cx + labelR * Math.cos(angle);
         var ly    = cy + labelR * Math.sin(angle);
         svgParts.push(
           '<text x="'+lx.toFixed(1)+'" y="'+(ly+0.5).toFixed(1)+'" text-anchor="middle"'
-          + ' dominant-baseline="middle" fill="'+color+'" font-weight="700"'
-          + ' font-size="'+fs.nameLabel+'" '+onclick+' style="cursor:pointer">'+escSVG(label)+'</text>'
+          + ' dominant-baseline="middle" fill="'+color+'" font-weight="600"'
+          + ' font-size="'+fs.nameLabel+'">'+escSVG(fullLbl)+'</text>'
         );
       }
     } else {

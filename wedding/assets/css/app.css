@@ -123,6 +123,12 @@ body {
 .app-nav .nav-save-status .save-dot.saved   { background: #60f0a0; }
 .app-nav .nav-save-status .save-dot.unsaved { background: #f0c060; }
 .app-nav .nav-save-status .save-dot.error   { background: #f06060; }
+.nav-logout {
+  background: none; border: 1px solid #2a3448; border-radius: 6px;
+  color: #6b7a99; font-size: 11px; font-family: inherit;
+  padding: 4px 10px; cursor: pointer; transition: all .15s;
+}
+.nav-logout:hover { border-color: #f06060; color: #f06060; }
 
 .autosave-toggle {
   display: flex; align-items: center; gap: 6px;

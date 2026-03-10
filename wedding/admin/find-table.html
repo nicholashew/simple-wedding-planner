@@ -21,17 +21,33 @@
       background: var(--bg); color: var(--text); min-height: 100dvh;
     }
 
-    /* Top nav */
-    .top-nav {
-      background: var(--surface); border-bottom: 2px solid var(--border);
-      padding: 0 16px; height: 44px;
-      display: flex; align-items: center; gap: 12px;
-      position: sticky; top: 0; z-index: 100;
+    /* App nav (shared admin style) */
+    .app-nav {
+      display: flex; align-items: center;
+      background: #0a0c10; border-bottom: 2px solid #1e2535;
+      padding: 0 20px; height: 44px;
+      position: sticky; top: 0; z-index: 1000; gap: 0;
+      font-family: 'Syne', sans-serif; flex-shrink: 0;
     }
-    .top-nav a { color: var(--muted); text-decoration: none; font-size: 12px; font-weight: 600; }
-    .top-nav a:hover { color: var(--text); }
-    .top-nav .brand { font-size: 13px; font-weight: 800; color: var(--accent); margin-right: 12px; }
-    .top-nav .sep { color: var(--border2); }
+    .app-nav .nav-brand {
+      font-size: 13px; font-weight: 800; color: #f0c060;
+      letter-spacing: -0.3px; margin-right: 28px; white-space: nowrap; text-decoration: none;
+    }
+    .app-nav .nav-links { display: flex; gap: 4px; flex: 1; }
+    .app-nav .nav-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 8px;
+      font-size: 12px; font-weight: 600; color: #6b7a99;
+      text-decoration: none; transition: background .15s, color .15s;
+    }
+    .app-nav .nav-link:hover { background: #1e2535; color: #e8eaf0; }
+    .app-nav .nav-link.active { background: #1e2535; color: #f0c060; border-bottom: 2px solid #f0c060; border-radius: 8px 8px 0 0; }
+    .nav-logout {
+      margin-left: auto; background: none; border: 1px solid #2a3448; border-radius: 6px;
+      color: #6b7a99; font-size: 11px; font-family: inherit;
+      padding: 4px 10px; cursor: pointer; transition: all .15s;
+    }
+    .nav-logout:hover { border-color: #f06060; color: #f06060; }
 
     /* Layout */
     .main { max-width: 640px; margin: 0 auto; padding: 20px 16px 60px; }
@@ -180,14 +196,15 @@
 </head>
 <body>
 
-<nav class="top-nav">
-  <span class="brand">&#128274; Admin</span>
-  <span class="sep">|</span>
-  <a href="index.html">Dashboard</a>
-  <span class="sep">|</span>
-  <a href="wedding.html">Wedding</a>
-  <span class="sep">|</span>
-  <a href="homestay.html">Homestay</a>
+<nav class="app-nav">
+  <a class="nav-brand" href="index.html">&#128274;&#128146; Admin</a>
+  <div class="nav-links">
+    <a class="nav-link" href="homestay.html">&#127968; Homestay</a>
+    <a class="nav-link" href="wedding.html">&#128146; Wedding</a>
+    <a class="nav-link active" href="find-table.html">&#128269; Find Table</a>
+    <a class="nav-link" href="/" target="_blank">&#128279; Guest Site</a>
+  </div>
+  <button class="nav-logout" onclick="(function(){document.cookie='gw_admin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/admin;';window.location.replace('/admin/login.html');})()">&#8592; Logout</button>
 </nav>
 
 <div class="main">
@@ -260,6 +277,10 @@
 <!-- jsQR -->
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script>
+// Auth guard
+if (!document.cookie.includes('gw_admin=1')) {
+  window.location.replace('/admin/login.html');
+}
 // ═══════════════════════════════
 // State
 // ═══════════════════════════════

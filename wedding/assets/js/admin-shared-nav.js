@@ -4,6 +4,11 @@
  * Each page calls: initSharedNav({ key, getState, setState, onSave, onLoad })
  */
 
+// Auth guard — redirect to login if not authenticated
+if (!document.cookie.includes('gw_admin=1')) {
+  window.location.replace('/admin/login.html');
+}
+
 (function () {
 
   // ── Detect Express (path-based) vs static file hosting
@@ -132,6 +137,7 @@
           onmouseover="this.style.borderColor='#f06060';this.style.color='#f06060'"
           onmouseout="this.style.borderColor='#2a3448';this.style.color='#6b7a99'"
         >🗑 Clear</button>
+        <button class="nav-logout" id="nav-logout-btn">&#8592; Logout</button>
       </div>
     `;
     document.body.insertBefore(nav, document.body.firstChild);
@@ -143,6 +149,12 @@
       const next = current === 'dark' ? 'light' : 'dark';
       applyTheme(next);
       localStorage.setItem(getThemeKey(), next);
+    });
+
+    // Wire logout
+    document.getElementById('nav-logout-btn').addEventListener('click', () => {
+      document.cookie = 'gw_admin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/admin;';
+      window.location.replace('/admin/login.html');
     });
   }
 

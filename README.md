@@ -1,108 +1,150 @@
-# 🏠💒 Planner App
+# Simple Wedding Planner
 
-A Node.js web app with two planning tools:
-
-- **Homestay Planner** — assign guests to rooms with drag & drop
-- **Wedding Banquet Planner** — arrange tables on a canvas, assign seats by category
+A static wedding banquet website with an admin planner tool. Designed for deployment on Cloudflare Pages or Vercel — no build step required.
 
 ---
 
-## Project Structure
+## Repository Structure
 
-```bash
-planner-app/
+```text
+simple-wedding-planner/
+├── wedding/                      # ← Deployable static site (root of deployment)
+│   ├── index.html                # Public home page
+│   ├── table.html                # Find My Table (QR code scan)
+│   ├── menu.html                 # Wedding menu
+│   ├── video.html                # Love story video (time-locked)
+│   ├── gallery.html              # Photo gallery
+│   ├── wish.html                 # Send wishes (Google Form embed)
+│   ├── robots.txt                # Disallow all bots
+│   │
+│   ├── assets/
+│   │   ├── css/
+│   │   │   ├── gw.css            # Shared public styles (design tokens, header, layout)
+│   │   │   ├── app.css           # Admin planner styles
+│   │   │   └── shared.css        # Admin nav styles
+│   │   ├── js/
+│   │   │   ├── gw.js             # Shared public JS (i18n, data loader, QR encode/decode)
+│   │   │   ├── admin-shared-nav.js
+│   │   │   ├── admin-wedding.js
+│   │   │   └── admin-homestay.js
+│   │   └── data/
+│   │       ├── config.json       # Event config (couple names, date, menu, video, etc.)
+│   │       ├── guests.json       # Guest list with table assignments
+│   │       ├── banner.jpg        # Home page banner image
+│   │       ├── floral-background.jpg
+│   │       └── montage.mp4       # Love story video
+│   │
+│   ├── admin/
+│   │   ├── login.html            # Admin login (PIN-based, cookie auth)
+│   │   ├── index.html            # Admin dashboard
+│   │   ├── wedding.html          # Wedding seating planner (canvas-based)
+│   │   ├── homestay.html         # Homestay room assignment planner
+│   │   └── find-table.html       # Admin QR scan + guest search tool
+│   │
+│   ├── server.js                 # Express static server (local dev only)
+│   └── package.json
 │
-├── public/                   # ← Everything here is static and deployable
-│   ├── index.html            # Home / landing page
-│   ├── css/
-│   │   ├── shared.css        # Nav bar, save status, toast — shared by all pages
-│   │   └── app.css           # app styles
-│   ├── js/
-│   │   ├── shared-nav.js     # Nav bar injection + localStorage save/load/autosave
-│   │   ├── homestay.js       # Homestay planner logic
-│   │   └── wedding.js        # Wedding banquet planner logic
-│   └── pages/
-│       ├── homestay.html     # Homestay planner page
-│       └── wedding.html      # Wedding banquet planner page
-│
-├── server.js                 # Express server (dev + self-hosting)
-├── package.json
+├── sample-webapp/                # Reference app (source of admin planner UI)
+├── requirements/                 # Original requirements docs
 └── README.md
 ```
 
-### Why this structure?
+---
 
-| Question | Answer |
-|---|---|
-| **Split JS/CSS into folders?** | Yes — `public/css/` and `public/js/`. Cleaner imports, easier caching, scales well. |
-| **Shared HTML layout?** | The nav is injected at runtime by `shared-nav.js` — no server-side templating needed. For a larger app, consider Vite or EJS/Handlebars. |
-| **Shared CSS?** | `shared.css` holds the nav bar, save-status indicator, toast, and toggle styles. Each page loads both `shared.css` and its own CSS file. |
-| **Shared JS?** | `shared-nav.js` is loaded on every page and handles: nav injection, localStorage read/write, autosave timer, and the global `markUnsaved()`. |
+## Public Pages
+
+| Page | URL | Description |
+|---|---|---|
+| Home | `/` | Nav cards linking to all sections |
+| Find My Table | `/table.html` | Guests scan invitation QR code to find their seat |
+| Wedding Menu | `/menu.html` | Banquet courses from `config.json` |
+| Love Story Video | `/video.html` | Time-locked video (unlocks at configured date/time) |
+| Photo Gallery | `/gallery.html` | Photo grid with lightbox, loaded from `config.json` |
+| Send Wishes | `/wish.html` | Embedded Google Form |
+
+All public pages support **English / Chinese (Traditional)** via the language toggle. Translations are managed in `assets/js/gw.js`.
 
 ---
 
-## Getting Started
+## Admin Pages
 
-### Prerequisites
+Protected by a PIN-based login (credentials in `config.json` → `adminUser` / `adminPin`). Auth is stored as a `gw_admin=1` session cookie.
 
-- Node.js v18+
+| Page | URL | Description |
+|---|---|---|
+| Login | `/admin/login.html` | PIN login |
+| Dashboard | `/admin/` | Links to all admin tools |
+| Wedding Planner | `/admin/wedding.html` | Canvas table layout, seat assignment, QR generation |
+| Homestay Planner | `/admin/homestay.html` | Drag & drop room assignment |
+| Find Table (Admin) | `/admin/find-table.html` | QR scan + guest name search |
 
-### Install
+---
+
+## Configuration
+
+Edit `wedding/assets/data/config.json`:
+
+```json
+{
+  "projectName": "Smith & Jones Wedding",
+  "eventDate": "2026-03-10",
+  "adminUser": "admin",
+  "adminPin": "1234",
+  "montage": {
+    "videoUrl": "/assets/data/montage.mp4",
+    "availableDate": "2026-03-10",
+    "availableFrom": "18:00",
+    "availableTo": "23:00"
+  },
+  "googleFormUrl": "https://docs.google.com/forms/d/e/YOUR_ID/viewform?embedded=true",
+  "gallery": ["/assets/data/photo1.jpg", "/assets/data/photo2.jpg"],
+  "menu": [
+    {
+      "courseEn": "Starter",
+      "courseZh": "頭盤",
+      "items": [
+        { "nameEn": "Dish Name", "nameZh": "菜名", "emoji": "🍤", "descEn": "...", "descZh": "..." }
+      ]
+    }
+  ]
+}
+```
+
+Guest data is managed via the admin Wedding Planner and exported to `assets/data/guests.json`.
+
+---
+
+## Local Development
 
 ```bash
+cd wedding
 npm install
-```
-
-### Development (hot reload)
-
-#### Option A — Express + Browser-Sync proxy
-
-```bash
-npm run dev
-```
-
-Opens at `http://localhost:3001`. Browser-Sync proxies Express (port 3000) and reloads the browser on any change to `public/**`. `nodemon` restarts the server when `server.js` changes.
-
-#### Option B — Static-only (no Node server)
-
-```bash
-npm run dev:static
-```
-
-Opens at `http://localhost:3000/index.html`. Browser-Sync serves `public/` directly — fastest option for frontend-only work.
-
-### Production
-
-```bash
 npm start
 # → http://localhost:3000
 ```
 
+Requires Node.js v18+. Uses Express + nodemon for hot reload.
+
 ---
 
-## localStorage — Saving Data
+## Deployment
 
-Both planners save state to `localStorage` so nothing is lost on page refresh.
+Deploy the `wedding/` folder as the site root (no build step needed).
 
-### Save modes
+**Cloudflare Pages / Vercel:** set the root directory to `wedding/` and leave the build command empty.
 
-| Mode | How |
+The site is fully static — `server.js` and `node_modules` are not required in production.
+
+---
+
+## Key Design Decisions
+
+| Question | Answer |
 |---|---|
-| **Manual save** | Click 💾 Save in the nav bar |
-| **Auto-save** | Toggle the switch — saves 30 seconds after any change |
-| **Clear** | Click 🗑 Clear in the nav bar (prompts for confirmation) |
-
-### Storage keys
-
-| Page | localStorage key |
-|---|---|
-| Homestay | `homestay-v1` |
-| Wedding | `wedding-banquet-v1` |
-
-## Keyboard Shortcuts
-
-| Shortcut | Action |
-|---|---|
-| `Enter` | Submit the focused input |
-| `Escape` | Close open modals |
-| `Ctrl/Cmd+Z` | Undo last action (Homestay only) |
+| Framework? | Pure static HTML — no build step, instant deploy |
+| CSS approach? | Custom CSS with design tokens (`--accent`, `--gold`, `--bg`, etc.) |
+| i18n? | `data-i18n` attributes + `GW.setLang()` in `gw.js`; lang stored in `localStorage` |
+| QR format? | `btoa(JSON.stringify([guestId, ...]))` — decoded client-side via jsQR |
+| Video lock? | Client-side time check against `availableDate` + `availableFrom` in config |
+| Admin auth? | PIN stored in `config.json`, checked client-side, cookie set for session |
+| Bot protection? | `robots.txt` with `Disallow: /` + `noindex` meta on every page |

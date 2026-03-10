@@ -5,6 +5,7 @@
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Find Your Seat</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     :root {
       --bg:        #faf9f6;
@@ -32,10 +33,10 @@
     /* ---- Header ---- */
     .sf-header {
       background: var(--surface); border-bottom: 1px solid var(--border);
-      padding: 14px 16px 12px; position: sticky; top: 0; z-index: 50;
+      padding: 14px 16px 0; position: sticky; top: 0; z-index: 50;
       box-shadow: 0 2px 12px rgba(0,0,0,.07);
     }
-    .sf-header-inner { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .sf-header-inner { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding-bottom: 12px; }
     .sf-header-text { flex: 1; text-align: center; }
     .sf-header .event-name { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
     .sf-header h1 { font-family: Georgia,'Times New Roman',serif; font-size: 24px; font-weight: 400; color: var(--text); }
@@ -51,8 +52,27 @@
     }
     .lang-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
+    /* ---- Breadcrumb ---- */
+    .breadcrumb {
+      display: none; align-items: center; gap: 0;
+      padding: 7px 16px; border-top: 1px solid var(--border);
+      background: var(--bg); overflow-x: auto; white-space: nowrap;
+      scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    }
+    .breadcrumb::-webkit-scrollbar { display: none; }
+    .breadcrumb.visible { display: flex; }
+    .bc-item {
+      font-size: 12px; color: var(--muted); cursor: pointer; font-family: inherit;
+      background: none; border: none; padding: 2px 4px; border-radius: 4px;
+      white-space: nowrap; transition: color .12s; flex-shrink: 0;
+    }
+    .bc-item:hover { color: var(--accent-dk); }
+    .bc-item.bc-current { color: var(--text2); font-weight: 600; cursor: default; pointer-events: none; }
+    .bc-sep { font-size: 11px; color: var(--border); padding: 0 1px; flex-shrink: 0; user-select: none; }
+    .bc-home { font-size: 13px; }
+
     /* ---- Main ---- */
-    .sf-main { flex: 1; padding: 18px 16px 80px; max-width: 500px; margin: 0 auto; width: 100%; }
+    .sf-main { flex: 1; padding: 18px 16px 120px; max-width: 500px; margin: 0 auto; width: 100%; }
 
     /* Top back button (small, inline) */
     .back-btn-top {
@@ -62,13 +82,12 @@
     }
     .back-btn-top:hover { color: var(--accent); }
 
-    /* Bottom back button (large, fixed-feel) */
+    /* Bottom back button — lives inside fixed bottom bar */
     .back-btn-bottom {
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-      margin: 28px auto 0; padding: 14px 28px;
-      background: var(--surface); border: 2px solid var(--border); border-radius: 50px;
-      cursor: pointer; font-size: 16px; font-weight: 600; color: var(--text2);
-      font-family: inherit; transition: all .15s; width: fit-content; min-width: 160px;
+      width: 100%; padding: 13px; border-radius: 50px; border: 1.5px solid var(--border);
+      cursor: pointer; font-size: 15px; font-weight: 600; color: var(--text2);
+      font-family: inherit; transition: all .15s; background: var(--surface);
+      display: flex; align-items: center; justify-content: center; gap: 6px;
     }
     .back-btn-bottom:hover, .back-btn-bottom:active { border-color: var(--accent); color: var(--accent); background: var(--accent-lt); }
 
@@ -145,16 +164,17 @@
     .g-seat-num { font-size: 11px; color: var(--muted); white-space: nowrap; }
     .g-table-strip { width: 4px; flex-shrink: 0; border-radius: 3px; align-self: stretch; min-height: 40px; }
 
-    /* ---- Confirm / Find seat button ---- */
+    /* ---- Universal fixed bottom bar ---- */
     .find-seat-bar {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
       background: var(--surface); border-top: 1px solid var(--border);
-      padding: 12px 16px; display: none;
+      padding: 10px 16px 12px; display: none;
       box-shadow: 0 -4px 20px rgba(0,0,0,.08);
+      max-width: 500px; margin: 0 auto;
     }
-    .find-seat-bar.visible { display: block; }
+    .find-seat-bar.visible { display: flex; flex-direction: column; gap: 8px; left: 50%; right: auto; transform: translateX(-50%); width: 100%; max-width: 500px; }
     .find-seat-btn {
-      width: 100%; padding: 16px; border-radius: 50px; border: none; cursor: pointer;
+      width: 100%; padding: 15px; border-radius: 50px; border: none; cursor: pointer;
       background: var(--accent); color: #fff; font-size: 17px; font-weight: 700;
       font-family: inherit; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 8px;
     }
@@ -162,6 +182,45 @@
     .find-seat-count {
       background: rgba(255,255,255,.25); border-radius: 50px; padding: 2px 10px; font-size: 14px;
     }
+
+    /* ---- Toggle names button (table-direct screen) ---- */
+    .toggle-names-btn {
+      width: 100%; padding: 11px; border-radius: 50px; border: 1.5px solid var(--border);
+      cursor: pointer; font-size: 14px; font-weight: 600; color: var(--text2);
+      font-family: inherit; transition: all .15s; background: var(--surface);
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .toggle-names-btn:hover, .toggle-names-btn:active { border-color: var(--accent); color: var(--accent); background: var(--accent-lt); }
+    .toggle-names-btn.active { background: var(--accent-lt); border-color: var(--accent); color: var(--accent-dk); }
+
+    /* ---- Nick unlock modal ---- */
+    #nick-modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 400;
+      background: rgba(0,0,0,.45); align-items: center; justify-content: center;
+    }
+    #nick-modal-overlay.visible { display: flex; }
+    #nick-modal {
+      background: var(--surface); border-radius: 16px; padding: 28px 24px;
+      width: calc(100% - 48px); max-width: 340px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.25);
+    }
+    #nick-modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    #nick-modal p  { font-size: 13px; color: var(--text2); margin-bottom: 16px; }
+    #nick-pw-input {
+      width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 15px; font-family: inherit; outline: none; transition: border-color .15s; box-sizing: border-box;
+    }
+    #nick-pw-input:focus { border-color: var(--gold); }
+    #nick-pw-error { font-size: 12px; color: #c0392b; margin-top: 6px; min-height: 16px; }
+    .nick-modal-btns { display: flex; gap: 10px; margin-top: 16px; }
+    .nick-modal-btns button {
+      flex: 1; padding: 12px; border-radius: 50px; font-size: 15px; font-weight: 600;
+      font-family: inherit; cursor: pointer; transition: all .15s; border: 1.5px solid var(--border);
+    }
+    #nick-confirm-btn { background: var(--accent); color: #fff; border-color: var(--accent); }
+    #nick-confirm-btn:hover { background: var(--accent-dk); }
+    #nick-cancel-btn  { background: var(--surface); color: var(--text2); }
+    #nick-cancel-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-lt); }
 
     .alpha-section-head { font-family: Georgia,serif; font-size: 28px; font-weight: 400; color: var(--text); padding: 18px 0 6px; }
 
@@ -179,7 +238,37 @@
     #no-data-banner p  { font-size: 13px; color: var(--text2); line-height: 1.9; text-align: left; }
     #no-data-banner code { background: #f0ece4; border-radius: 3px; padding: 1px 5px; font-size: 12px; }
 
-    /* ---- Seat Visualization Screen ---- */
+    /* ---- View All Tables button (below cat-grid on screen-cat) ---- */
+    .view-all-btn {
+      width: 100%; margin-top: 14px; padding: 15px 20px;
+      background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+      font-family: inherit; font-size: 15px; font-weight: 600; color: var(--text2);
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all .15s;
+    }
+    .view-all-btn:hover, .view-all-btn:active { border-color: var(--gold); color: var(--accent-dk); background: var(--accent-lt); }
+    .view-all-btn .vab-icon { font-size: 18px; }
+
+    /* ---- Table list screen (screen-tables) ---- */
+    .table-list { display: flex; flex-direction: column; gap: 10px; }
+    .table-list-item {
+      background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+      padding: 16px; display: flex; align-items: center; gap: 14px;
+      cursor: pointer; transition: all .15s; text-decoration: none;
+    }
+    .table-list-item:hover, .table-list-item:active { border-color: var(--gold); background: var(--accent-lt); transform: translateY(-1px); }
+    .tli-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+    .tli-info { flex: 1; min-width: 0; }
+    .tli-name { font-size: 16px; font-weight: 700; }
+    .tli-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .tli-arrow { font-size: 18px; color: var(--muted); flex-shrink: 0; }
+
+    /* ---- Table direct view (screen-table-direct) ---- */
+    .tdir-header { margin-bottom: 16px; }
+    .tdir-header h2 { font-family: Georgia,serif; font-size: 22px; font-weight: 400; }
+    .tdir-header p  { font-size: 13px; color: var(--text2); margin-top: 4px; }
+    .tdir-qr-wrap { text-align: center; margin: 18px 0 6px; }
+    .tdir-qr-wrap canvas, .tdir-qr-wrap img { border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,.10); }
     #screen-viz { padding-bottom: 20px; }
     .viz-intro { margin-bottom: 14px; }
     .viz-intro h2 { font-family: Georgia,serif; font-size: 20px; font-weight: 400; margin-bottom: 4px; }
@@ -220,8 +309,7 @@
     .viz-guest-info { flex: 1; min-width: 0; }
     .viz-guest-name  { font-size: 16px; font-weight: 600; }
     .viz-guest-name--full { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .viz-table-name  { font-size: 13px; color: var(--text2); margin-top: 1px; }
-    .viz-seat-label  { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .viz-guest-nick-name { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     /* Tooltip modal */
     #seat-tooltip {
@@ -274,6 +362,7 @@
       <button class="lang-btn"        id="btn-lang-zh" onclick="setLang('zh')">&#31616;</button>
     </div>
   </div>
+  <div class="breadcrumb" id="breadcrumb"></div>
 </div>
 
 <div class="sf-main">
@@ -288,6 +377,36 @@
   <div class="screen active" id="screen-cat">
     <div class="step-label" id="t-step1">STEP 1 &mdash; WHO ARE YOU HERE FOR?</div>
     <div class="cat-grid" id="cat-grid"></div>
+    <button class="view-all-btn" id="view-all-btn" onclick="showTableList()">
+      <span class="vab-icon">&#128085;</span>
+      <span id="t-view-all-btn">View All Tables</span>
+    </button>
+  </div>
+
+  <!-- Screen 5: Table list (all tables) -->
+  <div class="screen" id="screen-tables">
+    <button class="back-btn-top" onclick="showScreen('cat')">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span id="t-back-tables-txt">Back</span>
+    </button>
+    <div class="step-label" id="t-tables-label">ALL TABLES</div>
+    <div class="table-list" id="table-list-area"></div>
+  </div>
+
+  <!-- Screen 6: Table direct view (via #table=N hash or table list tap) -->
+  <div class="screen" id="screen-table-direct">
+    <button class="back-btn-top" id="tdir-back-btn" onclick="showScreen('tables')">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span id="tdir-back-txt">Back</span>
+    </button>
+    <div class="tdir-header">
+      <h2 id="tdir-table-name"></h2>
+    </div>
+    <div id="tdir-svg-area"></div>
+    <div class="tdir-qr-wrap" id="tdir-qr-wrap" style="display:none">
+      <div id="tdir-qr-canvas"></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;" id="tdir-qr-label">Scan to go directly to this table</div>
+    </div>
   </div>
 
   <!-- Screen 2: Alphabet -->
@@ -298,9 +417,6 @@
     </button>
     <div class="step-label" id="alpha-step-label">STEP 2 &mdash; FIRST LETTER OF LAST NAME</div>
     <div class="alpha-grid" id="alpha-grid"></div>
-    <button class="back-btn-bottom" id="alpha-bottom-back" onclick="showScreen('cat')">
-      <span id="alpha-bottom-back-txt">Back</span>
-    </button>
   </div>
 
   <!-- Screen 3: Guest list + search -->
@@ -316,9 +432,6 @@
       <button class="clear-btn" onclick="clearSFSearch()">&#10005;</button>
     </div>
     <div id="guest-list-area"></div>
-    <button class="back-btn-bottom" id="list-bottom-back" onclick="goBackFromList()">
-      <span id="list-bottom-back-txt">Back</span>
-    </button>
   </div>
 
   <!-- Screen 4: Seat Visualization -->
@@ -329,13 +442,10 @@
     </button>
     <div class="viz-intro">
       <h2 id="viz-title">Your Table</h2>
-      <p id="viz-desc">Tap any seat or name to see details.</p>
+      <p id="viz-desc">Your highlighted seat is shown below.</p>
     </div>
     <!-- Tables rendered here dynamically (one block per table) -->
     <div id="viz-tables-container"></div>
-    <button class="back-btn-bottom" onclick="showScreen('list')">
-      <span id="viz-bottom-back-txt">Back to list</span>
-    </button>
   </div>
 
 </div>
@@ -352,12 +462,37 @@
   </div>
 </div>
 
-<!-- Fixed bottom bar: Find My Seat button (shown when >=1 guest selected) -->
+<!-- Universal fixed bottom bar — content swapped per screen by showScreen() -->
 <div class="find-seat-bar" id="find-seat-bar">
-  <button class="find-seat-btn" id="find-seat-btn" onclick="showViz()">
+  <!-- Slot A: Find My Seat button (screen-list only, when selection > 0) -->
+  <button class="find-seat-btn" id="find-seat-btn" onclick="showViz()" style="display:none">
     <span id="t-find-seat-btn">Find My Seat</span>
     <span class="find-seat-count" id="find-seat-count">1</span>
   </button>
+  <!-- Slot B: Toggle names button (screen-table-direct only) -->
+  <button class="toggle-names-btn" id="toggle-names-btn" onclick="toggleSvgNames()" style="display:none">
+    <span id="t-toggle-names-btn">&#128065; Show Names</span>
+  </button>
+  <!-- Slot C: Universal back button -->
+  <button class="back-btn-bottom" id="bar-back-btn" onclick="barBack()">
+    <span id="bar-back-txt">Back</span>
+  </button>
+</div>
+
+<!-- Nickname unlock modal -->
+<div id="nick-modal-overlay" onclick="nickModalCancel()">
+  <div id="nick-modal" onclick="event.stopPropagation()">
+    <h3>&#128274; Nickname Access</h3>
+    <p id="nick-modal-desc">Enter the access password to view guest nicknames.</p>
+    <input type="password" id="nick-pw-input" placeholder="Password"
+      onkeydown="if(event.key==='Enter')nickModalConfirm()"
+      autocomplete="off" autocorrect="off">
+    <div id="nick-pw-error"></div>
+    <div class="nick-modal-btns">
+      <button id="nick-cancel-btn" onclick="nickModalCancel()">Cancel</button>
+      <button id="nick-confirm-btn" onclick="nickModalConfirm()">Unlock</button>
+    </div>
+  </div>
 </div>
 
 <div class="sf-footer" id="sf-footer">Powered by Banquet Planner</div>
@@ -510,7 +645,15 @@ function getTableColor(tableSeq) {
 // ================================================================
 // TRANSLATIONS
 // ================================================================
-var LANG = 'en';
+// Auto-detect language; prefer localStorage saved preference
+var LANG = (function() {
+  try {
+    var saved = localStorage.getItem('sf_lang');
+    if (saved === 'zh' || saved === 'en') return saved;
+  } catch(e) {}
+  var nav = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+  return nav.indexOf('zh') === 0 ? 'zh' : 'en';
+})();
 var T = {
   en: {
     find:'Find', yourSeat:'Your Seat',
@@ -527,6 +670,16 @@ var T = {
     unassigned:'Unassigned',
     findSeatBtn:'Find My Seat',
     vizTitle:'Your Table', vizDesc:'Your highlighted seat is shown below.',
+    viewAllBtn:'View All Tables',
+    tablesLabel:'ALL TABLES',
+    tdirQrLabel:'Scan to go directly to this table',
+    backTables:'Back to tables',
+    backToAlpha:'Back',
+    showNames:'\ud83d\udc41 Show Names', hideNames:'\ud83d\udc41 Hide Names',
+    allTablesItem:'ALL \u2014 View All Tables',
+    bcHome:'\ud83c\udfe0 Home',
+    bcStep1:'Category', bcStep2:'Last Name', bcSearch:'Search',
+    bcTables:'All Tables', bcViz:'Your Seat',
     catLabels:{
       'bride-family':"Bride's Family",'bride-rel':'Bride Relative','bride-friend':"Bride's Friend",
       'groom-family':"Groom's Family",'groom-rel':'Groom Relative','groom-friend':"Groom's Friend"
@@ -547,6 +700,16 @@ var T = {
     unassigned:'\u672a\u5206\u914d',
     findSeatBtn:'\u67e5\u627e\u5ea7\u4f4d',
     vizTitle:'\u60a8\u7684\u684c\u53f7', vizDesc:'\u60a8\u7684\u9ad8\u4eae\u5ea7\u4f4d\u5982\u4e0b\u56fe\u6240\u793a\u3002',
+    viewAllBtn:'\u67e5\u770b\u6240\u6709\u684c\u53f7',
+    tablesLabel:'\u6240\u6709\u684c\u53f7',
+    tdirQrLabel:'\u626b\u63cf\u4e8c\u7ef4\u7801\u76f4\u63a5\u8df3\u8f6c\u6b64\u684c',
+    backTables:'\u8fd4\u56de\u684c\u53f7\u5217\u8868',
+    backToAlpha:'\u8fd4\u56de',
+    showNames:'\ud83d\udc41 \u663e\u793a\u59d3\u540d', hideNames:'\ud83d\udc41 \u9690\u85cf\u59d3\u540d',
+    allTablesItem:'\u5168\u90e8 \u2014 \u67e5\u770b\u6240\u6709\u5ea7\u4f4d',
+    bcHome:'\ud83c\udfe0 \u9996\u9875',
+    bcStep1:'\u5206\u7c7b', bcStep2:'\u59d3\u6c0f', bcSearch:'\u641c\u7d22',
+    bcTables:'\u6240\u6709\u684c\u53f7', bcViz:'\u60a8\u7684\u5ea7\u4f4d',
     catLabels:{
       'bride-family':'\u65b0\u5a18\u5bb6\u5c5e','bride-rel':'\u65b0\u5a18\u4eb2\u5c5e','bride-friend':'\u65b0\u5a18\u670b\u53cb',
       'groom-family':'\u65b0\u90ce\u5bb6\u5c5e','groom-rel':'\u65b0\u90ce\u4eb2\u5c5e','groom-friend':'\u65b0\u90ce\u670b\u53cb'
@@ -557,6 +720,7 @@ function t(key) { return (T[LANG]||T.en)[key]||key; }
 
 function setLang(lang) {
   LANG = lang;
+  try { localStorage.setItem('sf_lang', lang); } catch(e) {}
   document.getElementById('btn-lang-en').classList.toggle('active', lang==='en');
   document.getElementById('btn-lang-zh').classList.toggle('active', lang==='zh');
   applyTranslations();
@@ -568,38 +732,75 @@ function setLang(lang) {
 }
 
 function applyTranslations() {
-  document.getElementById('t-find').textContent         = t('find');
-  document.getElementById('t-your-seat').textContent    = t('yourSeat');
-  document.getElementById('t-subtitle').textContent     = t('subtitle');
-  document.getElementById('t-step1').textContent        = t('step1');
-  document.getElementById('alpha-step-label').textContent = t('step2');
-  document.getElementById('sf-search').placeholder      = t('search');
-  document.getElementById('t-find-seat-btn').textContent= t('findSeatBtn');
-  document.getElementById('viz-title').textContent      = t('vizTitle');
-  document.getElementById('viz-desc').textContent       = t('vizDesc');
-  // Back button text
-  ['t-back-alpha-txt','alpha-bottom-back-txt','list-back-txt','list-bottom-back-txt','viz-back-txt'].forEach(function(id) {
+  document.getElementById('t-find').textContent          = t('find');
+  document.getElementById('t-your-seat').textContent     = t('yourSeat');
+  document.getElementById('t-subtitle').textContent      = t('subtitle');
+  document.getElementById('t-step1').textContent         = t('step1');
+  document.getElementById('alpha-step-label').textContent= t('step2');
+  document.getElementById('sf-search').placeholder       = t('search');
+  document.getElementById('t-find-seat-btn').textContent = t('findSeatBtn');
+  document.getElementById('viz-title').textContent       = t('vizTitle');
+  document.getElementById('viz-desc').textContent        = t('vizDesc');
+  var vab = document.getElementById('t-view-all-btn');  if (vab) vab.textContent = t('viewAllBtn');
+  var tbl = document.getElementById('t-tables-label');  if (tbl) tbl.textContent = t('tablesLabel');
+  // Static top-back labels
+  ['t-back-alpha-txt','t-back-tables-txt','tdir-back-txt',
+   'list-back-txt','viz-back-txt'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.textContent = t('back');
   });
-  document.getElementById('viz-bottom-back-txt').textContent = t('backToList');
   var errT = document.getElementById('t-err-title'), errB = document.getElementById('t-err-body');
   if (errT) errT.textContent = t('errTitle');
   if (errB) errB.textContent = t('errBody');
+  document.getElementById('btn-lang-en').classList.toggle('active', LANG === 'en');
+  document.getElementById('btn-lang-zh').classList.toggle('active', LANG === 'zh');
+  // Re-translate fixed bottom bar (back label key is stored, toggle label)
+  var barBackEl = document.getElementById('bar-back-txt');
+  if (barBackEl && barBackLabelKey) barBackEl.textContent = t(barBackLabelKey);
+  var tglLbl = document.getElementById('t-toggle-names-btn');
+  if (tglLbl && document.getElementById('toggle-names-btn').style.display !== 'none')
+    tglLbl.textContent = svgNamesVisible ? t('hideNames') : t('showNames');
+  // Rebuild breadcrumb so segment labels re-translate
+  buildBreadcrumb();
 }
 
-// ================================================================
-// APP STATE
-// ================================================================
-var sfData     = null;
-var sfGuests   = [];
-var sfFiltered = [];
-var selectedIds= {};   // guestId -> true
-var selCat     = null;
-var selAlpha   = null;
+
+var sfData      = null;
+var sfGuests    = [];
+var sfFiltered  = [];
+var selectedIds = {};
+var selCat      = null;
+var selAlpha    = null;
 var ALPHA_GROUPS = ['AB','CD','EF','GH','IJ','KL','MN','OP','QR','ST','UV','WX','YZ'];
+
+// ── Nickname privacy ──────────────────────────────────────────────
+var NICK_COOKIE  = 'sf_nick';
+var NICK_PW      = 'password';
+var showNicknames = false;
+
+function getCookie(name) {
+  var m = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
+  return m ? decodeURIComponent(m[1]) : null;
+}
+function setCookie(name, val, days) {
+  var exp = new Date(Date.now() + (days||1)*864e5).toUTCString();
+  document.cookie = name + '=' + encodeURIComponent(val) + '; expires=' + exp + '; path=/; SameSite=Strict';
+}
+function deleteCookie(name) {
+  document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=Strict';
+}
+
+// ── SVG names toggle state (table-direct screen) ──────────────────
+var svgNamesVisible      = false;
+var currentTableSeqDirect = null;
 
 // ── Boot ─────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', function() {
+  // Apply language immediately (auto-detected or default)
+  applyTranslations();
+
+  // Restore nickname session from cookie
+  showNicknames = getCookie(NICK_COOKIE) === '1';
+
   var catGrid = document.getElementById('cat-grid');
   if (catGrid) catGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px 0;color:var(--muted);font-size:14px;">Loading\u2026</div>';
 
@@ -617,6 +818,8 @@ window.addEventListener('DOMContentLoaded', function() {
       document.getElementById('sf-footer').textContent = (data.projectName||'Banquet') + (d?' - '+d:'');
       buildCatGrid();
       buildAlphaGrid(sfGuests);
+      // Handle deep-link hash: #table=N — use rAF to ensure DOM is fully ready
+      requestAnimationFrame(function() { handleHashNavigation(); });
     })
     .catch(function() {
       var isLocal = location.protocol==='file:' || location.hostname==='localhost' || location.hostname==='127.0.0.1';
@@ -640,15 +843,308 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 
 // ── Screens ───────────────────────────────────────────────────────
+// ── Back-action registry — set by each screen when it opens ──────
+var barBackAction   = null;
+var barBackLabelKey = 'back';
+var currentScreenId = 'cat';
+
+function barBack() {
+  if (typeof barBackAction === 'function') barBackAction();
+}
+
+// ── Breadcrumb ────────────────────────────────────────────────────
+var bcStack = [];
+
+function buildBreadcrumb() {
+  var el = document.getElementById('breadcrumb');
+  if (!el) return;
+  if (!bcStack.length) { el.classList.remove('visible'); el.innerHTML = ''; return; }
+  el.classList.add('visible');
+  var html = '';
+  bcStack.forEach(function(seg, i) {
+    var label = seg.customLabel || t(seg.labelKey);
+    var isLast = (i === bcStack.length - 1);
+    if (i === 0) {
+      html += '<button class="bc-item bc-home'+(isLast?' bc-current':'')+'" onclick="bcGoTo('+i+')">'
+            + label+'</button>';
+    } else {
+      html += '<span class="bc-sep">&#8250;</span>';
+      html += '<button class="bc-item'+(isLast?' bc-current':'')+'" onclick="bcGoTo('+i+')">'
+            + esc(label)+'</button>';
+    }
+  });
+  el.innerHTML = html;
+}
+
+function bcGoTo(idx) {
+  if (idx >= bcStack.length - 1) return;
+  var seg = bcStack[idx];
+  bcStack = bcStack.slice(0, idx + 1);
+  if (typeof seg.action === 'function') seg.action();
+}
+
+function setBar(opts) {
+  var bar       = document.getElementById('find-seat-bar');
+  var findBtn   = document.getElementById('find-seat-btn');
+  var toggleBtn = document.getElementById('toggle-names-btn');
+  var backBtn   = document.getElementById('bar-back-btn');
+  var backTxt   = document.getElementById('bar-back-txt');
+
+  findBtn.style.display   = 'none';
+  toggleBtn.style.display = 'none';
+  barBackAction   = opts.back || null;
+  barBackLabelKey = opts.backLabelKey || 'back';
+
+  if (opts.back) {
+    backBtn.style.display = '';
+    backTxt.textContent   = t(barBackLabelKey);
+    bar.classList.add('visible');
+  } else {
+    backBtn.style.display = 'none';
+    bar.classList.remove('visible');
+  }
+  if (opts.findSeat) {
+    findBtn.style.display = '';
+    bar.classList.add('visible');
+    updateFindSeatBarCount();
+  }
+  if (opts.toggleNames) {
+    toggleBtn.style.display = '';
+    bar.classList.add('visible');
+    var lbl = document.getElementById('t-toggle-names-btn');
+    if (lbl) lbl.textContent = svgNamesVisible ? t('hideNames') : t('showNames');
+    toggleBtn.classList.toggle('active', svgNamesVisible);
+  }
+  buildBreadcrumb();
+}
+
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
   document.getElementById('screen-'+id).classList.add('active');
   window.scrollTo(0,0);
-  // Hide find-seat bar when not on list
-  if (id !== 'list') {
-    document.getElementById('find-seat-bar').classList.remove('visible');
+  currentScreenId = id;
+
+  if (id === 'cat') {
+    bcStack = [];
+    setBar({ back: null });
+  } else if (id === 'alpha') {
+    if (!bcStack.length) bcStack = [{labelKey:'bcHome', action:function(){showScreen('cat');}}];
+    bcStack = [bcStack[0], {labelKey:'bcStep1', action:function(){showScreen('alpha');}}];
+    setBar({ back: function(){ showScreen('cat'); }, backLabelKey:'back' });
+  } else if (id === 'list') {
+    if (!bcStack.length) bcStack = [{labelKey:'bcHome', action:function(){showScreen('cat');}}];
+    var alphaLbl = selAlpha || t('bcStep2');
+    var base = [{labelKey:'bcHome', action:function(){goBackFromList();showScreen('cat');}}];
+    if (selCat) base.push({labelKey:'bcStep1', action:function(){goBackFromList();}});
+    base.push({customLabel:alphaLbl, action:function(){showScreen('list');}});
+    bcStack = base;
+    setBar({ back: function(){ goBackFromList(); }, backLabelKey:'back', findSeat: true });
+    updateFindSeatBarCount();
+  } else if (id === 'viz') {
+    if (!bcStack.length) bcStack = [{labelKey:'bcHome', action:function(){showScreen('cat');}}];
+    bcStack.push({labelKey:'bcViz', action:function(){showScreen('viz');}});
+    setBar({ back: function(){ showScreen('list'); }, backLabelKey:'backToList' });
+  } else if (id === 'tables') {
+    bcStack = [{labelKey:'bcHome', action:function(){showScreen('cat');}},
+               {labelKey:'bcTables', action:function(){showScreen('tables');}}];
+    setBar({ back: function(){ showScreen('cat'); }, backLabelKey:'back' });
+  } else if (id === 'table-direct') {
+    var tname = (document.getElementById('tdir-table-name')||{}).textContent || '';
+    var fromTables = currentTableDirectFrom !== 'cat';
+    if (fromTables) {
+      bcStack = [{labelKey:'bcHome', action:function(){history.replaceState(null,'',location.pathname);showScreen('cat');}},
+                 {labelKey:'bcTables', action:function(){history.replaceState(null,'',location.pathname);showScreen('tables');}},
+                 {customLabel:tname, action:null}];
+    } else {
+      bcStack = [{labelKey:'bcHome', action:function(){history.replaceState(null,'',location.pathname);showScreen('cat');}},
+                 {customLabel:tname, action:null}];
+    }
+    setBar({ back: function(){
+      history.replaceState(null,'',location.pathname);
+      bcStack = bcStack.slice(0, -1);
+      showScreen(currentTableDirectFrom || 'tables');
+    }, backLabelKey: fromTables ? 'backTables' : 'back', toggleNames: true });
   } else {
-    updateFindSeatBar();
+    if (!bcStack.length) bcStack = [{labelKey:'bcHome', action:function(){showScreen('cat');}}];
+    setBar({ back: function(){ showScreen('cat'); }, backLabelKey:'back' });
+  }
+}
+
+// ── Hash deep-link: #table=N ──────────────────────────────────────
+function handleHashNavigation() {
+  var hash = location.hash;
+  var m = hash.match(/^#table=(\d+)$/);
+  if (m) { openTableDirect(parseInt(m[1], 10), false); return; }
+  if (hash === '#tables=all') { openAllTables(); }
+}
+
+window.addEventListener('hashchange', function() {
+  if (!sfGuests.length) return;
+  var hash = location.hash;
+  var m = hash.match(/^#table=(\d+)$/);
+  if (m) { openTableDirect(parseInt(m[1], 10), false); return; }
+  if (hash === '#tables=all') { openAllTables(); return; }
+  if (hash === '' || hash === '#') { showScreen('cat'); }
+});
+
+// ── Table list screen ─────────────────────────────────────────────
+function showTableList() {
+  var area = document.getElementById('table-list-area');
+  if (!area) return;
+
+  // Get unique tables sorted by seq
+  var tableSeqs = [];
+  var tableIndex = {};
+  sfGuests.forEach(function(g) {
+    if (g.assigned && tableIndex[g.tableSeq] === undefined) {
+      tableIndex[g.tableSeq] = { seq: g.tableSeq, name: g.tableName || '', count: 0 };
+      tableSeqs.push(g.tableSeq);
+    }
+    if (g.assigned) tableIndex[g.tableSeq].count++;
+  });
+  tableSeqs.sort(function(a,b){return a-b;});
+
+  var html = '';
+  tableSeqs.forEach(function(seq) {
+    var info  = tableIndex[seq];
+    var color = getTableColor(seq);
+    html += '<div class="table-list-item" onclick="openTableDirect('+seq+', true)">'
+          + '<div class="tli-dot" style="background:'+color+'"></div>'
+          + '<div class="tli-info">'
+          + '<div class="tli-name">'+esc(info.name||('#'+seq))+'</div>'
+          + '<div class="tli-sub">'+info.count+' '+(info.count!==1?t('guestsPlural'):t('guests'))+'</div>'
+          + '</div>'
+          + '<div class="tli-arrow">&#8250;</div>'
+          + '</div>';
+  });
+  // ALL item — tap to see every table at once
+  var totalAssigned = sfGuests.filter(function(g){ return g.assigned; }).length;
+  html += '<div class="table-list-item" style="border-style:dashed;margin-top:4px" onclick="openAllTables()">'
+        + '<div class="tli-dot" style="background:var(--accent-lt);border:1.5px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:var(--accent-dk)">ALL</div>'
+        + '<div class="tli-info">'
+        + '<div class="tli-name" style="color:var(--accent-dk)">'+t('allTablesItem')+'</div>'
+        + '<div class="tli-sub">'+totalAssigned+' '+t('guestsPlural')+'</div>'
+        + '</div>'
+        + '<div class="tli-arrow">&#8250;</div>'
+        + '</div>';
+
+  area.innerHTML = html || '<div style="text-align:center;padding:30px;color:var(--muted)">No tables</div>';
+
+  document.getElementById('t-tables-label').textContent = t('tablesLabel');
+  showScreen('tables');
+}
+// ── Table direct view (single table) ─────────────────────────────
+var currentTableDirectFrom = 'tables';
+
+function openTableDirect(tableSeq, fromList) {
+  var tablemates = sfGuests.filter(function(g){ return g.tableSeq === tableSeq && g.assigned; });
+  if (!tablemates.length) return;
+
+  var color     = getTableColor(tableSeq);
+  var tableName = tablemates[0].tableName || ('#' + tableSeq);
+
+  currentTableSeqDirect  = tableSeq;
+  currentTableDirectFrom = fromList ? 'tables' : 'cat';
+  svgNamesVisible        = false;
+
+  document.getElementById('tdir-table-name').textContent = tableName;
+  document.getElementById('tdir-back-txt').textContent   = fromList ? t('backTables') : t('back');
+
+  var svgSize = Math.min(window.innerWidth - 32, 360);
+  document.getElementById('tdir-svg-area').innerHTML =
+    buildTableSVG(tablemates, [], color, svgSize, tableSeq);
+
+  var qrWrap   = document.getElementById('tdir-qr-wrap');
+  var qrCanvas = document.getElementById('tdir-qr-canvas');
+  qrCanvas.innerHTML = '';
+  var tableUrl = location.href.split('#')[0] + '#table=' + tableSeq;
+  if (window.QRCode) {
+    try {
+      new QRCode(qrCanvas, { text: tableUrl, width: 160, height: 160, correctLevel: QRCode.CorrectLevel.M });
+      document.getElementById('tdir-qr-label').textContent = t('tdirQrLabel');
+      qrWrap.style.display = 'block';
+    } catch(e) { qrWrap.style.display = 'none'; }
+  } else {
+    qrWrap.style.display = 'none';
+  }
+
+  history.pushState(null, '', '#table=' + tableSeq);
+  showScreen('table-direct');
+}
+
+// ── "ALL" — show every table in table-direct view ─────────────────
+function openAllTables() {
+  var tableSeqs = [];
+  var seenSeqs  = {};
+  sfGuests.forEach(function(g){
+    if (g.assigned && !seenSeqs[g.tableSeq]) { seenSeqs[g.tableSeq]=true; tableSeqs.push(g.tableSeq); }
+  });
+  tableSeqs.sort(function(a,b){return a-b;});
+
+  currentTableSeqDirect  = null;
+  currentTableDirectFrom = 'tables';
+  svgNamesVisible        = false;
+
+  document.getElementById('tdir-table-name').textContent = t('allTablesItem').replace(' — View All Tables','').replace(' — 查看所有座位','');
+  document.getElementById('tdir-back-txt').textContent   = t('backTables');
+  document.getElementById('tdir-qr-wrap').style.display  = 'none';
+
+  var svgSize = Math.min(window.innerWidth - 32, 360);
+  var html = '';
+  tableSeqs.forEach(function(seq){
+    var tablemates = sfGuests.filter(function(g){ return g.tableSeq===seq && g.assigned; });
+    var color = getTableColor(seq);
+    var tname = tablemates[0] ? tablemates[0].tableName||('#'+seq) : '#'+seq;
+    html += '<div style="margin-bottom:24px">'
+          + '<div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px">'
+          + '<span style="width:10px;height:10px;border-radius:50%;background:'+color+';display:inline-block;flex-shrink:0"></span>'
+          + esc(tname)+'</div>'
+          + buildTableSVG(tablemates, [], color, svgSize, seq)
+          + '</div>';
+  });
+  document.getElementById('tdir-svg-area').innerHTML = html;
+
+  history.pushState(null, '', '#tables=all');
+  showScreen('table-direct');
+}
+
+// ── Toggle SVG name labels on/off ─────────────────────────────────
+function toggleSvgNames() {
+  svgNamesVisible = !svgNamesVisible;
+  var lbl = document.getElementById('t-toggle-names-btn');
+  var btn = document.getElementById('toggle-names-btn');
+  if (lbl) lbl.textContent = svgNamesVisible ? t('hideNames') : t('showNames');
+  if (btn) btn.classList.toggle('active', svgNamesVisible);
+  rebuildTdirSVG();
+}
+
+function rebuildTdirSVG() {
+  var svgSize = Math.min(window.innerWidth - 32, 360);
+  if (currentTableSeqDirect !== null) {
+    var tablemates = sfGuests.filter(function(g){ return g.tableSeq===currentTableSeqDirect && g.assigned; });
+    var color = getTableColor(currentTableSeqDirect);
+    document.getElementById('tdir-svg-area').innerHTML =
+      buildTableSVG(tablemates, [], color, svgSize, currentTableSeqDirect);
+  } else {
+    var tableSeqs = [];
+    var seenSeqs  = {};
+    sfGuests.forEach(function(g){
+      if (g.assigned && !seenSeqs[g.tableSeq]) { seenSeqs[g.tableSeq]=true; tableSeqs.push(g.tableSeq); }
+    });
+    tableSeqs.sort(function(a,b){return a-b;});
+    var html = '';
+    tableSeqs.forEach(function(seq){
+      var tm = sfGuests.filter(function(g){ return g.tableSeq===seq && g.assigned; });
+      var col = getTableColor(seq);
+      var tn  = tm[0] ? tm[0].tableName||('#'+seq) : '#'+seq;
+      html += '<div style="margin-bottom:24px">'
+            + '<div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px">'
+            + '<span style="width:10px;height:10px;border-radius:50%;background:'+col+';display:inline-block;flex-shrink:0"></span>'
+            + esc(tn)+'</div>'
+            + buildTableSVG(tm, [], col, svgSize, seq)
+            + '</div>';
+    });
+    document.getElementById('tdir-svg-area').innerHTML = html;
   }
 }
 
@@ -672,13 +1168,17 @@ function toggleSelect(guestId) {
   updateFindSeatBar();
 }
 
-function updateFindSeatBar() {
+function updateFindSeatBarCount() {
   var count = Object.keys(selectedIds).length;
-  var bar   = document.getElementById('find-seat-bar');
   var cnt   = document.getElementById('find-seat-count');
-  bar.classList.toggle('visible', count > 0);
+  var btn   = document.getElementById('find-seat-btn');
   if (cnt) cnt.textContent = count;
+  // Only show Find My Seat if count > 0 AND we're on the list screen
+  if (btn) btn.style.display = count > 0 ? '' : 'none';
 }
+
+// legacy alias used elsewhere
+function updateFindSeatBar() { updateFindSeatBarCount(); }
 
 // ── Category screen ───────────────────────────────────────────────
 var CAT_EMOJI = {
@@ -715,10 +1215,6 @@ function selectCat(catKey) {
   var pool = sfGuests.filter(function(g){return g.cat===catKey&&g.assigned;});
   buildAlphaGrid(pool);
   document.getElementById('alpha-step-label').textContent = t('step2');
-  document.getElementById('t-back-alpha-txt').textContent = t('back');
-  document.getElementById('alpha-bottom-back-txt').textContent = t('back');
-  document.getElementById('t-back-alpha').onclick = function(){showScreen('cat');};
-  document.getElementById('alpha-bottom-back').onclick = function(){showScreen('cat');};
   showScreen('alpha');
 }
 
@@ -766,10 +1262,6 @@ function selectAlpha(grp) {
   selectedIds = {};
   document.getElementById('sf-search').value = '';
   renderGuestList(pool, false);
-  // Set list back button to go to alpha
-  document.getElementById('list-back-btn').onclick = function(){goBackFromList();};
-  document.getElementById('list-back-txt').textContent = t('back');
-  document.getElementById('list-bottom-back-txt').textContent = t('back');
   showScreen('list');
 }
 
@@ -787,7 +1279,27 @@ function matchGuest(g, q) {
 }
 
 function onSFSearch(val) {
-  var q = val.trim().toLowerCase();
+  var raw = val.trim();
+  var q   = raw.toLowerCase();
+
+  // ── Nickname magic phrases ────────────────────────────────────
+  if (q === 'show nickname') {
+    document.getElementById('sf-search').value = '';
+    if (showNicknames) return; // already unlocked, nothing to do
+    showNickModal();
+    return;
+  }
+  if (q === 'hide nickname') {
+    document.getElementById('sf-search').value = '';
+    if (showNicknames) {
+      showNicknames = false;
+      deleteCookie(NICK_COOKIE);
+      // Re-render current list without nicks
+      onSFSearch('');
+    }
+    return;
+  }
+
   var letters = selAlpha ? selAlpha.split('') : null;
   var base = selCat ? sfGuests.filter(function(g){return g.cat===selCat;}) : sfGuests;
   var pool = base.filter(function(g){
@@ -803,6 +1315,34 @@ function onSFSearch(val) {
   sfFiltered = results;
   renderGuestList(results, !!q);
 }
+
+// ── Nickname unlock modal ─────────────────────────────────────────
+function showNickModal() {
+  var overlay = document.getElementById('nick-modal-overlay');
+  document.getElementById('nick-pw-input').value = '';
+  document.getElementById('nick-pw-error').textContent = '';
+  overlay.classList.add('visible');
+  setTimeout(function(){ document.getElementById('nick-pw-input').focus(); }, 80);
+}
+function nickModalCancel() {
+  document.getElementById('nick-modal-overlay').classList.remove('visible');
+}
+function nickModalConfirm() {
+  var pw = document.getElementById('nick-pw-input').value;
+  if (pw === NICK_PW) {
+    showNicknames = true;
+    setCookie(NICK_COOKIE, '1', 1); // session cookie (1 day)
+    document.getElementById('nick-modal-overlay').classList.remove('visible');
+    // Re-render current list with nicknames visible
+    onSFSearch(document.getElementById('sf-search').value);
+  } else {
+    document.getElementById('nick-pw-error').textContent = 'Incorrect password.';
+    document.getElementById('nick-pw-input').value = '';
+    document.getElementById('nick-pw-input').focus();
+  }
+}
+
+
 
 function clearSFSearch() {
   document.getElementById('sf-search').value = '';
@@ -846,7 +1386,7 @@ function buildListBlock(list) {
   var html = '<div class="guest-list">';
   list.forEach(function(g){
     var name  = esc(g.lastName)+(g.firstName?', '+esc(g.firstName):'');
-    var nick  = g.nickName?' <span class="g-nick">('+esc(g.nickName)+')</span>':'';
+    var nick  = (showNicknames && g.nickName) ? ' <span class="g-nick">('+esc(g.nickName)+')</span>' : '';
     var color = g.assigned ? getTableColor(g.tableSeq) : '#ccc';
     var tname = esc(g.tableName||(t('unassigned')));
     var isSel = selectedIds[g.id] ? ' selected' : '';
@@ -920,8 +1460,7 @@ function showViz() {
         + '<div class="viz-seat-circle" style="background:'+color+'">'+esc(String(g.seat))+'</div>'
         + '<div class="viz-guest-info">'
         + '<div class="viz-guest-name viz-guest-name--full">'+esc(fullName)+'</div>'
-        + '<div class="viz-table-name">'+esc(g.tableName||t('unassigned'))+'</div>'
-        + '<div class="viz-seat-label">'+t('seat')+' '+esc(String(g.seat))+'</div>'
+        + (showNicknames && g.nickName ? '<div class="viz-guest-nick-name">'+esc(g.nickName)+'</div>' : '')
         + '</div>'
         + '</div>';
     });
@@ -959,14 +1498,14 @@ function buildTableSVG(tablemates, highlighted, color, size, tableSeq) {
 
   // Geometry — all relative to inner drawing area
   // We add a padding zone so name labels outside the seat orbit never clip
-  var pad    = size * 0.14;            // space reserved for name labels on each edge
+  var pad    = size * 0.17;            // space reserved for name labels (2 lines) on each edge
   var inner  = size - pad * 2;         // inner area for table + seats
   var cx     = size / 2;
   var cy     = size / 2;
   var tableR = inner * 0.30;           // round table radius
   var seatR  = inner * 0.094;          // seat bubble radius
   var orbitR = tableR + seatR + inner * 0.05;  // seat center orbit
-  var labelR = orbitR + seatR + inner * 0.055; // name label orbit (stays inside pad zone)
+  var labelR = orbitR + seatR + inner * 0.07;  // name label orbit (extra room for 2 lines)
 
   // Map seatNum -> guest
   var seatMap = {};
@@ -1010,31 +1549,18 @@ function buildTableSVG(tablemates, highlighted, color, size, tableSeq) {
     var onclick = 'onclick="showTooltipForSeat('+tableSeq+','+i+')"';
 
     if (isHL) {
-      // Highlighted: filled seat with glow halo + name label outside
+      // Highlighted: filled seat with glow halo
       svgParts.push(
         '<g '+onclick+' style="cursor:pointer">',
         '<circle cx="'+sx.toFixed(1)+'" cy="'+sy.toFixed(1)+'" r="'+(seatR+5).toFixed(1)+'"'
-          + ' fill="'+color+'28"/>',                                  // glow
+          + ' fill="'+color+'28"/>',
         '<circle cx="'+sx.toFixed(1)+'" cy="'+sy.toFixed(1)+'" r="'+seatR.toFixed(1)+'"'
-          + ' fill="'+color+'" stroke="#fff" stroke-width="2.5"/>',   // seat
+          + ' fill="'+color+'" stroke="#fff" stroke-width="2.5"/>',
         '<text x="'+sx.toFixed(1)+'" y="'+(sy+0.5).toFixed(1)+'" text-anchor="middle"'
           + ' dominant-baseline="middle" fill="#fff" font-weight="800"'
           + ' font-size="'+fs.seatNum+'">'+i+'</text>',
         '</g>'
       );
-      // Name label — positioned outside orbit, always readable
-      if (guest) {
-        var fullLbl = (guest.lastName||'') + (guest.firstName ? ' '+guest.firstName : '');
-        // Max chars that fit comfortably in the label zone
-        if (fullLbl.length > 6) fullLbl = fullLbl.substring(0, 5) + '\u2026';
-        var lx    = cx + labelR * Math.cos(angle);
-        var ly    = cy + labelR * Math.sin(angle);
-        svgParts.push(
-          '<text x="'+lx.toFixed(1)+'" y="'+(ly+0.5).toFixed(1)+'" text-anchor="middle"'
-          + ' dominant-baseline="middle" fill="'+color+'" font-weight="600"'
-          + ' font-size="'+fs.nameLabel+'">'+escSVG(fullLbl)+'</text>'
-        );
-      }
     } else {
       // Normal seat — white fill with subtle stroke; empty seats slightly greyed
       var fillCol  = isEmpty ? '#f0efe8' : '#ffffff';
@@ -1048,6 +1574,31 @@ function buildTableSVG(tablemates, highlighted, color, size, tableSeq) {
           + ' dominant-baseline="middle" fill="'+numCol+'" font-size="'+fs.seatNum+'">'+i+'</text>',
         '</g>'
       );
+    }
+
+    // Name label — outside BOTH branches, applies to all seats
+    // Visible when: svgNamesVisible=true (table-direct toggle) OR isHL=true (find-seat viz)
+    if (guest && (svgNamesVisible || isHL)) {
+      var nameLine = (guest.lastName||'') + (guest.firstName ? ' '+guest.firstName : '');
+      var relLine  = (svgNamesVisible && guest.nickName) ? guest.nickName : '';
+      var lx = cx + labelR * Math.cos(angle);
+      var ly = cy + labelR * Math.sin(angle);
+      if (relLine) {
+        svgParts.push(
+          '<text x="'+lx.toFixed(1)+'" y="'+(ly - 5).toFixed(1)+'" text-anchor="middle"'
+            + ' dominant-baseline="middle" fill="'+color+'" font-weight="700"'
+            + ' font-size="11">'+escSVG(nameLine)+'</text>',
+          '<text x="'+lx.toFixed(1)+'" y="'+(ly + 7).toFixed(1)+'" text-anchor="middle"'
+            + ' dominant-baseline="middle" fill="'+color+'bb" font-weight="400"'
+            + ' font-size="10">'+escSVG(relLine)+'</text>'
+        );
+      } else {
+        svgParts.push(
+          '<text x="'+lx.toFixed(1)+'" y="'+(ly + 0.5).toFixed(1)+'" text-anchor="middle"'
+            + ' dominant-baseline="middle" fill="'+color+'" font-weight="600"'
+            + ' font-size="12">'+escSVG(nameLine)+'</text>'
+        );
+      }
     }
   }
 

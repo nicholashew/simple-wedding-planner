@@ -140,5 +140,16 @@ vite.config.ts.timestamp-*
 
 # custom ignores
 data/
-public/pages/guests.json
-public/pages/banner.jpg
+
+# Venue runtime data — uploaded manually, never committed
+public/pages/data/guests.json
+public/pages/data/config.json
+public/pages/data/banner.jpg
+public/pages/data/banner.jpeg
+public/pages/data/banner.png
+
+# Montage video (may be large)
+montage.*
+*.mp4
+*.mov
+*.webm

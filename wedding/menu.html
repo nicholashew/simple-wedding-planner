@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wedding Menu</title>
+  <link rel="stylesheet" href="assets/css/gw.css">
+  <style>
+    /* Banquet scroll style */
+    .menu-scroll {
+      border: 1.5px solid var(--gold); border-radius: 18px;
+      padding: 22px 20px; position: relative; overflow: hidden;
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .menu-scroll::before {
+      content: '❧';
+      position: absolute; top: 10px; right: 14px;
+      font-size: 18px; color: rgba(200,168,74,.35);
+      pointer-events: none; user-select: none;
+    }
+
+    .menu-section-head {
+      font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--gold); font-weight: 700; margin: 18px 0 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .menu-section-head::before,
+    .menu-section-head::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(to right, transparent, rgba(200,168,74,.5));
+    }
+    .menu-section-head::after {
+      background: linear-gradient(to left, transparent, rgba(200,168,74,.5));
+    }
+    .menu-section-head:first-child { margin-top: 0; }
+
+    .menu-item {
+      padding: 11px 6px;
+      border-bottom: 1px dashed rgba(200,168,74,.28);
+      transition: background .15s;
+    }
+    .menu-item:last-child { border-bottom: none; }
+    .menu-item:hover { background: rgba(200,168,74,.06); border-radius: 8px; }
+    .menu-item-inner { display: flex; align-items: center; gap: 12px; }
+
+    .menu-dish-num {
+      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+      background: var(--gold); color: #fff; border: none;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; font-family: Georgia, serif;
+    }
+    .menu-item-emoji { font-size: 20px; flex-shrink: 0; }
+    .menu-item-text { flex: 1; min-width: 0; }
+    .menu-item-name {
+      font-family: Georgia, serif; font-size: 16px; font-weight: 400;
+      color: var(--text); line-height: 1.3;
+    }
+    .menu-item-name-alt {
+      font-size: 15px; color: var(--muted); margin-top: 1px; line-height: 1.4;
+    }
+    .menu-item-desc {
+      font-size: 13px; color: var(--muted); margin-top: 3px;
+      line-height: 1.5; font-style: italic;
+    }
+    .menu-empty {
+      text-align: center; padding: 32px 20px; color: var(--muted); font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+
+<div class="gw-header">
+  <div class="gw-header-inner">
+    <div style="width:60px;flex-shrink:0;"></div>
+    <div class="gw-header-text">
+      <div class="gw-event-name" id="gw-event-date"></div>
+      <h1><em id="gw-couple-names">Our Wedding</em></h1>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+  </div>
+  <div class="gw-breadcrumb">
+    <a class="gw-bc-item" href="/" data-i18n="breadcrumbHome">Home</a>
+    <span class="gw-bc-sep">›</span>
+    <span class="gw-bc-current" data-i18n="bcMenu">Wedding Menu</span>
+  </div>
+</div>
+
+<main class="gw-main">
+  <button class="back-btn" onclick="history.back()">&#8592; <span data-i18n="backHome">Back</span></button>
+  <h2 class="page-title" data-i18n="weddingMenu">Wedding Menu</h2>
+  <p class="page-subtitle" id="menu-subtitle" data-i18n="weddingMenuSub">Tonight's banquet courses</p>
+
+  <div id="menu-container">
+    <div class="menu-empty">Loading menu...</div>
+  </div>
+</main>
+
+<footer class="gw-footer">
+  <span id="gw-footer-names"></span>
+</footer>
+
+<script src="assets/js/gw.js"></script>
+<script>
+let currentLangMenu = 'en';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const { config } = await GW.loadData();
+    GW.applyConfig();
+    const footerEl = document.getElementById('gw-footer-names');
+    if (footerEl) footerEl.textContent = config.projectName || '';
+    renderMenu(GW.lang);
+  } catch (e) {
+    document.getElementById('menu-container').innerHTML =
+      '<div class="menu-empty">Menu not available.</div>';
+  }
+});
+
+// Re-render on language change
+window.onLangChange = (lang) => renderMenu(lang);
+
+function renderMenu(lang) {
+  const config = GW.config;
+  if (!config || !config.menu) return;
+  const container = document.getElementById('menu-container');
+  const isZh = lang === 'zh';
+
+  let dishNum = 1;
+  let html = '<div class="menu-scroll">';
+
+  config.menu.forEach(section => {
+    const courseLabel = isZh ? section.courseZh : section.courseEn;
+    html += `<div class="menu-section-head">${courseLabel}</div>`;
+    section.items.forEach(item => {
+      const primary   = isZh ? item.nameZh   : item.nameEn;
+      const secondary = isZh ? item.nameEn   : item.nameZh;
+      const desc      = isZh ? item.descZh   : item.descEn;
+      html += `
+        <div class="menu-item">
+          <div class="menu-item-inner">
+            <div class="menu-dish-num">${dishNum++}</div>
+            <div class="menu-item-emoji">${item.emoji || ''}</div>
+            <div class="menu-item-text">
+              <div class="menu-item-name">${primary}</div>
+              <div class="menu-item-name-alt">${secondary}</div>
+              ${desc ? `<div class="menu-item-desc">${desc}</div>` : ''}
+            </div>
+          </div>
+        </div>`;
+    });
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+</script>
+</body>
+</html>

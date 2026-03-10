@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <style>
+    :root {
+      --bg: #0d0f14; --surface: #161b25; --surface2: #1e2535;
+      --border: #2a3448; --accent: #f0c060; --accent2: #60c0f0;
+      --text: #e8eaf0; --text2: #a0aac0; --muted: #6b7a99;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Syne', 'Inter', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100dvh;
+    }
+    /* Top bar */
+    .top-bar {
+      background: var(--surface); border-bottom: 2px solid var(--border);
+      padding: 0 20px; height: 44px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .top-brand { font-size: 13px; font-weight: 800; color: var(--accent); }
+    .logout-btn {
+      background: none; border: 1px solid var(--border); border-radius: 6px;
+      color: var(--muted); font-size: 11px; font-family: inherit;
+      padding: 4px 10px; cursor: pointer; transition: all .15s;
+    }
+    .logout-btn:hover { border-color: #f06060; color: #f06060; }
+
+    .main { max-width: 820px; margin: 0 auto; padding: 32px 20px; }
+
+    .dashboard-title {
+      font-size: 24px; font-weight: 800; color: var(--text);
+      margin-bottom: 6px;
+    }
+    .dashboard-sub { font-size: 13px; color: var(--muted); margin-bottom: 32px; }
+
+    .dash-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .dash-card {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 22px 20px;
+      text-decoration: none; cursor: pointer;
+      transition: border-color .15s, background .15s, transform .15s;
+      display: block;
+    }
+    .dash-card:hover {
+      border-color: var(--accent); background: var(--surface2);
+      transform: translateY(-2px);
+    }
+    .dash-card .card-icon { font-size: 32px; display: block; margin-bottom: 12px; }
+    .dash-card .card-title {
+      font-size: 16px; font-weight: 700; color: var(--text);
+      margin-bottom: 4px;
+    }
+    .dash-card .card-sub { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    .section-head {
+      font-size: 10px; font-weight: 700; color: var(--muted);
+      letter-spacing: 1.5px; text-transform: uppercase;
+      margin: 32px 0 14px;
+    }
+    .section-head:first-child { margin-top: 0; }
+  </style>
+</head>
+<body>
+
+<div class="top-bar">
+  <span class="top-brand">&#128274; Wedding Admin</span>
+  <button class="logout-btn" onclick="logout()">&#x2190; Logout</button>
+</div>
+
+<div class="main">
+  <div class="dashboard-title">Admin Dashboard</div>
+  <div class="dashboard-sub" id="dash-sub">Wedding Planner &amp; Tools</div>
+
+  <div class="section-head">Planning</div>
+  <div class="dash-grid">
+    <a class="dash-card" href="wedding.html">
+      <span class="card-icon">&#128146;</span>
+      <div class="card-title">Wedding Seats</div>
+      <div class="card-sub">Plan and assign guest tables &amp; seats</div>
+    </a>
+    <a class="dash-card" href="homestay.html">
+      <span class="card-icon">&#127968;</span>
+      <div class="card-title">Homestay</div>
+      <div class="card-sub">Plan overnight guest accommodation</div>
+    </a>
+  </div>
+
+  <div class="section-head">Operations</div>
+  <div class="dash-grid">
+    <a class="dash-card" href="find-table.html">
+      <span class="card-icon">&#128269;</span>
+      <div class="card-title">Find Table</div>
+      <div class="card-sub">Scan QR or search guests by name</div>
+    </a>
+  </div>
+
+  <div class="section-head">Guest Site</div>
+  <div class="dash-grid">
+    <a class="dash-card" href="/" target="_blank">
+      <span class="card-icon">&#127968;</span>
+      <div class="card-title">Guest Site</div>
+      <div class="card-sub">Open the public-facing wedding website</div>
+    </a>
+    <a class="dash-card" href="/table.html" target="_blank">
+      <span class="card-icon">&#128085;</span>
+      <div class="card-title">Find My Table</div>
+      <div class="card-sub">Preview the guest table finder</div>
+    </a>
+  </div>
+</div>
+
+<script>
+// Auth guard
+if (!document.cookie.includes('gw_admin=1')) {
+  window.location.href = '/admin/login.html';
+}
+
+function logout() {
+  document.cookie = 'gw_admin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/admin;';
+  window.location.href = '/admin/login.html';
+}
+
+// Show project name in sub-title
+(async () => {
+  try {
+    const res = await fetch('/assets/data/config.json');
+    const config = await res.json();
+    const el = document.getElementById('dash-sub');
+    if (el && config.projectName) el.textContent = config.projectName;
+  } catch {}
+})();
+</script>
+</body>
+</html>

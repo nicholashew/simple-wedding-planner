@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find My Table</title>
+  <link rel="stylesheet" href="assets/css/gw.css">
+  <style>
+    /* Upload screen */
+    .upload-area {
+      border: 2.5px dashed rgba(200,168,74,0.5);
+      border-radius: 18px; padding: 40px 24px;
+      text-align: center; cursor: pointer;
+      background: rgba(255,255,255,0.55);
+      transition: border-color .2s, background .2s;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      margin-bottom: 16px;
+    }
+    .upload-area:hover, .upload-area.drag-over {
+      border-color: var(--gold); background: rgba(255,248,230,0.7);
+    }
+    .upload-icon { font-size: 48px; display: block; margin-bottom: 12px; }
+    .upload-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .upload-sub   { font-size: 13px; color: var(--muted); }
+    #file-input   { display: none; }
+
+    .or-divider {
+      text-align: center; color: var(--muted); font-size: 13px;
+      margin: 12px 0; position: relative;
+    }
+    .or-divider::before, .or-divider::after {
+      content: ''; position: absolute; top: 50%;
+      width: calc(50% - 24px); height: 1px;
+      background: var(--border);
+    }
+    .or-divider::before { left: 0; }
+    .or-divider::after  { right: 0; }
+
+    /* Result screen */
+    #result-screen { display: none; }
+
+    .welcome-banner {
+      background: rgba(255,255,255,0.75);
+      border: 1.5px solid rgba(200,168,74,0.4);
+      border-radius: 18px; padding: 24px 20px; text-align: center;
+      margin-bottom: 20px;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .welcome-banner .welcome-emoji { font-size: 36px; display: block; margin-bottom: 8px; }
+    .welcome-banner h2 {
+      font-family: Georgia, serif; font-size: 22px; font-weight: 400;
+      color: var(--text); margin-bottom: 4px;
+    }
+    .welcome-banner .table-highlight {
+      font-size: 28px; font-weight: 800; color: var(--accent-dk);
+      font-family: Georgia, serif; letter-spacing: 1px; margin-top: 6px;
+    }
+
+    .table-section { margin-bottom: 20px; }
+    .table-section-head {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); font-weight: 600; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .table-section-head::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .table-name-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--accent); color: #fff; border-radius: 50px;
+      padding: 6px 16px; font-size: 16px; font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .guest-card {
+      background: rgba(255,255,255,0.75); border: 1px solid var(--border);
+      border-radius: 12px; padding: 13px 16px;
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 8px;
+    }
+    .guest-card-strip { width: 4px; border-radius: 3px; align-self: stretch; min-height: 38px; flex-shrink: 0; }
+    .guest-card-info  { flex: 1; min-width: 0; }
+    .guest-card-name  { font-size: 16px; font-weight: 600; color: var(--text); }
+    .guest-card-meta  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* Error state */
+    .error-box {
+      background: #fff8e8; border: 1.5px solid var(--gold);
+      border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 16px;
+    }
+    .error-box .error-icon { font-size: 32px; display: block; margin-bottom: 8px; }
+    .error-box p { font-size: 14px; color: var(--text2); }
+  </style>
+</head>
+<body>
+
+<div class="gw-header">
+  <div class="gw-header-inner">
+    <div style="width:60px;flex-shrink:0;"></div>
+    <div class="gw-header-text">
+      <div class="gw-event-name" id="gw-event-date"></div>
+      <h1><em id="gw-couple-names">Our Wedding</em></h1>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+  </div>
+  <div class="gw-breadcrumb">
+    <a class="gw-bc-item" href="/" data-i18n="breadcrumbHome">Home</a>
+    <span class="gw-bc-sep">›</span>
+    <span class="gw-bc-current" data-i18n="bcFindTable">Find My Table</span>
+  </div>
+</div>
+
+<main class="gw-main">
+
+  <!-- Upload screen -->
+  <div id="upload-screen">
+    <button class="back-btn" onclick="history.back()">&#8592; <span data-i18n="backHome">Back</span></button>
+    <h2 class="page-title" data-i18n="findTable">Find My Table</h2>
+    <p class="page-subtitle" data-i18n="findTableSub">Upload your invitation QR code</p>
+
+    <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+      <span class="upload-icon">&#128247;</span>
+      <div class="upload-title" id="upload-title" data-i18n="uploadTitle">Tap to upload QR code</div>
+      <div class="upload-sub" data-i18n="uploadSub">JPG or PNG image of your invitation QR code</div>
+      <input type="file" id="file-input" accept="image/*" capture="environment">
+    </div>
+
+    <div class="or-divider" data-i18n="orDivider">or</div>
+
+    <!-- Camera scan button -->
+    <button class="gw-btn" id="scan-btn" onclick="startCamera()" style="margin-bottom:12px;">
+      &#128247; <span data-i18n="scanWithCamera">Scan with Camera</span>
+    </button>
+
+    <div id="camera-section" style="display:none; margin-bottom:16px;">
+      <video id="camera-video" playsinline autoplay
+        style="width:100%;border-radius:14px;background:#000;"></video>
+      <button class="gw-btn-outline" onclick="stopCamera()" style="margin-top:8px;">
+        &#9632; Stop Camera
+      </button>
+    </div>
+
+    <div id="error-box" class="error-box" style="display:none;">
+      <span class="error-icon">&#9888;&#65039;</span>
+      <p id="error-msg">Could not read QR code. Please try again.</p>
+    </div>
+  </div>
+
+  <!-- Result screen -->
+  <div id="result-screen">
+    <button class="back-btn" onclick="showUpload()">&#8592; <span data-i18n="backHome">Back</span></button>
+
+    <div class="welcome-banner">
+      <span class="welcome-emoji">&#127881;</span>
+      <h2>Welcome!</h2>
+      <div class="table-highlight" id="result-tables"></div>
+    </div>
+
+    <div id="result-tables-detail"></div>
+
+    <button class="gw-btn-outline" onclick="showUpload()" style="margin-top:8px;">
+      &#8592; Scan another QR code
+    </button>
+  </div>
+
+</main>
+
+<footer class="gw-footer">
+  <span id="gw-footer-names"></span>
+</footer>
+
+<!-- jsQR for QR decoding -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="assets/js/gw.js"></script>
+<script>
+let guestData = [], configData = null, categories = [];
+let cameraStream = null;
+let scanAnimFrame = null;
+
+// ── Init
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const { config, guests } = await GW.loadData();
+    configData = config;
+    guestData  = guests;
+    categories = config._categories || [];
+    GW.applyConfig();
+    const footerEl = document.getElementById('gw-footer-names');
+    if (footerEl) footerEl.textContent = config.projectName || '';
+  } catch (e) {
+    console.warn('Could not load data:', e);
+  }
+
+  // Check URL param ?qr=...
+  const params = new URLSearchParams(location.search);
+  const qrParam = params.get('qr');
+  if (qrParam) {
+    const ids = GW.decodeGuestIds(qrParam);
+    if (ids.length) showResult(ids);
+  }
+
+  // Wire file input
+  document.getElementById('file-input').addEventListener('change', handleFileUpload);
+
+  // Drag & drop
+  const area = document.getElementById('upload-area');
+  area.addEventListener('dragover', e => { e.preventDefault(); area.classList.add('drag-over'); });
+  area.addEventListener('dragleave', () => area.classList.remove('drag-over'));
+  area.addEventListener('drop', e => {
+    e.preventDefault(); area.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) processImageFile(file);
+  });
+});
+
+// ── File upload handler
+function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if (file) processImageFile(file);
+  e.target.value = '';
+}
+
+function processImageFile(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width  = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code) {
+        handleQrData(code.data);
+      } else {
+        showError('Could not read QR code. Make sure the image is clear and try again.');
+      }
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Camera scanning
+function startCamera() {
+  const section = document.getElementById('camera-section');
+  const video   = document.getElementById('camera-video');
+  section.style.display = 'block';
+  hideError();
+
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(stream => {
+      cameraStream = stream;
+      video.srcObject = stream;
+      video.play();
+      scanFrame(video);
+    })
+    .catch(() => showError('Camera access denied. Please use the upload option instead.'));
+}
+
+function stopCamera() {
+  if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
+  cancelAnimationFrame(scanAnimFrame);
+  document.getElementById('camera-section').style.display = 'none';
+  document.getElementById('camera-video').srcObject = null;
+}
+
+function scanFrame(video) {
+  if (!cameraStream) return;
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    const canvas = document.createElement('canvas');
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    const imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height);
+    if (code) { stopCamera(); handleQrData(code.data); return; }
+  }
+  scanAnimFrame = requestAnimationFrame(() => scanFrame(video));
+}
+
+// ── QR data handler
+function handleQrData(raw) {
+  // Try URL format: table.html?qr=...
+  let ids = [];
+  try {
+    const url = new URL(raw, location.href);
+    const qrParam = url.searchParams.get('qr');
+    if (qrParam) ids = GW.decodeGuestIds(qrParam);
+  } catch {}
+  // Fallback: raw is base64 encoded ids
+  if (!ids.length) ids = GW.decodeGuestIds(raw);
+  // Fallback: raw is JSON array
+  if (!ids.length) { try { ids = JSON.parse(raw); } catch {} }
+
+  if (ids.length) {
+    showResult(ids);
+  } else {
+    showError('QR code format not recognised. Please contact the organiser.');
+  }
+}
+
+// ── Show result
+function showResult(guestIds) {
+  const matched = guestData.filter(g => guestIds.includes(g.id));
+  if (!matched.length) {
+    showError('No guests found for this QR code. Please check with the organiser.');
+    return;
+  }
+
+  // Group by table
+  const tableMap = {};
+  matched.forEach(g => {
+    const key = g.tableName;
+    if (!tableMap[key]) tableMap[key] = { name: key, seq: g.tableSeq, guests: [] };
+    tableMap[key].guests.push(g);
+  });
+  const tables = Object.values(tableMap).sort((a, b) => a.seq - b.seq);
+
+  // Header: star tables
+  const tableNames = tables.map(t => `TABLE ${t.name}`).join(', ');
+  document.getElementById('result-tables').textContent = '⭐ ' + tableNames;
+
+  // Detail per table
+  const detailEl = document.getElementById('result-tables-detail');
+  detailEl.innerHTML = '';
+
+  tables.forEach(table => {
+    const section = document.createElement('div');
+    section.className = 'table-section';
+    section.innerHTML = `
+      <div class="table-section-head">Guests at Table ${table.name}</div>
+    `;
+
+    // Also show all guests at this table (not just QR guests)
+    const tableGuests = guestData
+      .filter(g => g.tableName === table.name && g.assigned)
+      .sort((a, b) => a.seat - b.seat);
+
+    tableGuests.forEach(g => {
+      const isHighlighted = guestIds.includes(g.id);
+      const cat = categories.find(c => c.key === g.cat);
+      const color = GW.getCatColor(g.cat);
+      const card = document.createElement('div');
+      card.className = 'guest-card';
+      card.style.borderColor = isHighlighted ? 'rgba(200,168,74,0.6)' : '';
+      card.style.background  = isHighlighted ? 'rgba(253,245,230,0.9)' : '';
+      const meta = [cat ? cat.label : '', g.group].filter(Boolean).join(' · ');
+      card.innerHTML = `
+        <div class="guest-card-strip" style="background:${color}"></div>
+        <div class="guest-card-info">
+          <div class="guest-card-name">${g.lastName} ${g.firstName}${g.nickName ? ` <span style="font-size:12px;color:var(--muted);">(${g.nickName})</span>` : ''}</div>
+          ${meta ? `<div class="guest-card-meta">${meta}</div>` : ''}
+        </div>
+        ${isHighlighted ? '<span style="font-size:18px;">&#11088;</span>' : ''}
+      `;
+      section.appendChild(card);
+    });
+
+    detailEl.appendChild(section);
+  });
+
+  document.getElementById('upload-screen').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Error helpers
+function showError(msg) {
+  const box = document.getElementById('error-box');
+  document.getElementById('error-msg').textContent = msg;
+  box.style.display = 'block';
+}
+function hideError() {
+  document.getElementById('error-box').style.display = 'none';
+}
+
+function showUpload() {
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('upload-screen').style.display = 'block';
+  hideError();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find Table — Admin</title>
+  <style>
+    :root {
+      --bg: #0d0f14; --surface: #161b25; --surface2: #1e2535;
+      --border: #2a3448; --border2: #3a4560;
+      --accent: #f0c060; --accent-dk: #c09030; --accent-lt: rgba(240,192,96,0.1);
+      --text: #e8eaf0; --text2: #a0aac0; --muted: #6b7a99;
+      --green: #60f0a0; --danger: #f06060;
+      --radius: 12px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Syne', 'Inter', -apple-system, sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100dvh;
+    }
+
+    /* Top nav */
+    .top-nav {
+      background: var(--surface); border-bottom: 2px solid var(--border);
+      padding: 0 16px; height: 44px;
+      display: flex; align-items: center; gap: 12px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .top-nav a { color: var(--muted); text-decoration: none; font-size: 12px; font-weight: 600; }
+    .top-nav a:hover { color: var(--text); }
+    .top-nav .brand { font-size: 13px; font-weight: 800; color: var(--accent); margin-right: 12px; }
+    .top-nav .sep { color: var(--border2); }
+
+    /* Layout */
+    .main { max-width: 640px; margin: 0 auto; padding: 20px 16px 60px; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 6px; margin-bottom: 24px; }
+    .tab-btn {
+      flex: 1; padding: 10px; border-radius: var(--radius);
+      border: 1.5px solid var(--border); background: none;
+      font-size: 13px; font-weight: 700; color: var(--muted);
+      font-family: inherit; cursor: pointer; transition: all .15s;
+    }
+    .tab-btn.active { background: var(--accent); border-color: var(--accent); color: #0d0f14; }
+
+    /* ── Sections */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* Camera */
+    #camera-video {
+      width: 100%; border-radius: var(--radius); background: #000;
+      display: block; margin-bottom: 10px;
+    }
+    .btn {
+      width: 100%; padding: 13px; border-radius: 50px; border: none;
+      font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer;
+      transition: all .15s; display: flex; align-items: center;
+      justify-content: center; gap: 8px; margin-bottom: 10px;
+    }
+    .btn-primary { background: var(--accent); color: #0d0f14; }
+    .btn-primary:hover { opacity: .88; }
+    .btn-outline {
+      background: none; border: 1.5px solid var(--border); color: var(--text2);
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Step label */
+    .step-label {
+      font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 12px; font-weight: 700;
+    }
+
+    /* Category grid */
+    .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .cat-card {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: var(--radius); padding: 16px 12px;
+      cursor: pointer; text-align: center; font-family: inherit;
+      transition: all .15s;
+    }
+    .cat-card:hover { border-color: var(--accent); background: var(--surface2); }
+    .cat-emoji { font-size: 26px; display: block; margin-bottom: 6px; }
+    .cat-name  { font-size: 13px; font-weight: 700; color: var(--text); }
+    .cat-sub   { font-size: 11px; color: var(--muted); margin-top: 3px; }
+
+    /* Alphabet grid */
+    .alpha-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 7px; margin-bottom: 10px; }
+    .alpha-card {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 8px; padding: 14px 4px; cursor: pointer;
+      text-align: center; font-size: 17px; font-weight: 700;
+      color: var(--text); font-family: Georgia, serif;
+      transition: all .12s;
+    }
+    .alpha-card:hover { border-color: var(--accent); background: var(--surface2); }
+    .alpha-card.dimmed { opacity: 0.25; cursor: default; pointer-events: none; }
+    .alpha-count { font-size: 9px; color: var(--muted); display: block; margin-top: 3px; font-family: sans-serif; font-weight: 400; }
+
+    /* Search bar */
+    .search-bar { position: relative; margin-bottom: 14px; }
+    .search-bar input {
+      width: 100%; padding: 13px 40px 13px 44px;
+      border: 1.5px solid var(--border); border-radius: 50px;
+      font-size: 15px; background: var(--surface); color: var(--text);
+      font-family: inherit; outline: none; transition: border-color .15s;
+    }
+    .search-bar input:focus { border-color: var(--accent); }
+    .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none; }
+    .clear-btn {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; font-size: 16px;
+      color: var(--muted); display: none; padding: 4px;
+    }
+    .search-bar input:not(:placeholder-shown) ~ .clear-btn { display: block; }
+
+    /* Guest list */
+    .guest-list {
+      background: var(--surface); border-radius: var(--radius);
+      border: 1px solid var(--border); overflow: hidden;
+    }
+    .guest-item {
+      display: flex; align-items: center; padding: 13px 14px;
+      border-bottom: 1px solid var(--border); gap: 10px; cursor: pointer;
+      transition: background .1s;
+    }
+    .guest-item:last-child { border-bottom: none; }
+    .guest-item:hover { background: var(--surface2); }
+    .g-strip { width: 4px; border-radius: 3px; align-self: stretch; min-height: 38px; flex-shrink: 0; }
+    .g-info  { flex: 1; min-width: 0; }
+    .g-name  { font-size: 15px; font-weight: 600; }
+    .g-nick  { font-size: 11px; color: var(--muted); }
+    .g-badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      color: #fff; border-radius: 5px; padding: 3px 8px;
+    }
+    .empty-state { padding: 32px 20px; text-align: center; color: var(--muted); font-size: 14px; }
+
+    /* Result card */
+    .result-card {
+      background: var(--surface); border: 1.5px solid var(--accent);
+      border-radius: 14px; padding: 20px; margin-bottom: 14px;
+    }
+    .result-table-name {
+      font-size: 28px; font-weight: 800; color: var(--accent);
+      font-family: Georgia, serif; margin-bottom: 4px;
+    }
+    .result-guest-name { font-size: 18px; font-weight: 700; color: var(--text); }
+    .result-meta { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+    /* Back button */
+    .back-btn {
+      background: none; border: none; font-size: 13px; color: var(--muted);
+      cursor: pointer; font-family: inherit; padding: 0 0 16px;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .back-btn:hover { color: var(--text); }
+
+    /* Breadcrumb */
+    .breadcrumb {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 11px; color: var(--muted); margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .bc-item { cursor: pointer; }
+    .bc-item:hover { color: var(--accent); }
+    .bc-sep { color: var(--border2); }
+
+    @media (min-width: 480px) {
+      .cat-grid  { grid-template-columns: repeat(3,1fr); }
+      .alpha-grid { grid-template-columns: repeat(6,1fr); }
+    }
+    @media (min-width: 640px) {
+      .alpha-grid { grid-template-columns: repeat(7,1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <span class="brand">&#128274; Admin</span>
+  <span class="sep">|</span>
+  <a href="index.html">Dashboard</a>
+  <span class="sep">|</span>
+  <a href="wedding.html">Wedding</a>
+  <span class="sep">|</span>
+  <a href="homestay.html">Homestay</a>
+</nav>
+
+<div class="main">
+  <h2 style="font-size:20px;font-weight:800;margin-bottom:6px;">Find Table</h2>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Scan a guest QR code or search by category › alphabet › name</p>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-scan-btn" onclick="switchTab('scan')">&#128247; Scan QR</button>
+    <button class="tab-btn"        id="tab-search-btn" onclick="switchTab('search')">&#128269; Search</button>
+  </div>
+
+  <!-- ─── QR SCAN TAB ─── -->
+  <div class="section active" id="tab-scan">
+    <div class="step-label">Camera scan or upload image</div>
+    <button class="btn btn-primary" id="cam-start-btn" onclick="startCamera()">
+      &#128247; Start Camera
+    </button>
+    <video id="camera-video" playsinline autoplay style="display:none;"></video>
+    <button class="btn btn-outline" id="cam-stop-btn" style="display:none;" onclick="stopCamera()">
+      &#9632; Stop Camera
+    </button>
+
+    <div style="text-align:center;font-size:12px;color:var(--muted);margin:8px 0;">— or upload QR image —</div>
+    <button class="btn btn-outline" onclick="document.getElementById('qr-file').click()">
+      &#128193; Upload QR Image
+    </button>
+    <input type="file" id="qr-file" accept="image/*" style="display:none;">
+
+    <div id="scan-result"></div>
+  </div>
+
+  <!-- ─── SEARCH TAB ─── -->
+  <div class="section" id="tab-search">
+
+    <!-- Screen: category -->
+    <div id="screen-cat" class="section active">
+      <div class="step-label">Step 1 — Select relationship group</div>
+      <div class="cat-grid" id="cat-grid"></div>
+    </div>
+
+    <!-- Screen: alphabet -->
+    <div id="screen-alpha" class="section">
+      <div class="breadcrumb" id="bc-alpha"></div>
+      <div class="step-label">Step 2 — Select first letter of last name</div>
+      <div class="alpha-grid" id="alpha-grid"></div>
+    </div>
+
+    <!-- Screen: name search -->
+    <div id="screen-name" class="section">
+      <div class="breadcrumb" id="bc-name"></div>
+      <div class="step-label">Step 3 — Search by name</div>
+      <div class="search-bar">
+        <span class="search-icon">&#128269;</span>
+        <input type="text" id="name-search" placeholder="Type a name…" oninput="filterGuests(this.value)">
+        <button class="clear-btn" onclick="clearSearch()">&#215;</button>
+      </div>
+      <div id="guest-list-wrap"></div>
+    </div>
+
+    <!-- Screen: result -->
+    <div id="screen-result" class="section">
+      <button class="back-btn" onclick="backToSearch()">&#8592; Back to search</button>
+      <div id="result-detail"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- jsQR -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+// ═══════════════════════════════
+// State
+// ═══════════════════════════════
+let allGuests = [], categories = [], filteredByAlpha = [];
+let selectedCat = null, selectedAlpha = null;
+let cameraStream = null, scanAF = null;
+
+const CAT_COLORS = [
+  '#e07070','#e09050','#c8a84a','#70b870',
+  '#60a8e0','#9070c8','#e07090','#60c8b8',
+];
+function catColor(catKey) {
+  const i = categories.findIndex(c => c.key === catKey);
+  return i >= 0 ? CAT_COLORS[i % CAT_COLORS.length] : '#6b7a99';
+}
+function encodeIds(ids) { return btoa(JSON.stringify(ids)); }
+function decodeIds(str) { try { return JSON.parse(atob(str)); } catch { return []; } }
+
+// ═══════════════════════════════
+// Load data
+// ═══════════════════════════════
+(async () => {
+  try {
+    const [cfgRes, gstRes] = await Promise.all([
+      fetch('/assets/data/config.json'),
+      fetch('/assets/data/guests.json'),
+    ]);
+    const config  = await cfgRes.json();
+    const gstData = await gstRes.json();
+    allGuests  = Array.isArray(gstData) ? gstData : (gstData.guests || []);
+    categories = (Array.isArray(gstData) ? [] : gstData.categories) || config._categories || [];
+    buildCatGrid();
+  } catch (e) {
+    document.getElementById('cat-grid').innerHTML =
+      '<div class="empty-state">Could not load guest data.</div>';
+  }
+})();
+
+// ═══════════════════════════════
+// Tabs
+// ═══════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.section[id^="tab-"]').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + tab + '-btn').classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+// ═══════════════════════════════
+// QR SCAN
+// ═══════════════════════════════
+function startCamera() {
+  document.getElementById('cam-start-btn').style.display = 'none';
+  document.getElementById('cam-stop-btn').style.display  = 'flex';
+  const video = document.getElementById('camera-video');
+  video.style.display = 'block';
+
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(stream => {
+      cameraStream = stream;
+      video.srcObject = stream; video.play();
+      scanLoop(video);
+    })
+    .catch(() => showScanResult('<div class="empty-state">Camera access denied.</div>'));
+}
+function stopCamera() {
+  if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
+  cancelAnimationFrame(scanAF);
+  const video = document.getElementById('camera-video');
+  video.style.display = 'none'; video.srcObject = null;
+  document.getElementById('cam-start-btn').style.display = 'flex';
+  document.getElementById('cam-stop-btn').style.display  = 'none';
+}
+function scanLoop(video) {
+  if (!cameraStream) return;
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    const c = document.createElement('canvas');
+    c.width = video.videoWidth; c.height = video.videoHeight;
+    c.getContext('2d').drawImage(video, 0, 0);
+    const img = c.getContext('2d').getImageData(0, 0, c.width, c.height);
+    const code = jsQR(img.data, img.width, img.height);
+    if (code) { stopCamera(); handleQR(code.data); return; }
+  }
+  scanAF = requestAnimationFrame(() => scanLoop(video));
+}
+document.getElementById('qr-file').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = img.width; c.height = img.height;
+      c.getContext('2d').drawImage(img, 0, 0);
+      const id = c.getContext('2d').getImageData(0, 0, c.width, c.height);
+      const code = jsQR(id.data, id.width, id.height);
+      if (code) handleQR(code.data);
+      else showScanResult('<div class="empty-state">Could not read QR code.</div>');
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+});
+function handleQR(raw) {
+  let ids = [];
+  try { const u = new URL(raw, location.href); const p = u.searchParams.get('qr'); if (p) ids = decodeIds(p); } catch {}
+  if (!ids.length) ids = decodeIds(raw);
+  if (!ids.length) { try { ids = JSON.parse(raw); } catch {} }
+  if (!ids.length) { showScanResult('<div class="empty-state">Unrecognised QR format.</div>'); return; }
+  const matched = allGuests.filter(g => ids.includes(g.id));
+  if (!matched.length) { showScanResult('<div class="empty-state">No guests found for this QR code.</div>'); return; }
+  showScanResult(buildResultHtml(matched));
+}
+function showScanResult(html) {
+  document.getElementById('scan-result').innerHTML = html;
+}
+
+// ═══════════════════════════════
+// SEARCH — Category
+// ═══════════════════════════════
+function buildCatGrid() {
+  const grid = document.getElementById('cat-grid');
+  if (!categories.length) {
+    grid.innerHTML = '<div class="empty-state">No categories found.</div>';
+    return;
+  }
+  grid.innerHTML = categories.map((cat, i) => `
+    <button class="cat-card" onclick="selectCat('${cat.key}')">
+      <span class="cat-emoji">${cat.label.match(/\p{Emoji}/u)?.[0] || '👥'}</span>
+      <span class="cat-name">${cat.label.replace(/^\p{Emoji}\s*/u, '')}</span>
+      <span class="cat-sub">${allGuests.filter(g => g.cat === cat.key).length} guests</span>
+    </button>
+  `).join('');
+  // Add "Show all" option
+  grid.innerHTML += `
+    <button class="cat-card" onclick="selectCat(null)">
+      <span class="cat-emoji">🔍</span>
+      <span class="cat-name">All Guests</span>
+      <span class="cat-sub">${allGuests.length} total</span>
+    </button>`;
+}
+
+function selectCat(catKey) {
+  selectedCat = catKey;
+  buildAlphaGrid(catKey);
+  showSearchScreen('alpha');
+  const cat = categories.find(c => c.key === catKey);
+  document.getElementById('bc-alpha').innerHTML =
+    `<span class="bc-item" onclick="showSearchScreen('cat')">Groups</span>
+     <span class="bc-sep">›</span>
+     <span>${cat ? cat.label : 'All Guests'}</span>`;
+}
+
+// ─── Alphabet
+function buildAlphaGrid(catKey) {
+  const pool = catKey ? allGuests.filter(g => g.cat === catKey) : allGuests;
+  const lettersWithCount = {};
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l => {
+    const cnt = pool.filter(g => g.lastName.toUpperCase().startsWith(l)).length;
+    lettersWithCount[l] = cnt;
+  });
+  const grid = document.getElementById('alpha-grid');
+  grid.innerHTML = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(l => `
+    <button class="alpha-card${lettersWithCount[l] === 0 ? ' dimmed' : ''}" onclick="selectAlpha('${l}')">
+      ${l}<span class="alpha-count">${lettersWithCount[l] || ''}</span>
+    </button>`).join('');
+}
+
+function selectAlpha(letter) {
+  selectedAlpha = letter;
+  const pool = selectedCat ? allGuests.filter(g => g.cat === selectedCat) : allGuests;
+  filteredByAlpha = pool.filter(g => g.lastName.toUpperCase().startsWith(letter));
+  renderGuestList(filteredByAlpha);
+  showSearchScreen('name');
+  const cat = categories.find(c => c.key === selectedCat);
+  document.getElementById('bc-name').innerHTML =
+    `<span class="bc-item" onclick="showSearchScreen('cat')">Groups</span>
+     <span class="bc-sep">›</span>
+     <span class="bc-item" onclick="showSearchScreen('alpha')">${cat ? cat.label : 'All Guests'}</span>
+     <span class="bc-sep">›</span>
+     <span>${letter}</span>`;
+  document.getElementById('name-search').value = '';
+}
+
+// ─── Name search
+function filterGuests(query) {
+  if (!query.trim()) { renderGuestList(filteredByAlpha); return; }
+  const q = query.toLowerCase();
+  const filtered = filteredByAlpha.filter(g =>
+    `${g.lastName} ${g.firstName}`.toLowerCase().includes(q) ||
+    (g.nickName || '').toLowerCase().includes(q)
+  );
+  renderGuestList(filtered);
+}
+function clearSearch() {
+  document.getElementById('name-search').value = '';
+  renderGuestList(filteredByAlpha);
+}
+
+function renderGuestList(guests) {
+  const wrap = document.getElementById('guest-list-wrap');
+  if (!guests.length) {
+    wrap.innerHTML = '<div class="empty-state">No guests found.</div>';
+    return;
+  }
+  wrap.innerHTML = `<div class="guest-list">${guests.map(g => {
+    const color = catColor(g.cat);
+    return `
+      <div class="guest-item" onclick="showGuestResult(${g.id})">
+        <div class="g-strip" style="background:${color}"></div>
+        <div class="g-info">
+          <div class="g-name">${g.lastName} ${g.firstName}</div>
+          ${g.nickName ? `<div class="g-nick">${g.nickName}</div>` : ''}
+        </div>
+        ${g.tableName ? `<span class="g-badge" style="background:${color}">T ${g.tableName}</span>` : ''}
+      </div>`;
+  }).join('')}</div>`;
+}
+
+function showGuestResult(id) {
+  const guest = allGuests.find(g => g.id === id);
+  if (!guest) return;
+  const tableGuests = allGuests.filter(g => g.tableName === guest.tableName && g.assigned).sort((a,b) => a.seat - b.seat);
+  document.getElementById('result-detail').innerHTML = buildResultHtml([guest], tableGuests);
+  showSearchScreen('result');
+}
+
+function backToSearch() {
+  showSearchScreen('name');
+}
+
+// ─── Screen navigation
+function showSearchScreen(name) {
+  ['cat','alpha','name','result'].forEach(s => {
+    document.getElementById('screen-' + s).classList.toggle('active', s === name);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── Build result HTML
+function buildResultHtml(highlightGuests, tableGuests) {
+  // Group by table
+  const tableMap = {};
+  highlightGuests.forEach(g => {
+    const k = g.tableName;
+    if (!tableMap[k]) tableMap[k] = { name: k, seq: g.tableSeq, highlighted: [], all: [] };
+    tableMap[k].highlighted.push(g);
+  });
+  if (tableGuests) {
+    tableGuests.forEach(g => {
+      if (tableMap[g.tableName]) tableMap[g.tableName].all.push(g);
+    });
+  }
+
+  let html = '';
+  Object.values(tableMap).sort((a,b) => a.seq - b.seq).forEach(table => {
+    html += `<div class="result-card">
+      <div class="result-table-name">TABLE ${table.name}</div>`;
+    table.highlighted.forEach(g => {
+      const cat = categories.find(c => c.key === g.cat);
+      html += `<div class="result-guest-name">&#11088; ${g.lastName} ${g.firstName}${g.nickName ? ` (${g.nickName})` : ''}</div>
+               <div class="result-meta">Seat ${g.seat}${cat ? ' · ' + cat.label : ''}${g.group ? ' · ' + g.group : ''}</div>`;
+    });
+    if (table.all && table.all.length) {
+      html += `<div style="margin-top:14px;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">All guests at this table</div>`;
+      table.all.forEach(g => {
+        const isHL = table.highlighted.some(h => h.id === g.id);
+        html += `<div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;color:${isHL ? 'var(--accent)' : 'var(--text2)'}">
+          ${isHL ? '⭐ ' : ''}${g.lastName} ${g.firstName} — Seat ${g.seat}
+        </div>`;
+      });
+    }
+    html += '</div>';
+  });
+  return html || '<div class="empty-state">No table assigned.</div>';
+}
+</script>
+</body>
+</html>

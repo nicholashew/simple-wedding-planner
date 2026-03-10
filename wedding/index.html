@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Our Wedding</title>
+  <link rel="stylesheet" href="assets/css/gw.css">
+  <style>
+    .home-greeting { text-align: center; margin-bottom: 28px; }
+    .home-date {
+      font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 8px;
+    }
+    .home-greeting h2 {
+      font-family: Georgia, serif; font-size: 22px; font-weight: 400;
+      color: var(--text); line-height: 1.5;
+    }
+    .home-greeting h2 em { font-style: italic; color: var(--accent-dk); }
+
+    .home-sections { display: flex; flex-direction: column; gap: 14px; }
+
+    .home-card {
+      background: rgba(255,255,255,0.55);
+      border: 1.5px solid rgba(200,168,74,0.35);
+      border-radius: 18px; overflow: hidden; cursor: pointer;
+      transition: transform .2s cubic-bezier(.34,1.56,.64,1),
+                  box-shadow .2s ease, border-color .2s ease, background .2s ease;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+      text-decoration: none; display: block; width: 100%;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .home-card:hover {
+      border-color: var(--gold); transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(0,0,0,.12);
+      background: rgba(255,255,255,0.72);
+    }
+    .home-card:active { transform: translateY(0) scale(0.98); }
+    .home-card-inner {
+      display: flex; align-items: center; gap: 16px; padding: 18px 20px;
+    }
+    .home-card-icon {
+      width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; background: var(--accent-lt);
+    }
+    .home-card-text { flex: 1; min-width: 0; }
+    .home-card-title {
+      font-size: 17px; font-weight: 700; color: var(--text);
+      margin-bottom: 3px; line-height: 1.2;
+    }
+    .home-card-sub { font-size: 13px; color: var(--muted); line-height: 1.4; }
+    .home-card-arrow { font-size: 20px; color: var(--muted); flex-shrink: 0; margin-left: 4px; }
+
+    @media (min-width: 640px) {
+      .home-greeting h2 { font-size: 26px; }
+    }
+    @media (min-width: 900px) {
+      .home-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+      .home-sections .home-card:first-child { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+
+<img id="gw-banner" src="assets/data/banner.jpg" alt=""
+  onload="this.style.display='block'"
+  onerror="this.style.display='none'">
+
+<div class="gw-header">
+  <div class="gw-header-inner">
+    <div style="width:60px;flex-shrink:0;"></div>
+    <div class="gw-header-text">
+      <div class="gw-event-name" id="gw-event-date"></div>
+      <h1><em id="gw-couple-names">Our Wedding</em></h1>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+  </div>
+</div>
+
+<main class="gw-main">
+  <div class="home-greeting">
+    <h2 data-i18n="welcomeTitle">Welcome to Our Wedding</h2>
+  </div>
+
+  <div class="home-sections">
+
+    <a class="home-card" href="table.html">
+      <div class="home-card-inner">
+        <div class="home-card-icon">&#128085;</div>
+        <div class="home-card-text">
+          <div class="home-card-title" data-i18n="findTable">Find My Table</div>
+          <div class="home-card-sub" data-i18n="findTableSub">Upload your invitation QR code</div>
+        </div>
+        <div class="home-card-arrow">›</div>
+      </div>
+    </a>
+
+    <a class="home-card" href="menu.html">
+      <div class="home-card-inner">
+        <div class="home-card-icon">&#127860;</div>
+        <div class="home-card-text">
+          <div class="home-card-title" data-i18n="weddingMenu">Wedding Menu</div>
+          <div class="home-card-sub" data-i18n="weddingMenuSub">Tonight's banquet</div>
+        </div>
+        <div class="home-card-arrow">›</div>
+      </div>
+    </a>
+
+    <a class="home-card" href="video.html">
+      <div class="home-card-inner">
+        <div class="home-card-icon">&#127916;</div>
+        <div class="home-card-text">
+          <div class="home-card-title" data-i18n="loveStory">Love Story Video</div>
+          <div class="home-card-sub" data-i18n="loveStorySub">Our journey together</div>
+        </div>
+        <div class="home-card-arrow">›</div>
+      </div>
+    </a>
+
+    <a class="home-card" href="gallery.html">
+      <div class="home-card-inner">
+        <div class="home-card-icon">&#128247;</div>
+        <div class="home-card-text">
+          <div class="home-card-title" data-i18n="photoGallery">Photo Gallery</div>
+          <div class="home-card-sub" data-i18n="photoGallerySub">Memories</div>
+        </div>
+        <div class="home-card-arrow">›</div>
+      </div>
+    </a>
+
+    <a class="home-card" href="wish.html">
+      <div class="home-card-inner">
+        <div class="home-card-icon">&#128140;</div>
+        <div class="home-card-text">
+          <div class="home-card-title" data-i18n="sendWishes">Send Wishes</div>
+          <div class="home-card-sub" data-i18n="sendWishesSub">Leave a message for us</div>
+        </div>
+        <div class="home-card-arrow">›</div>
+      </div>
+    </a>
+
+  </div>
+</main>
+
+<footer class="gw-footer">
+  <span id="gw-footer-names"></span>
+</footer>
+
+<script src="assets/js/gw.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const { config } = await GW.loadData();
+      GW.applyConfig();
+      const footerEl = document.getElementById('gw-footer-names');
+      if (footerEl) footerEl.textContent = config.projectName || '';
+    } catch (e) {
+      console.warn('Could not load config:', e);
+    }
+  });
+</script>
+</body>
+</html>

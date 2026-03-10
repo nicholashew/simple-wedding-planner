@@ -1,0 +1,2407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wedding Day</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    /* ================================================================
+       DESIGN TOKENS
+    ================================================================ */
+    :root {
+      --bg:        #faf9f6;
+      --surface:   #ffffff;
+      --border:    #e8e4dc;
+      --text:      #1a1512;
+      --text2:     #5a5550;
+      --muted:     #9a9590;
+      --accent:    #b8923a;
+      --accent-lt: #fdf5e6;
+      --accent-dk: #8a6a20;
+      --gold:      #c8a84a;
+      --radius:    14px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', PingFang SC, Noto Sans CJK SC, sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 150dvh; display: flex; flex-direction: column;
+    }
+
+    /* ================================================================
+       ANTI-CAPTURE — best-effort screen record / screenshot deterrent
+       (No JS API can fully block native screen capture, but this raises
+        the bar: watermark overlay, CSS filter on video, warn on visibility
+        change, and the video URL is never exposed in the DOM.)
+    ================================================================ */
+    /* Persistent translucent watermark rendered over the entire page */
+    body::after {
+      content: '';
+      position: fixed; inset: 0; z-index: 9999;
+      pointer-events: none;
+      background-image: repeating-linear-gradient(
+        -45deg,
+        transparent 0px, transparent 60px,
+        rgba(180,140,50,.045) 60px, rgba(180,140,50,.045) 61px
+      );
+    }
+    /* Extra watermark on video specifically */
+    #montage-wrap::after {
+      content: attr(data-wm);
+      position: absolute; inset: 0; z-index: 5;
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(12px, 3vw, 18px); font-weight: 600;
+      color: rgba(255,255,255,.18); pointer-events: none;
+      text-align: center; padding: 16px;
+      text-shadow: 0 1px 3px rgba(0,0,0,.4);
+      white-space: pre-wrap; word-break: break-all;
+    }
+
+    /* ================================================================
+       BANNER
+    ================================================================ */
+    #gw-banner {
+      width: 100%; max-height: 200px;
+      object-fit: cover; object-position: center top;
+      display: none;
+    }
+
+    /* ================================================================
+       STICKY HEADER
+    ================================================================ */
+    .gw-header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 14px 16px 0; position: sticky; top: 0; z-index: 50;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+    }
+    .gw-header-inner {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 10px; padding-bottom: 12px;
+    }
+    .gw-header-text { flex: 1; text-align: center; }
+    .gw-event-name {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 3px;
+    }
+    .gw-header h1 {
+      font-family: Georgia,'Times New Roman',serif;
+      font-size: 24px; font-weight: 400; color: var(--text);
+    }
+    .gw-header h1 em { font-style: italic; color: var(--accent-dk); }
+    .gw-header .gw-subtitle { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+    /* Language toggle */
+    .lang-toggle { display: flex; gap: 4px; flex-shrink: 0; padding-top: 2px; }
+    .lang-btn {
+      background: none; border: 1.5px solid var(--border); border-radius: 6px;
+      padding: 5px 9px; font-size: 11px; font-weight: 700; cursor: pointer;
+      color: var(--muted); font-family: inherit; transition: all .15s; line-height: 1;
+    }
+    .lang-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* ================================================================
+       BREADCRUMB
+    ================================================================ */
+    .breadcrumb {
+      display: none; align-items: center; gap: 0;
+      padding: 7px 16px; border-top: 1px solid var(--border);
+      background: var(--bg); overflow-x: auto; white-space: nowrap;
+      scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    }
+    .breadcrumb::-webkit-scrollbar { display: none; }
+    .breadcrumb.visible { display: flex; }
+    .bc-item {
+      font-size: 12px; color: var(--muted); cursor: pointer; font-family: inherit;
+      background: none; border: none; padding: 2px 4px; border-radius: 4px;
+      white-space: nowrap; transition: color .12s; flex-shrink: 0;
+    }
+    .bc-item:hover { color: var(--accent-dk); }
+    .bc-item.bc-current { color: var(--text2); font-weight: 600; cursor: default; pointer-events: none; }
+    .bc-sep { font-size: 11px; color: var(--border); padding: 0 1px; flex-shrink: 0; user-select: none; }
+
+    /* ================================================================
+       MAIN CONTENT AREA
+    ================================================================ */
+    .gw-main {
+      flex: 1; padding: 18px 16px 120px;
+      max-width: 500px; margin: 0 auto; width: 100%;
+      position: relative;
+    }
+    .gw-main::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('./data/floral-background.jpg');
+      background-size: cover;
+      background-repeat: repeat;
+      opacity: 0.5;
+      z-index: -1;
+    }
+
+    /* Screens */
+    .screen { display: none; opacity: 0; }
+    .screen.active {
+      display: block;
+      animation: screenFadeIn 0.22s ease forwards;
+    }
+    @keyframes screenFadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ================================================================
+       HOME SCREEN — hub with three section cards
+    ================================================================ */
+    .home-greeting {
+      text-align: center; margin-bottom: 24px; padding-top: 4px;
+    }
+    .home-greeting .home-date {
+      font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 6px;
+    }
+    .home-greeting h2 {
+      font-family: Georgia,serif; font-size: 22px; font-weight: 400;
+      color: var(--text); line-height: 1.4;
+    }
+    .home-greeting h2 em { font-style: italic; color: var(--accent-dk); }
+
+    .home-sections { display: flex; flex-direction: column; gap: 14px; }
+
+    .home-card {
+      background: rgba(255,255,255,0.55); border: 1.5px solid rgba(200,168,74,0.35);
+      border-radius: 18px; overflow: hidden; cursor: pointer;
+      transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s ease, border-color .2s ease, opacity .25s ease, background .2s ease;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+      text-align: left; font-family: inherit; width: 100%;
+      display: block; text-decoration: none;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .home-card:hover {
+      border-color: var(--gold); transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(0,0,0,.12);
+      background: rgba(255,255,255,0.72);
+    }
+    .home-card:active { transform: translateY(0) scale(0.98); box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    .home-card-inner {
+      display: flex; align-items: center; gap: 16px; padding: 18px 20px;
+    }
+    .home-card-icon {
+      width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; background: var(--accent-lt);
+    }
+    .home-card-text { flex: 1; min-width: 0; }
+    .home-card-title {
+      font-size: 17px; font-weight: 700; color: var(--text);
+      margin-bottom: 3px; line-height: 1.2;
+    }
+    .home-card-sub { font-size: 13px; color: var(--muted); line-height: 1.4; }
+    .home-card-arrow {
+      font-size: 20px; color: var(--muted); flex-shrink: 0; margin-left: 4px;
+    }
+
+    /* Locked card state (montage not yet unlocked) */
+    .home-card.locked { cursor: default; pointer-events: none; }
+    .home-card.locked .home-card-icon { background: #f0ece4; filter: grayscale(0.3); }
+    .home-card.locked .home-card-title { color: var(--text2); }
+    .home-card.locked .home-card-arrow { opacity: 0.2; }
+    .home-card-badge {
+      display: inline-block; font-size: 10px; font-weight: 700;
+      background: var(--accent); color: #fff; border-radius: 20px;
+      padding: 2px 8px; margin-top: 4px; letter-spacing: 0.5px;
+    }
+    .home-card-badge.locked-badge { background: var(--muted); }
+
+    /* Inline countdown on the locked home card */
+    .home-card-countdown {
+      display: none; margin-top: 9px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 9px 12px;
+    }
+    .home-card-countdown.visible { display: block; }
+    .hcc-label {
+      font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase;
+      color: var(--muted); font-weight: 600; margin-bottom: 6px;
+    }
+    .hcc-units { display: flex; gap: 5px; align-items: center; }
+    .hcc-unit {
+      display: flex; flex-direction: column; align-items: center;
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 8px; padding: 6px 10px; min-width: 44px; flex: 1;
+    }
+    .hcc-val {
+      font-size: 20px; font-weight: 800; color: var(--text); line-height: 1;
+      font-variant-numeric: tabular-nums; font-family: Georgia, serif;
+    }
+    .hcc-lbl {
+      font-size: 9px; color: var(--muted); margin-top: 3px;
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .hcc-sep {
+      font-size: 16px; font-weight: 700; color: var(--border);
+      padding-bottom: 10px; flex-shrink: 0;
+    }
+
+    /* ================================================================
+       MENU SCREEN
+    ================================================================ */
+    .menu-back { display: inline-flex; align-items: center; gap: 5px;
+      background: none; border: none; cursor: pointer; font-size: 14px;
+      color: var(--text2); padding: 4px 0; margin-bottom: 14px; font-family: inherit;
+      transition: color .15s; }
+    .menu-back:hover { color: var(--accent); }
+
+    .menu-title {
+      font-family: Georgia,serif; font-size: 22px; font-weight: 400;
+      margin-bottom: 4px;
+    }
+    .menu-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+    .menu-section { margin-bottom: 22px; }
+    .menu-section-head {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); font-weight: 600; margin-bottom: 10px;
+      padding-bottom: 6px;
+    }
+    .menu-items { display: flex; flex-direction: column; gap: 1px; }
+    .menu-item {
+      background: var(--surface); padding: 13px 16px;
+      border-radius: 0;
+      transition: background .15s;
+    }
+    .menu-item:first-child { border-radius: 12px 12px 0 0; }
+    .menu-item:last-child  { border-radius: 0 0 12px 12px; }
+    .menu-item:only-child  { border-radius: 12px; }
+    .menu-item-inner { display: flex; align-items: center; gap: 14px; }
+    .menu-dish-num {
+      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+      background: var(--accent-lt); border: 1.5px solid var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: var(--accent-dk);
+      font-family: Georgia, serif;
+    }
+    .menu-item-text { flex: 1; min-width: 0; }
+    .menu-item-name { font-size: 16px; font-weight: 700; color: var(--text); line-height: 1.3; }
+    .menu-item-name-alt {
+      font-size: 16px; color: var(--muted); margin-top: 2px; line-height: 1.4;
+      font-style: italic;
+    }
+    .menu-item-emoji { font-size: 18px; flex-shrink: 0; }
+    .menu-item-desc { font-size: 14px; color: var(--muted); margin-top: 3px; line-height: 1.5; }
+    .menu-empty {
+      text-align: center; padding: 32px 20px; color: var(--muted); font-size: 14px;
+    }
+
+    /* ── Banquet Scroll menu style ───────────────────────────────── */
+    .menu-scroll {
+      border: 1.5px solid var(--gold); border-radius: 18px;
+      padding: 22px 20px; position: relative; overflow: hidden;
+    }
+    /* Subtle corner ornament */
+    .menu-scroll::before {
+      content: '❧';
+      position: absolute; top: 10px; right: 14px;
+      font-size: 18px; color: rgba(200,168,74,.35);
+      pointer-events: none; user-select: none;
+    }
+    .menu-scroll .menu-section-head {
+      font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--gold); font-weight: 700; margin: 18px 0 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .menu-scroll .menu-section-head::before,
+    .menu-scroll .menu-section-head::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(to right, transparent, rgba(200,168,74,.5));
+    }
+    .menu-scroll .menu-section-head::after {
+      background: linear-gradient(to left, transparent, rgba(200,168,74,.5));
+    }
+    .menu-scroll .menu-section-head:first-child { margin-top: 0; }
+    .menu-scroll .menu-items { gap: 0; }
+    .menu-scroll .menu-item {
+      background: none; border-radius: 0 !important; padding: 11px 6px;
+      border-bottom: 1px dashed rgba(200,168,74,.28);
+      transition: background .15s;
+    }
+    .menu-scroll .menu-item:last-child { border-bottom: none; }
+    .menu-scroll .menu-item:hover { background: rgba(200,168,74,.06); border-radius: 8px !important; }
+    .menu-scroll .menu-item-inner { gap: 12px; align-items: center; }
+    .menu-scroll .menu-dish-num {
+      background: var(--gold); color: #fff; border-color: transparent;
+      font-size: 10px; font-family: Georgia, serif; flex-shrink: 0;
+    }
+    .menu-scroll .menu-item-emoji { font-size: 20px; flex-shrink: 0; }
+    .menu-scroll .menu-item-name {
+      font-family: Georgia,serif; font-size: 16px; font-weight: 400;
+      color: var(--text); line-height: 1.3;
+    }
+    .menu-scroll .menu-item-name-alt {
+      font-style: normal; font-size: 16px; color: var(--muted); margin-top: 1px;
+    }
+    .menu-scroll .menu-item-desc {
+      font-size: 14px; color: var(--muted); margin-top: 3px; line-height: 1.5;
+      font-style: italic;
+    }
+
+    /* ================================================================
+       FIND SEAT — full existing flow reused as a sub-section
+    ================================================================ */
+    /* Top back button (used inside seat-finder sub-screens) */
+    .back-btn-top {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: none; border: none; cursor: pointer; font-size: 14px;
+      color: var(--text2); padding: 4px 0; margin-bottom: 10px; font-family: inherit;
+    }
+    .back-btn-top:hover { color: var(--accent); }
+
+    /* Bottom back button — lives inside fixed bottom bar */
+    .back-btn-bottom {
+      width: 100%; padding: 13px; border-radius: 50px; border: 1.5px solid var(--border);
+      cursor: pointer; font-size: 15px; font-weight: 600; color: var(--text2);
+      font-family: inherit; transition: all .15s; background: var(--surface);
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .back-btn-bottom:hover, .back-btn-bottom:active { border-color: var(--accent); color: var(--accent); background: var(--accent-lt); }
+
+    .step-label { font-size: 14px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; font-weight: 500; }
+
+    /* Category grid */
+    .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .cat-card {
+      background: rgba(255,255,255,0.55); border: 1.5px solid rgba(200,168,74,0.35); border-radius: var(--radius);
+      padding: 18px 14px; cursor: pointer; transition: all 0.15s; text-align: center;
+      box-shadow: 0 1px 6px rgba(0,0,0,.06); font-family: inherit;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .cat-card:hover, .cat-card:active { border-color: var(--gold); background: rgba(255,248,230,0.8); transform: translateY(-1px); }
+    .cat-card.skip-card { border-style: dashed; color: var(--accent-dk); }
+    .cat-card.skip-card:hover { background: rgba(255,248,230,0.8); }
+    .cat-card .cat-emoji { font-size: 28px; display: block; margin-bottom: 8px; }
+    .cat-card .cat-name  { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.3; display: block; }
+    .cat-card .cat-sub   { font-size: 12px; color: var(--muted); margin-top: 3px; display: block; }
+
+    /* Alphabet grid */
+    .alpha-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 9px; }
+    .alpha-card {
+      background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 16px 6px; cursor: pointer; text-align: center; font-size: 18px; font-weight: 700;
+      color: var(--text); font-family: Georgia,serif; transition: all 0.12s;
+      box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    }
+    .alpha-card:hover, .alpha-card:active { border-color: var(--gold); background: var(--accent-lt); transform: translateY(-1px); }
+    .alpha-card.dimmed { opacity: 0.25; cursor: default; pointer-events: none; }
+    .alpha-card .alpha-count { font-size: 10px; font-weight: 400; color: var(--muted); display: block; margin-top: 4px; font-family: sans-serif; }
+
+    /* Search bar */
+    .search-bar { position: relative; margin-bottom: 14px; }
+    .search-bar input {
+      width: 100%; padding: 14px 44px 14px 44px; border: 1.5px solid var(--border);
+      border-radius: 50px; font-size: 16px; background: var(--surface); color: var(--text);
+      font-family: inherit; outline: none; transition: border-color .15s;
+    }
+    .search-bar input:focus { border-color: var(--gold); }
+    .search-bar .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none; }
+    .search-bar .clear-btn {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; font-size: 18px; color: var(--muted); display: none; padding: 4px;
+    }
+    .search-bar input:not(:placeholder-shown) ~ .clear-btn { display: block; }
+
+    /* Guest list */
+    .guest-list { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: 0 1px 8px rgba(0,0,0,.05); margin-bottom: 8px; }
+    .guest-item {
+      display: flex; align-items: center; padding: 14px 14px; border-bottom: 1px solid var(--border); gap: 10px;
+      cursor: pointer; transition: background .1s; user-select: none; -webkit-user-select: none;
+    }
+    .guest-item:last-child { border-bottom: none; }
+    .guest-item.selected { background: var(--accent-lt); }
+    .guest-item.selected .g-sel-box { background: var(--accent); border-color: var(--accent); }
+    .guest-item.selected .g-sel-box::after { content: '\2713'; }
+    .g-sel-box {
+      width: 24px; height: 24px; border-radius: 6px; border: 2px solid var(--border);
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 14px; color: #fff; font-weight: 700; transition: all .12s;
+    }
+    .g-name { flex: 1; font-size: 16px; font-weight: 500; line-height: 1.3; }
+    .g-nick { font-size: 12px; color: var(--muted); font-weight: 400; }
+    .g-table-col { text-align: right; flex-shrink: 0; }
+    .g-table-badge {
+      display: inline-block; font-size: 11px; font-weight: 700; color: #fff;
+      border-radius: 5px; padding: 3px 8px; margin-bottom: 2px; white-space: nowrap;
+    }
+    .g-seat-num { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .g-table-strip { width: 4px; flex-shrink: 0; border-radius: 3px; align-self: stretch; min-height: 40px; }
+
+    /* Fixed bottom bar */
+    .find-seat-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      background-image: url('./data/floral-background.jpg');
+      background-size: cover; background-position: center bottom;
+      border-top: 1px solid rgba(200,168,74,0.4);
+      padding: 10px 16px 12px; display: none;
+      box-shadow: 0 -4px 20px rgba(0,0,0,.08);
+    }
+    /* White overlay so floral is subtle, not overwhelming */
+    .find-seat-bar::before {
+      content: ''; position: absolute; inset: 0;
+      background: rgba(255,252,248,0.82);
+      pointer-events: none; z-index: 0;
+    }
+    .find-seat-bar > * { position: relative; z-index: 1; }
+    .find-seat-bar.visible {
+      display: flex; flex-direction: column; gap: 8px;
+      left: 50%; right: auto; transform: translateX(-50%);
+      width: 100%; max-width: 500px;
+    }
+    .find-seat-btn {
+      width: 100%; padding: 15px; border-radius: 50px; border: none; cursor: pointer;
+      background: var(--accent); color: #fff; font-size: 17px; font-weight: 700;
+      font-family: inherit; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .find-seat-btn:hover { background: var(--accent-dk); }
+    .find-seat-count { background: rgba(255,255,255,.25); border-radius: 50px; padding: 2px 10px; font-size: 14px; }
+    /* Back button inside find-seat-bar — transparent */
+    #bar-back-btn {
+      background: transparent; border-color: rgba(200,168,74,0.5); color: var(--accent-dk);
+    }
+    #bar-back-btn:hover, #bar-back-btn:active {
+      background: rgba(255,248,230,0.7); border-color: var(--gold);
+    }
+
+    .toggle-names-btn {
+      width: 100%; padding: 11px; border-radius: 50px; border: 1.5px solid var(--border);
+      cursor: pointer; font-size: 14px; font-weight: 600; color: var(--text2);
+      font-family: inherit; transition: all .15s; background: var(--surface);
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .toggle-names-btn:hover, .toggle-names-btn:active { border-color: var(--accent); color: var(--accent); background: var(--accent-lt); }
+    .toggle-names-btn.active { background: var(--accent-lt); border-color: var(--accent); color: var(--accent-dk); }
+
+    /* View all tables button */
+    .view-all-btn {
+      width: 100%; margin-top: 14px; padding: 15px 20px;
+      background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
+      font-family: inherit; font-size: 15px; font-weight: 600; color: var(--text2);
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all .15s;
+    }
+    .view-all-btn:hover, .view-all-btn:active { border-color: var(--gold); color: var(--accent-dk); background: var(--accent-lt); }
+    .view-all-btn .vab-icon { font-size: 18px; }
+
+    /* Table list */
+    .table-list { display: flex; flex-direction: column; gap: 10px; }
+    .table-list-item {
+      background: rgba(255,255,255,0.55); border: 1.5px solid rgba(200,168,74,0.35); border-radius: var(--radius);
+      padding: 16px; display: flex; align-items: center; gap: 14px;
+      cursor: pointer; transition: all .15s;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 1px 6px rgba(0,0,0,.06);
+    }
+    .table-list-item:hover, .table-list-item:active { border-color: var(--gold); background: rgba(255,248,230,0.8); transform: translateY(-1px); }
+    .tli-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+    .tli-info { flex: 1; min-width: 0; }
+    .tli-name { font-size: 16px; font-weight: 700; }
+    .tli-sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .tli-arrow { font-size: 18px; color: var(--muted); flex-shrink: 0; }
+
+    /* Table direct view */
+    .tdir-header { margin-bottom: 16px; }
+    .tdir-header h2 { font-family: Georgia,serif; font-size: 22px; font-weight: 400; }
+    .tdir-qr-wrap { text-align: center; margin: 18px 0 6px; }
+    .tdir-qr-wrap canvas, .tdir-qr-wrap img { border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,.10); }
+    #tdir-qr-canvas { display: flex; justify-content: center; align-items: center; }
+
+    /* Viz */
+    #screen-viz { padding-bottom: 20px; }
+    .viz-intro { margin-bottom: 14px; }
+    .viz-intro h2 { font-family: Georgia,serif; font-size: 20px; font-weight: 400; margin-bottom: 4px; }
+    .viz-intro p  { font-size: 14px; color: var(--text2); line-height: 1.5; }
+    .viz-table-block { background: var(--surface); border-radius: 14px; border: 1px solid var(--border); margin-bottom: 14px; overflow: hidden; box-shadow: 0 1px 8px rgba(0,0,0,.05); }
+    .viz-table-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; user-select: none; -webkit-user-select: none; }
+    .viz-table-color-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .viz-table-header-text { flex: 1; }
+    .viz-table-title { font-size: 16px; font-weight: 700; }
+    .viz-table-subtitle { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .viz-table-chevron { font-size: 18px; color: var(--muted); transition: transform .2s; flex-shrink: 0; }
+    .viz-table-block.open .viz-table-chevron { transform: rotate(180deg); }
+    .viz-table-body { display: none; padding: 0 16px 16px; }
+    .viz-table-block.open .viz-table-body { display: block; }
+    .viz-svg-wrap { display: block; margin: 0 auto 14px; overflow: visible; }
+    .viz-guest-cards { display: flex; flex-direction: column; gap: 8px; }
+    .viz-guest-card { background: var(--bg); border-radius: 10px; border: 1px solid var(--border); padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
+    .viz-seat-circle { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 800; color: #fff; }
+    .viz-guest-info { flex: 1; min-width: 0; }
+    .viz-guest-name  { font-size: 16px; font-weight: 600; }
+    .viz-guest-name--full { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .viz-guest-nick-name { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Alpha section head */
+    .alpha-section-head { font-family: Georgia,serif; font-size: 28px; font-weight: 400; color: var(--text); padding: 18px 0 6px; }
+
+    /* Empty / error states */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+    .empty-state .empty-icon { font-size: 44px; display: block; margin-bottom: 12px; }
+    .empty-state p { font-size: 15px; line-height: 1.6; }
+    #no-data-banner { background: #fff8e8; border: 1.5px solid var(--gold); border-radius: 10px; padding: 20px; text-align: center; margin: 20px 0; display: none; }
+    #no-data-banner .icon { font-size: 32px; margin-bottom: 8px; }
+    #no-data-banner h3 { font-size: 16px; margin-bottom: 8px; color: var(--accent-dk); }
+    #no-data-banner p  { font-size: 13px; color: var(--text2); line-height: 1.9; text-align: left; }
+    #no-data-banner code { background: #f0ece4; border-radius: 3px; padding: 1px 5px; font-size: 12px; }
+
+    /* ================================================================
+       MONTAGE SCREEN
+    ================================================================ */
+    .montage-back { display: inline-flex; align-items: center; gap: 5px;
+      background: none; border: none; cursor: pointer; font-size: 14px;
+      color: var(--text2); padding: 4px 0; margin-bottom: 14px; font-family: inherit; }
+    .montage-back:hover { color: var(--accent); }
+
+    .montage-title {
+      font-family: Georgia,serif; font-size: 22px; font-weight: 400; margin-bottom: 4px;
+    }
+    .montage-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+
+    /* Video wrapper — position:relative needed for ::after watermark */
+    #montage-wrap {
+      position: relative; background: #000;
+      border-radius: 14px; overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,.18);
+      aspect-ratio: 16/9;
+    }
+    #montage-video {
+      width: 100%; height: 100%;
+      display: block; object-fit: cover;
+      /* CSS filter makes screenshots look washed out */
+      filter: saturate(0.92) brightness(0.97) contrast(1.02);
+    }
+    /* Blocked / countdown overlay */
+    #montage-overlay {
+      position: absolute; inset: 0; z-index: 10;
+      background: rgba(10,8,5,.92);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: #fff; text-align: center; padding: 24px;
+    }
+    #montage-overlay.hidden { display: none; }
+    .montage-lock-icon { font-size: 48px; margin-bottom: 16px; }
+    .montage-lock-title {
+      font-family: Georgia,serif; font-size: 22px; font-weight: 400;
+      margin-bottom: 8px; color: var(--gold);
+    }
+    .montage-lock-desc { font-size: 14px; color: rgba(255,255,255,.65); line-height: 1.6; }
+    .montage-countdown {
+      margin-top: 20px; font-size: 13px; color: rgba(255,255,255,.5);
+    }
+    .montage-countdown strong { color: #fff; font-size: 22px; display: block; margin-top: 4px; }
+
+    /* Screen-record warning toast */
+    #capture-warn {
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      z-index: 9998; background: rgba(30,20,10,.92); color: #fff;
+      border: 1px solid var(--gold); border-radius: 50px;
+      padding: 10px 22px; font-size: 13px; font-weight: 600;
+      white-space: nowrap; pointer-events: none; opacity: 0;
+      transition: opacity .3s;
+    }
+    #capture-warn.show { opacity: 1; }
+
+    /* Tooltip modal */
+    #seat-tooltip { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.5); align-items: center; justify-content: center; }
+    #seat-tooltip.visible { display: flex; }
+    #seat-tooltip-inner { background: #fff; border-radius: 20px; padding: 28px 24px; min-width: 240px; max-width: 320px; text-align: center; position: relative; box-shadow: 0 12px 48px rgba(0,0,0,.22); animation: popIn .18s ease; }
+    @keyframes popIn { from { transform: scale(.88); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    #tt-seat-badge { width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; color: #fff; }
+    #tt-guest-name  { font-size: 20px; font-weight: 700; color: var(--text); line-height: 1.25; margin-bottom: 6px; }
+    #tt-table-name  { font-size: 14px; color: var(--text2); margin-bottom: 3px; }
+    #tt-seat-label  { font-size: 12px; color: var(--muted); }
+    #tt-empty-label { font-size: 14px; color: var(--muted); font-style: italic; }
+    #tt-close { position: absolute; top: 12px; right: 14px; background: none; border: none; font-size: 22px; color: var(--muted); cursor: pointer; line-height: 1; }
+
+    /* Nick unlock modal */
+    #nick-modal-overlay { display: none; position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,.45); align-items: center; justify-content: center; }
+    #nick-modal-overlay.visible { display: flex; }
+    #nick-modal { background: var(--surface); border-radius: 16px; padding: 28px 24px; width: calc(100% - 48px); max-width: 340px; box-shadow: 0 8px 40px rgba(0,0,0,.25); }
+    #nick-modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    #nick-modal p  { font-size: 13px; color: var(--text2); margin-bottom: 16px; }
+    #nick-pw-input { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 15px; font-family: inherit; outline: none; transition: border-color .15s; box-sizing: border-box; }
+    #nick-pw-input:focus { border-color: var(--gold); }
+    #nick-pw-error { font-size: 12px; color: #c0392b; margin-top: 6px; min-height: 16px; }
+    .nick-modal-btns { display: flex; gap: 10px; margin-top: 16px; }
+    .nick-modal-btns button { flex: 1; padding: 12px; border-radius: 50px; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; transition: all .15s; border: 1.5px solid var(--border); }
+    #nick-confirm-btn { background: var(--accent); color: #fff; border-color: var(--accent); }
+    #nick-confirm-btn:hover { background: var(--accent-dk); }
+    #nick-cancel-btn  { background: var(--surface); color: var(--text2); }
+    #nick-cancel-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-lt); }
+
+    /* Footer */
+    .gw-footer { text-align: center; padding: 16px; font-size: 10px; color: var(--muted); letter-spacing: 0.8px; }
+
+    /* ================================================================
+       RESPONSIVE — mobile-first, enhancements at each breakpoint
+    ================================================================ */
+    @media (min-width: 480px) {
+      .gw-header h1       { font-size: 28px; }
+      .home-card-title    { font-size: 18px; }
+      .cat-grid           { gap: 14px; }
+      .cat-card           { padding: 22px 16px; }
+      .cat-card .cat-emoji{ font-size: 32px; }
+      .alpha-grid         { grid-template-columns: repeat(5,1fr); gap: 10px; }
+      .alpha-card         { font-size: 20px; padding: 18px 6px; }
+    }
+
+    @media (min-width: 640px) {
+      .gw-header          { padding: 18px 24px 0; }
+      .gw-header h1       { font-size: 32px; }
+      #gw-banner          { max-height: 260px; }
+      .breadcrumb         { padding: 8px 24px; }
+      .bc-item            { font-size: 13px; }
+      .gw-main            { max-width: 680px; padding: 24px 24px 130px; }
+      .home-sections      { gap: 16px; }
+      .home-card-inner    { padding: 20px 24px; gap: 20px; }
+      .home-card-icon     { width: 58px; height: 58px; font-size: 28px; border-radius: 16px; }
+      .home-card-title    { font-size: 19px; }
+      .cat-grid           { grid-template-columns: repeat(3,1fr); gap: 16px; }
+      .alpha-grid         { grid-template-columns: repeat(6,1fr); }
+      .search-bar input   { font-size: 17px; }
+      .find-seat-bar      { max-width: 680px; }
+      .find-seat-bar.visible { max-width: 680px; }
+      .find-seat-btn      { font-size: 18px; padding: 16px; }
+      .back-btn-bottom    { font-size: 16px; padding: 14px; }
+      .table-list         { gap: 12px; }
+      .tli-name           { font-size: 17px; }
+      .tdir-header h2     { font-size: 26px; }
+      .montage-title      { font-size: 26px; }
+      #montage-wrap       { border-radius: 18px; }
+    }
+
+    @media (min-width: 900px) {
+      .gw-header h1       { font-size: 36px; }
+      #gw-banner          { max-height: 300px; }
+      .gw-main            { max-width: 820px; padding: 32px 32px 140px; }
+      .home-sections      { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+      /* Menu card spans full width if there are 3 cards and grid is 2-col */
+      .home-sections .home-card:first-child { grid-column: 1 / -1; }
+      .cat-grid           { grid-template-columns: repeat(3,1fr); gap: 20px; }
+      .cat-card           { padding: 28px 22px; border-radius: 18px; }
+      .alpha-grid         { grid-template-columns: repeat(7,1fr); gap: 12px; }
+      .find-seat-bar      { max-width: 820px; }
+      .find-seat-bar.visible { max-width: 820px; }
+      .table-list         { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; animation: none !important; }
+    }
+
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      .find-seat-bar { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+      .gw-main { padding-bottom: calc(120px + env(safe-area-inset-bottom)); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Optional banner -->
+<img id="gw-banner" src="./data/banner.jpg" alt=""
+  onload="this.style.display='block'"
+  onerror="this.style.display='none'">
+
+<!-- Header -->
+<div class="gw-header">
+  <div class="gw-header-inner">
+    <div style="width:60px;flex-shrink:0;"></div>
+    <div class="gw-header-text">
+      <h1 id="gw-title"><em id="t-welcome">💍 Our Wedding 💍</em></h1>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-lang-en" onclick="setLang('en')">EN</button>
+      <button class="lang-btn"        id="btn-lang-zh" onclick="setLang('zh')">&#31616;</button>
+    </div>
+  </div>
+  <div class="breadcrumb" id="breadcrumb"></div>
+</div>
+
+<div class="gw-main">
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN: Home (hub)
+  ══════════════════════════════════════════════════════ -->
+  <div class="screen active" id="screen-home">
+
+    <div id="no-data-banner">
+      <div class="icon">&#9888;&#65039;</div>
+      <h3 id="t-err-title">Guest data not available</h3>
+      <p id="t-err-body">Please ask the organiser to upload the guest data file.</p>
+    </div>
+
+    <div class="home-sections" id="home-sections">
+      <!-- Card 1: Find Your Seat -->
+      <button class="home-card" id="card-seat" onclick="enterSeat()">
+        <div class="home-card-inner">
+          <div class="home-card-icon">&#128085;</div>
+          <div class="home-card-text">
+            <div class="home-card-title" id="t-card-seat-title">Find Your Seat</div>
+            <div class="home-card-sub" id="t-card-seat-sub">Browse by name or category</div>
+          </div>
+          <div class="home-card-arrow">&#8250;</div>
+        </div>
+      </button>
+
+      <!-- Card 2: Wedding Menu -->
+      <button class="home-card" id="card-menu" onclick="enterMenu()">
+        <div class="home-card-inner">
+          <div class="home-card-icon">&#127869;</div>
+          <div class="home-card-text">
+            <div class="home-card-title" id="t-card-menu-title">Wedding Menu</div>
+            <div class="home-card-sub" id="t-card-menu-sub">Tonight's banquet courses</div>
+          </div>
+          <div class="home-card-arrow">&#8250;</div>
+        </div>
+      </button>
+
+      <!-- Card 3: Montage Video -->
+      <button class="home-card" id="card-montage" onclick="enterMontage()">
+        <div class="home-card-inner">
+          <div class="home-card-icon">&#127916;</div>
+          <div class="home-card-text">
+            <div class="home-card-title" id="t-card-montage-title">Our Story</div>
+            <div class="home-card-sub" id="t-card-montage-sub">A video montage</div>
+            <div class="home-card-badge" id="montage-badge" style="display:none"></div>
+            <!-- Inline countdown — shown only when locked and config has a release time -->
+            <div class="home-card-countdown" id="montage-card-cd">
+              <div class="hcc-label" id="hcc-label">Available in</div>
+              <div class="hcc-units">
+                <div class="hcc-unit" id="hcc-d"><div class="hcc-val" id="hcc-d-val">0</div><div class="hcc-lbl" id="hcc-d-lbl">Day</div></div>
+                <div class="hcc-sep">:</div>
+                <div class="hcc-unit" id="hcc-h"><div class="hcc-val" id="hcc-h-val">00</div><div class="hcc-lbl" id="hcc-h-lbl">Hr</div></div>
+                <div class="hcc-sep">:</div>
+                <div class="hcc-unit" id="hcc-m"><div class="hcc-val" id="hcc-m-val">00</div><div class="hcc-lbl" id="hcc-m-lbl">Min</div></div>
+                <div class="hcc-sep">:</div>
+                <div class="hcc-unit" id="hcc-s"><div class="hcc-val" id="hcc-s-val">00</div><div class="hcc-lbl" id="hcc-s-lbl">Sec</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="home-card-arrow" id="montage-arrow">&#8250;</div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN: Wedding Menu
+  ══════════════════════════════════════════════════════ -->
+  <div class="screen" id="screen-menu">
+    <button class="menu-back back-btn-top" onclick="goHome()">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span id="t-back-menu">Back</span>
+    </button>
+    <h2 class="menu-title" id="t-menu-title">Wedding Menu</h2>
+    <p class="menu-subtitle" id="t-menu-subtitle">Tonight's banquet</p>
+    <div id="menu-content"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN: Montage Video
+  ══════════════════════════════════════════════════════ -->
+  <div class="screen" id="screen-montage">
+    <button class="montage-back back-btn-top" onclick="goHome()">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span id="t-back-montage">Back</span>
+    </button>
+    <h2 class="montage-title" id="t-montage-title">Our Story</h2>
+    <p class="montage-subtitle" id="t-montage-subtitle">A special video message for you</p>
+
+    <div id="montage-wrap" data-wm="">
+      <!-- Blocked overlay (shown when outside time window) -->
+      <div id="montage-overlay">
+        <div class="montage-lock-icon" id="montage-lock-icon-btn"
+          title="Hold to unlock (admin)"
+          onmousedown="adminLockHoldStart(event)" ontouchstart="adminLockHoldStart(event)"
+          onmouseup="adminLockHoldEnd()"         ontouchend="adminLockHoldEnd()"
+          onmouseleave="adminLockHoldEnd()">&#127916;</div>
+        <div class="montage-lock-title" id="t-montage-lock-title">Coming Soon</div>
+        <div class="montage-lock-desc" id="t-montage-lock-desc">The video will be available during the reception.</div>
+        <div class="montage-countdown" id="montage-countdown"></div>
+        <!-- Admin hint: appears after 1s hold -->
+        <div id="admin-hold-hint" style="display:none;margin-top:10px;font-size:11px;color:var(--muted);letter-spacing:.5px;">Release to enter admin PIN…</div>
+      </div>
+      <!-- Video element — src set dynamically only when unlocked -->
+      <video id="montage-video" controls playsinline preload="none"
+        controlsList="nodownload nofullscreen noremoteplayback"
+        disablePictureInPicture disableRemotePlayback>
+      </video>
+    </div>
+
+    <p style="font-size:12px;color:var(--muted);text-align:center;margin-top:12px;" id="t-montage-note">
+      Please enjoy this moment with the couple &#10084;&#65039;
+    </p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN: Seat Finder — screen-cat (Step 1)
+  ══════════════════════════════════════════════════════ -->
+  <div class="screen" id="screen-cat">
+    <div class="step-label" id="t-step1">STEP 1 &mdash; WHO ARE YOU HERE FOR?</div>
+    <div class="cat-grid" id="cat-grid"></div>
+    <button class="view-all-btn" id="view-all-btn" onclick="showTableList()">
+      <span class="vab-icon">&#128085;</span>
+      <span id="t-view-all-btn">View All Tables</span>
+    </button>
+  </div>
+
+  <!-- Screen: Table list (screen-tables) -->
+  <div class="screen" id="screen-tables">
+    <button class="back-btn-top" onclick="showScreen('cat')">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span id="t-back-tables-txt">Back</span>
+    </button>
+    <div class="step-label" id="t-tables-label">ALL TABLES</div>
+    <div class="table-list" id="table-list-area"></div>
+  </div>
+
+  <!-- Screen: Table direct view (screen-table-direct) -->
+  <div class="screen" id="screen-table-direct">
+    <button class="back-btn-top" id="tdir-back-btn" onclick="showScreen('tables')">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span id="tdir-back-txt">Back</span>
+    </button>
+    <div class="tdir-header"><h2 id="tdir-table-name"></h2></div>
+    <div id="tdir-svg-area"></div>
+    <div class="tdir-qr-wrap" id="tdir-qr-wrap" style="display:none">
+      <div id="tdir-qr-canvas"></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;" id="tdir-qr-label">Scan to go directly to this table</div>
+    </div>
+  </div>
+
+  <!-- Screen: Alphabet (screen-alpha) -->
+  <div class="screen" id="screen-alpha">
+    <button class="back-btn-top" id="t-back-alpha" onclick="showScreen('cat')">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span id="t-back-alpha-txt">Back</span>
+    </button>
+    <div class="step-label" id="alpha-step-label">STEP 2 &mdash; FIRST LETTER OF LAST NAME</div>
+    <div class="alpha-grid" id="alpha-grid"></div>
+  </div>
+
+  <!-- Screen: Guest list (screen-list) -->
+  <div class="screen" id="screen-list">
+    <button class="back-btn-top" id="list-back-btn" onclick="showScreen('alpha')">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span id="list-back-txt">Back</span>
+    </button>
+    <div class="search-bar">
+      <span class="search-icon">&#128269;</span>
+      <input type="text" id="sf-search" placeholder="Search name..."
+        oninput="onSFSearch(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+      <button class="clear-btn" onclick="clearSFSearch()">&#10005;</button>
+    </div>
+    <div id="guest-list-area"></div>
+  </div>
+
+  <!-- Screen: Seat Visualization (screen-viz) -->
+  <div class="screen" id="screen-viz">
+    <button class="back-btn-top" onclick="showScreen('list')">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span id="viz-back-txt">Back</span>
+    </button>
+    <div class="viz-intro">
+      <h2 id="viz-title">Your Table</h2>
+      <p id="viz-desc">Your highlighted seat is shown below.</p>
+    </div>
+    <div id="viz-tables-container"></div>
+  </div>
+
+</div><!-- /.gw-main -->
+
+<!-- Seat tooltip overlay -->
+<div id="seat-tooltip" onclick="hideTooltip()">
+  <div id="seat-tooltip-inner" onclick="event.stopPropagation()">
+    <button id="tt-close" onclick="hideTooltip()">&#10005;</button>
+    <div id="tt-seat-badge"></div>
+    <div id="tt-guest-name"></div>
+    <div id="tt-empty-label"></div>
+    <div id="tt-table-name"></div>
+    <div id="tt-seat-label"></div>
+  </div>
+</div>
+
+<!-- Universal fixed bottom bar -->
+<div class="find-seat-bar" id="find-seat-bar">
+  <button class="find-seat-btn" id="find-seat-btn" onclick="showViz()" style="display:none">
+    <span id="t-find-seat-btn">Find My Seat</span>
+    <span class="find-seat-count" id="find-seat-count">1</span>
+  </button>
+  <button class="toggle-names-btn" id="toggle-names-btn" onclick="toggleSvgNames()" style="display:none">
+    <span id="t-toggle-names-btn">&#128065; Show Names</span>
+  </button>
+  <button class="back-btn-bottom" id="bar-back-btn" onclick="barBack()">
+    <span id="bar-back-txt">Back</span>
+  </button>
+</div>
+
+<!-- Nickname unlock modal -->
+<div id="nick-modal-overlay" onclick="nickModalCancel()">
+  <div id="nick-modal" onclick="event.stopPropagation()">
+    <h3>&#128274; Nickname Access</h3>
+    <p id="nick-modal-desc">Enter the access password to view guest nicknames.</p>
+    <input type="password" id="nick-pw-input" placeholder="Password"
+      onkeydown="if(event.key==='Enter')nickModalConfirm()"
+      autocomplete="off" autocorrect="off">
+    <div id="nick-pw-error"></div>
+    <div class="nick-modal-btns">
+      <button id="nick-cancel-btn" onclick="nickModalCancel()">Cancel</button>
+      <button id="nick-confirm-btn" onclick="nickModalConfirm()">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin montage preview modal -->
+<div id="admin-modal-overlay" onclick="adminModalCancel()">
+  <div id="admin-modal" onclick="event.stopPropagation()">
+    <div style="font-size:32px;text-align:center;margin-bottom:8px;">🎬</div>
+    <h3 id="admin-modal-title">Admin Preview</h3>
+    <p id="admin-modal-desc">Enter the admin PIN to preview the montage video outside the scheduled window.</p>
+    <input type="password" id="admin-pin-input" placeholder="Admin PIN"
+      onkeydown="if(event.key==='Enter')adminModalConfirm()"
+      inputmode="numeric" pattern="[0-9]*" maxlength="8"
+      autocomplete="off" autocorrect="off">
+    <div id="admin-pin-error"></div>
+    <div class="nick-modal-btns">
+      <button id="admin-cancel-btn" onclick="adminModalCancel()">Cancel</button>
+      <button id="admin-confirm-btn" onclick="adminModalConfirm()">Preview</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  #admin-modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,.55); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+    transition: opacity .2s;
+  }
+  #admin-modal-overlay.visible { display: flex; }
+  #admin-modal {
+    background: var(--surface); border-radius: 18px; padding: 28px 24px;
+    width: calc(100% - 48px); max-width: 320px;
+    box-shadow: 0 8px 40px rgba(0,0,0,.25);
+    border: 1px solid var(--gold);
+  }
+  #admin-modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 6px; text-align:center; }
+  #admin-modal p  { font-size: 13px; color: var(--text2); margin-bottom: 16px; text-align:center; line-height:1.5; }
+  #admin-pin-input {
+    width: 100%; padding: 12px 14px; border: 1.5px solid var(--border);
+    border-radius: 10px; font-size: 20px; font-family: inherit;
+    outline: none; transition: border-color .15s; box-sizing: border-box;
+    text-align: center; letter-spacing: 6px;
+  }
+  #admin-pin-input:focus { border-color: var(--gold); }
+  #admin-pin-error { font-size: 12px; color: #c0392b; margin-top: 6px; min-height: 16px; text-align:center; }
+  #admin-confirm-btn { background: var(--accent); color: #fff; border-color: var(--accent); }
+  #admin-confirm-btn:hover { background: var(--accent-dk); }
+  /* Hold progress ring on lock icon */
+  #montage-lock-icon-btn { cursor: pointer; position: relative; user-select: none; -webkit-user-select:none; }
+  #admin-hold-progress {
+    position: absolute; inset: -6px; border-radius: 50%;
+    border: 3px solid transparent; border-top-color: var(--gold);
+    display: none; animation: adminHoldSpin 1.5s linear forwards;
+    pointer-events: none;
+  }
+  @keyframes adminHoldSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
+
+<!-- Screen-capture warning toast -->
+<div id="capture-warn">&#128683; Recording not permitted</div>
+
+<div class="gw-footer" id="gw-footer">Powered by Banquet Planner</div>
+
+<script>
+// ================================================================
+// CONFIG — loaded from ./data/config.json, then ./data/guests.json
+// config.json shape (all fields optional except guests.json):
+// {
+//   "projectName": "Smith & Jones Wedding",
+//   "eventDate": "2025-12-20",          // YYYY-MM-DD (local time)
+//   "montage": {
+//     "videoUrl": "./data/montage.mp4",  // or external URL
+//     "availableFrom": "14:00",          // HH:MM 24h local time
+//     "availableTo":   "16:00"
+//   },
+//   "menu": [
+//     {
+//       "courseZh": "頭盤",  "courseEn": "Starter",   // both optional
+//       "items": [
+//         { "nameZh": "五福喜臨門", "nameEn": "Five Blessings Platter" },
+//         { "nameZh": "紅燒蟹皇翅", "nameEn": "Braised Shark's Fin",
+//           "descZh": "蟹肉勾芡", "descEn": "with crab meat sauce" }
+//       ]
+//     }
+//   ]
+// }
+// If courseZh/courseEn are both omitted, no section heading is shown.
+// Legacy "name"/"desc"/"course" single-language fields still supported.
+// ================================================================
+
+// ================================================================
+// PINYIN TABLE (shared with seat-finder logic below)
+// ================================================================
+var PINYIN = (function() {
+  var r = {
+    '\u674e':'li','\u738b':'wang','\u5f20':'zhang','\u5218':'liu','\u9648':'chen',
+    '\u6768':'yang','\u9ec4':'huang','\u8d75':'zhao','\u5434':'wu','\u5468':'zhou',
+    '\u5f90':'xu','\u5b59':'sun','\u9a6c':'ma','\u80e1':'hu','\u6797':'lin',
+    '\u90ed':'guo','\u4f55':'he','\u9ad8':'gao','\u7f57':'luo','\u90d1':'zheng',
+    '\u8881':'yuan','\u9093':'deng','\u8c22':'xie','\u97e9':'han','\u66f9':'cao',
+    '\u8bb8':'xu','\u6c88':'shen','\u5f6d':'peng','\u8521':'cai','\u6643':'zeng',
+    '\u5415':'lv','\u4e01':'ding','\u9b4f':'wei','\u59dc':'jiang','\u51ef':'kai',
+    '\u6d2a':'hong','\u8fba':'bian','\u6b27':'ou','\u4efb':'ren','\u5bfb':'xun',
+    '\u5218':'liu','\u5e9f':'fei','\u5218':'liu','\u843d':'luo','\u804c':'zhi',
+    '\u8d3a':'he','\u5218':'liu','\u5510':'tang','\u9676':'tao','\u5c39':'yin',
+  };
+  return r;
+})();
+function toPinyin(s) {
+  return (s||'').split('').map(function(c){ return PINYIN[c]||c; }).join('');
+}
+function toPinyinInitials(s) {
+  return (s||'').split('').map(function(c){ return (PINYIN[c]||c)[0]; }).join('');
+}
+function matchGuest(g, q) {
+  if (!q) return true;
+  var ql = q.toLowerCase();
+  var full = (g.lastName+' '+g.firstName+' '+g.nickName).toLowerCase();
+  if (full.includes(ql)) return true;
+  var py   = toPinyin(g.lastName+g.firstName+g.nickName).toLowerCase();
+  if (py.includes(ql)) return true;
+  var pyI  = toPinyinInitials(g.lastName+g.firstName+g.nickName).toLowerCase();
+  if (pyI.includes(ql)) return true;
+  return false;
+}
+
+// ================================================================
+// TRANSLATIONS
+// ================================================================
+var LANG = (function(){
+  try { var s = localStorage.getItem('gw_lang'); if(s) return s; } catch(e){}
+  var nl = (navigator.language||'en').toLowerCase();
+  return nl.startsWith('zh') ? 'zh' : 'en';
+})();
+
+var T = {
+  en: {
+    welcome:'💍 Our Wedding 💍', celebration:'Celebration',
+    greeting:'Welcome to our', greetingSub:'Celebration',
+    cardSeatTitle:'Find Your Seat', cardSeatSub:'Browse by name or category',
+    cardMenuTitle:'Wedding Menu',  cardMenuSub:'Tonight\'s banquet courses',
+    cardMontageTitleOpen:'Our Story',  cardMontageSubOpen:'A video montage for you',
+    cardMontageTitleLocked:'Our Story', cardMontageSubLocked:'Available during the reception',
+    montageLockBadge:'🔒 Coming Soon', montageOpenBadge:'▶ Now Playing',
+    montageLockTitle:'Coming Soon',
+    montageLockDesc:'The video will be available during the reception.',
+    montageTitle:'Our Story', montageSubtitle:'A special video message for you',
+    montageNote:'Please enjoy this moment with the couple \u2764\uFE0F',
+    cdLabel:'Available in',
+    cdDay:'Day', cdHr:'Hr', cdMin:'Min', cdSec:'Sec',
+    menuTitle:'Wedding Menu', menuSubtitle:'Tonight\'s banquet',
+    back:'Back', backHome:'🏠 Home',
+    find:'Find', yourSeat:'Your Seat',
+    subtitle:'Browse by last name to find your table',
+    step1:'STEP 1 \u2014 WHO ARE YOU HERE FOR?',
+    step2:'STEP 2 \u2014 FIRST LETTER OF LAST NAME',
+    skipLabel:'All Guests', skipSub:'Browse everyone',
+    search:'Search name / pinyin\u2026', seat:'Seat', tablePrefix:'Table:',
+    noGuests:'No guests found, try a different name.',
+    errTitle:'Guest data not available',
+    errBody:'Please ask the organiser to upload the guest data file.',
+    guests:' guest', guestsPlural:' guests',
+    unassigned:'Unassigned',
+    findSeatBtn:'Find My Seat',
+    vizTitle:'Your Table', vizDesc:'Your highlighted seat is shown below.',
+    viewAllBtn:'View All Tables', tablesLabel:'ALL TABLES',
+    tdirQrLabel:'Scan to go directly to this table',
+    backTables:'Back to tables', backToList:'Back to list',
+    showNames:'\uD83D\uDC41 Show Names', hideNames:'\uD83D\uDC41 Hide Names',
+    allTablesItem:'ALL \u2014 View All Tables',
+    bcHome:'\uD83C\uDFE0 Home', bcSeat:'Find Seat',
+    bcStep1:'Category', bcStep2:'Last Name',
+    bcTables:'All Tables', bcViz:'Your Seat',
+    bcMenu:'Menu', bcMontage:'Our Story',
+    catLabels:{
+      'bride-family':"Bride's Family",'bride-rel':'Bride Relative','bride-friend':"Bride's Friend",
+      'groom-family':"Groom's Family",'groom-rel':'Groom Relative','groom-friend':"Groom's Friend"
+    }
+  },
+  zh: {
+    welcome:'💍 我们的婚礼 💍', celebration:'\u5a5a\u5bb4',
+    greeting:'\u6b22\u8fce\u6765\u5230', greetingSub:'\u5a5a\u5bb4\u5e86\u5178',
+    cardSeatTitle:'\u67e5\u627e\u5ea7\u4f4d', cardSeatSub:'\u6309\u59d3\u540d\u6216\u5206\u7c7b\u67e5\u627e',
+    cardMenuTitle:'\u5a5a\u5bb4\u83dc\u5355', cardMenuSub:'\u4eca\u665a\u7684\u5a5a\u5bb4\u83dc\u5f0f',
+    cardMontageTitleOpen:'\u6211\u4eec\u7684\u6545\u4e8b', cardMontageSubOpen:'\u4e13\u5c5e\u89c6\u9891\u56de\u987e',
+    cardMontageTitleLocked:'\u6211\u4eec\u7684\u6545\u4e8b', cardMontageSubLocked:'\u5a5a\u5bb4\u671f\u95f4\u5f00\u653e',
+    montageLockBadge:'\uD83D\uDD12 \u5373\u5c06\u5f00\u653e', montageOpenBadge:'\u25B6 \u73b0\u5728\u64ad\u653e',
+    montageLockTitle:'\u5373\u5c06\u5f00\u653e',
+    montageLockDesc:'\u89c6\u9891\u5c06\u5728\u5a5a\u5bb4\u671f\u95f4\u5f00\u653e\u3002',
+    montageTitle:'\u6211\u4eec\u7684\u6545\u4e8b', montageSubtitle:'\u4e13\u5c5e\u89c6\u9891\u56de\u987e',
+    montageNote:'\u8bf7\u548c\u65b0\u4eba\u5171\u540c\u6b23\u8d4f\u8fd9\u4e00\u7f8e\u597d\u65f6\u523b \u2764\uFE0F',
+    cdLabel:'\u5373\u5c06\u5f00\u653e',
+    cdDay:'\u65e5', cdHr:'\u65f6', cdMin:'\u5206', cdSec:'\u79d2',
+    menuTitle:'\u5a5a\u5bb4\u83dc\u5355', menuSubtitle:'\u4eca\u665a\u7684\u5a5a\u5bb4',
+    back:'\u8fd4\u56de', backHome:'\uD83C\uDFE0 \u9996\u9875',
+    find:'\u67e5\u627e', yourSeat:'\u60a8\u7684\u5ea7\u4f4d',
+    subtitle:'\u6309\u59d3\u6c0f\u9996\u5b57\u67e5\u627e\u60a8\u7684\u684c\u53f7',
+    step1:'\u7b2c\u4e00\u6b65 \u2014 \u60a8\u662f\u54ea\u4f4d\u5bbe\u5ba2\uff1f',
+    step2:'\u7b2c\u4e8c\u6b65 \u2014 \u9009\u62e9\u59d3\u6c0f\u9996\u5b57\u62fc\u97f3',
+    skipLabel:'\u5168\u90e8\u5bbe\u5ba2', skipSub:'\u6d4f\u89c8\u6240\u6709\u4eba',
+    search:'\u641c\u7d22\u59d3\u540d / \u62fc\u97f3\u2026', seat:'\u5ea7\u4f4d', tablePrefix:'\u684c\u53f7:',
+    noGuests:'\u672a\u627e\u5230\u5bbe\u5ba2\uff0c\u8bf7\u5c1d\u8bd5\u5176\u4ed6\u59d3\u540d\u3002',
+    errTitle:'\u5bbe\u5ba2\u6570\u636e\u672a\u627e\u5230',
+    errBody:'\u8bf7\u5411\u4e3b\u529e\u65b9\u786e\u8ba4\u5df2\u4e0a\u4f20\u5bbe\u5ba2\u6570\u636e\u3002',
+    guests:'\u4f4d', guestsPlural:'\u4f4d',
+    unassigned:'\u672a\u5206\u914d',
+    findSeatBtn:'\u67e5\u627e\u5ea7\u4f4d',
+    vizTitle:'\u60a8\u7684\u684c\u53f7', vizDesc:'\u60a8\u7684\u9ad8\u4eae\u5ea7\u4f4d\u5982\u4e0b\u56fe\u6240\u793a\u3002',
+    viewAllBtn:'\u67e5\u770b\u6240\u6709\u684c\u53f7', tablesLabel:'\u6240\u6709\u684c\u53f7',
+    tdirQrLabel:'\u626b\u63cf\u4e8c\u7ef4\u7801\u76f4\u63a5\u8df3\u8f6c\u6b64\u684c',
+    backTables:'\u8fd4\u56de\u684c\u53f7\u5217\u8868', backToList:'\u8fd4\u56de\u5217\u8868',
+    showNames:'\uD83D\uDC41 \u663e\u793a\u59d3\u540d', hideNames:'\uD83D\uDC41 \u9690\u85cf\u59d3\u540d',
+    allTablesItem:'\u5168\u90e8 \u2014 \u67e5\u770b\u6240\u6709\u5ea7\u4f4d',
+    bcHome:'\uD83C\uDFE0 \u9996\u9875', bcSeat:'\u67e5\u627e\u5ea7\u4f4d',
+    bcStep1:'\u5206\u7c7b', bcStep2:'\u59d3\u6c0f',
+    bcTables:'\u6240\u6709\u684c\u53f7', bcViz:'\u60a8\u7684\u5ea7\u4f4d',
+    bcMenu:'\u83dc\u5355', bcMontage:'\u6211\u4eec\u7684\u6545\u4e8b',
+    catLabels:{
+      'bride-family':'\u65b0\u5a18\u5bb6\u5c5e','bride-rel':'\u65b0\u5a18\u4eb2\u5c5e','bride-friend':'\u65b0\u5a18\u670b\u53cb',
+      'groom-family':'\u65b0\u90ce\u5bb6\u5c5e','groom-rel':'\u65b0\u90ce\u4eb2\u5c5e','groom-friend':'\u65b0\u90ce\u670b\u53cb'
+    }
+  }
+};
+function t(k){ return (T[LANG]||T.en)[k]||k; }
+
+function setLang(lang) {
+  LANG = lang;
+  try { localStorage.setItem('gw_lang', lang); } catch(e) {}
+  applyTranslations();
+  updateMontageCard();
+  renderMenuContent();
+  var active = document.querySelector('.screen.active');
+  if (active) {
+    if (active.id === 'screen-cat') buildCatGrid();
+    if (active.id === 'screen-list') onSFSearch(document.getElementById('sf-search').value);
+  }
+  buildBreadcrumb();
+}
+
+function applyTranslations() {
+  var set = function(id, v){ var e=document.getElementById(id); if(e) e.textContent=v; };
+  set('t-welcome',         t('welcome'));
+  set('t-card-seat-title', t('cardSeatTitle'));
+  set('t-card-seat-sub',   t('cardSeatSub'));
+  set('t-card-menu-title', t('cardMenuTitle'));
+  set('t-card-menu-sub',   t('cardMenuSub'));
+  set('t-montage-title',   t('montageTitle'));
+  set('t-montage-subtitle',t('montageSubtitle'));
+  set('t-montage-note',    t('montageNote'));
+  set('t-montage-lock-title', t('montageLockTitle'));
+  set('t-montage-lock-desc',  t('montageLockDesc'));
+  // Countdown unit labels
+  set('hcc-label',  t('cdLabel'));
+  set('hcc-d-lbl',  t('cdDay'));
+  set('hcc-h-lbl',  t('cdHr'));
+  set('hcc-m-lbl',  t('cdMin'));
+  set('hcc-s-lbl',  t('cdSec'));
+  set('t-menu-title',      t('menuTitle'));
+  set('t-menu-subtitle',   t('menuSubtitle'));
+  set('t-back-menu',       t('back'));
+  set('t-back-montage',    t('back'));
+  set('t-step1',           t('step1'));
+  set('alpha-step-label',  t('step2'));
+  var si = document.getElementById('sf-search'); if(si) si.placeholder = t('search');
+  set('t-find-seat-btn',   t('findSeatBtn'));
+  set('viz-title',         t('vizTitle'));
+  set('viz-desc',          t('vizDesc'));
+  set('t-err-title',       t('errTitle'));
+  set('t-err-body',        t('errBody'));
+  var vab = document.getElementById('t-view-all-btn'); if(vab) vab.textContent = t('viewAllBtn');
+  var tbl = document.getElementById('t-tables-label'); if(tbl) tbl.textContent = t('tablesLabel');
+  ['t-back-alpha-txt','t-back-tables-txt','tdir-back-txt','list-back-txt','viz-back-txt']
+    .forEach(function(id){ var e=document.getElementById(id); if(e) e.textContent=t('back'); });
+  document.getElementById('btn-lang-en').classList.toggle('active', LANG==='en');
+  document.getElementById('btn-lang-zh').classList.toggle('active', LANG==='zh');
+  // Re-translate bottom bar back label
+  var barTxt = document.getElementById('bar-back-txt');
+  if (barTxt && barBackLabelKey) barTxt.textContent = t(barBackLabelKey);
+  var tglLbl = document.getElementById('t-toggle-names-btn');
+  if (tglLbl) tglLbl.textContent = svgNamesVisible ? t('hideNames') : t('showNames');
+}
+
+// ================================================================
+// COOKIE HELPERS
+// ================================================================
+function getCookie(n){var m=document.cookie.match('(?:^|; )'+n+'=([^;]*)');return m?decodeURIComponent(m[1]):null;}
+function setCookie(n,v,d){var e=new Date();e.setTime(e.getTime()+d*864e5);document.cookie=n+'='+encodeURIComponent(v)+';expires='+e.toUTCString()+';path=/';}
+function deleteCookie(n){document.cookie=n+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';}
+
+// ================================================================
+// NICK PRIVACY
+// ================================================================
+var NICK_COOKIE = 'gw_nick';
+var showNicknames = false;
+
+function showNickModal(){}  // placeholder — wired below
+function nickModalCancel() { document.getElementById('nick-modal-overlay').classList.remove('visible'); }
+function nickModalConfirm() {
+  var pw = document.getElementById('nick-pw-input').value;
+  var errEl = document.getElementById('nick-pw-error');
+  if (pw === 'password') {
+    showNicknames = true;
+    setCookie(NICK_COOKIE, '1', 1);
+    document.getElementById('nick-modal-overlay').classList.remove('visible');
+    onSFSearch(document.getElementById('sf-search').value);
+  } else {
+    errEl.textContent = 'Incorrect password.';
+    document.getElementById('nick-pw-input').value = '';
+  }
+}
+function _showNickModal() {
+  document.getElementById('nick-pw-error').textContent = '';
+  document.getElementById('nick-pw-input').value = '';
+  document.getElementById('nick-modal-overlay').classList.add('visible');
+  setTimeout(function(){ document.getElementById('nick-pw-input').focus(); }, 100);
+}
+
+// ================================================================
+// ADMIN MONTAGE UNLOCK
+// ================================================================
+// The default PIN is '1234'. Change via config.json: { "adminPin": "YOUR_PIN" }
+// Mechanism: long-press (1.5 s) on the 🎬 lock icon → PIN modal → force-unlocks
+// video for the current session only (no localStorage, no flag persisted).
+var _adminHoldTimer  = null;
+var _adminHoldHint   = null;
+var montageAdminUnlocked = false;
+
+function adminLockHoldStart(e) {
+  e.preventDefault();
+  var hint = document.getElementById('admin-hold-hint');
+  if (hint) { hint.style.display = 'block'; }
+  _adminHoldTimer = setTimeout(function() {
+    if (hint) hint.style.display = 'none';
+    adminModalOpen();
+  }, 1500);
+}
+function adminLockHoldEnd() {
+  if (_adminHoldTimer) { clearTimeout(_adminHoldTimer); _adminHoldTimer = null; }
+  var hint = document.getElementById('admin-hold-hint');
+  if (hint) hint.style.display = 'none';
+}
+function adminModalOpen() {
+  document.getElementById('admin-pin-error').textContent = '';
+  document.getElementById('admin-pin-input').value = '';
+  document.getElementById('admin-modal-overlay').classList.add('visible');
+  setTimeout(function(){ document.getElementById('admin-pin-input').focus(); }, 120);
+}
+function adminModalCancel() {
+  document.getElementById('admin-modal-overlay').classList.remove('visible');
+}
+function adminModalConfirm() {
+  var pin    = document.getElementById('admin-pin-input').value;
+  var errEl  = document.getElementById('admin-pin-error');
+  var cfgPin = (gwConfig && gwConfig.adminPin) ? String(gwConfig.adminPin) : '1234';
+  if (pin === cfgPin) {
+    montageAdminUnlocked = true;
+    montageUnlocked      = true;
+    document.getElementById('admin-modal-overlay').classList.remove('visible');
+    updateMontageCard();
+    // Actually enter the montage screen
+    enterMontage();
+  } else {
+    errEl.textContent = 'Incorrect PIN.';
+    document.getElementById('admin-pin-input').value = '';
+    document.getElementById('admin-pin-input').focus();
+  }
+}
+// Override enterMontage to allow admin session unlock
+function enterMontage() {
+  if (!montageUnlocked && !montageAdminUnlocked) return;
+  currentSection = 'montage';
+  bcStack = [
+    { labelKey:'bcHome', action: goHome },
+    { labelKey:'bcMontage', action: enterMontage }
+  ];
+  showGwScreen('montage');
+  buildBreadcrumb();
+  var wm = document.getElementById('montage-wrap');
+  if (wm) wm.setAttribute('data-wm', gwConfig && gwConfig.projectName ? gwConfig.projectName : 'Private');
+  _unlockMontageOverlay();
+  _startMontageCountdown();
+}
+
+// ================================================================
+// ANTI-CAPTURE
+// ================================================================
+function _showCaptureWarn() {
+  var el = document.getElementById('capture-warn');
+  el.classList.add('show');
+  setTimeout(function(){ el.classList.remove('show'); }, 3500);
+}
+// Page visibility: warn when tab is hidden (often triggered by screen-record on iOS)
+document.addEventListener('visibilitychange', function() {
+  var active = document.querySelector('.screen.active');
+  if (document.hidden && active && active.id === 'screen-montage') {
+    _showCaptureWarn();
+  }
+});
+// Warn on print / screenshot shortcut (desktop)
+window.addEventListener('beforeprint', function(){ _showCaptureWarn(); });
+// Blur = potential screen-capture tool on desktop
+window.addEventListener('blur', function() {
+  var active = document.querySelector('.screen.active');
+  if (active && active.id === 'screen-montage') _showCaptureWarn();
+});
+
+// ================================================================
+// CONFIG + MONTAGE SCHEDULING
+// ================================================================
+var gwConfig   = null;    // populated from config.json
+var sfData     = null;    // populated from guests.json
+var sfGuests   = [];
+var montageUnlocked = false;
+var montageCountdownTimer = null;
+
+function _parseDayTime(dateStr, timeStr) {
+  // Returns a Date for dateStr (YYYY-MM-DD) + timeStr (HH:MM) in LOCAL time
+  var parts = (dateStr||'').split('-');
+  var tp    = (timeStr||'00:00').split(':');
+  return new Date(+parts[0], +parts[1]-1, +parts[2], +tp[0], +tp[1], 0, 0);
+}
+
+function _checkMontageWindow() {
+  var m = gwConfig && gwConfig.montage;
+  if (!m || !m.videoUrl) { montageUnlocked = false; return; }
+
+  var now   = new Date();
+  var dateS = gwConfig.eventDate || (now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate());
+  var from  = _parseDayTime(dateS, m.availableFrom || '14:00');
+  var to    = _parseDayTime(dateS, m.availableTo   || '16:00');
+
+  montageUnlocked = (now >= from && now < to);
+}
+
+function updateMontageCard() {
+  _checkMontageWindow();
+  var card    = document.getElementById('card-montage');
+  var badge   = document.getElementById('montage-badge');
+  var arrow   = document.getElementById('montage-arrow');
+  var subEl   = document.getElementById('t-card-montage-sub');
+  var titleEl = document.getElementById('t-card-montage-title');
+  var cdEl    = document.getElementById('montage-card-cd');
+
+  // Always show the card — hide only if config explicitly says no montage
+  // (hasMontage check is deferred: before config loads, show locked card)
+  var hasMontage = !gwConfig || !gwConfig.montage || gwConfig.montage.videoUrl;
+  card.style.display = '';
+
+  if (montageUnlocked) {
+    _stopHomeCardCountdown();
+    card.classList.remove('locked');
+    card.style.opacity = '';
+    if(titleEl) titleEl.textContent = t('cardMontageTitleOpen');
+    if(subEl)   subEl.textContent   = t('cardMontageSubOpen');
+    badge.style.display = 'inline-block';
+    badge.textContent   = t('montageOpenBadge');
+    badge.className     = 'home-card-badge';
+    if(cdEl) cdEl.classList.remove('visible');
+  } else {
+    card.classList.add('locked');
+    card.style.opacity = '0.55';
+    if(titleEl) titleEl.textContent = t('cardMontageTitleLocked');
+    if(subEl)   subEl.textContent   = t('cardMontageSubLocked');
+    badge.style.display = 'none';
+    // Show countdown — use eventDate from config, or fall back to today
+    var m     = gwConfig && gwConfig.montage;
+    var dateS = (gwConfig && gwConfig.eventDate) || _todayDateStr();
+    if (dateS) {
+      if(cdEl) cdEl.classList.add('visible');
+      var setLbl = function(id, v){ var e=document.getElementById(id); if(e) e.textContent=v; };
+      setLbl('hcc-label', t('cdLabel'));
+      setLbl('hcc-d-lbl', t('cdDay'));
+      setLbl('hcc-h-lbl', t('cdHr'));
+      setLbl('hcc-m-lbl', t('cdMin'));
+      setLbl('hcc-s-lbl', t('cdSec'));
+      _tickHomeCardCountdown();
+      _startHomeCardCountdown();
+    } else {
+      if(cdEl) cdEl.classList.remove('visible');
+    }
+  }
+}
+
+function _todayDateStr() {
+  var n = new Date();
+  return n.getFullYear()+'-'+(n.getMonth()+1)+'-'+n.getDate();
+}
+
+var _homeCardCdTimer = null;
+
+function _stopHomeCardCountdown() {
+  if (_homeCardCdTimer) { clearInterval(_homeCardCdTimer); _homeCardCdTimer = null; }
+}
+
+function _startHomeCardCountdown() {
+  _stopHomeCardCountdown();
+  _homeCardCdTimer = setInterval(_tickHomeCardCountdown, 1000);
+}
+
+function _tickHomeCardCountdown() {
+  var m     = gwConfig && gwConfig.montage;
+  var dateS = (gwConfig && gwConfig.eventDate) || _todayDateStr();
+
+  _checkMontageWindow();
+  if (montageUnlocked) { updateMontageCard(); return; }
+
+  var now      = new Date();
+  var fromTime = m ? (m.availableFrom || '14:00') : '14:00';
+  var from     = _parseDayTime(dateS, fromTime);
+  var diff     = from - now;
+
+  var pad    = function(n){ return String(Math.max(0,n)).padStart(2,'0'); };
+  var setVal = function(id, v){ var e=document.getElementById(id); if(e) e.textContent=v; };
+
+  if (diff <= 0) {
+    setVal('hcc-d-val', '0'); setVal('hcc-h-val','00');
+    setVal('hcc-m-val','00'); setVal('hcc-s-val','00');
+    return;
+  }
+  var totalSec = Math.floor(diff / 1000);
+  var days = Math.floor(totalSec / 86400);
+  var hrs  = Math.floor((totalSec % 86400) / 3600);
+  var mins = Math.floor((totalSec % 3600) / 60);
+  var secs = totalSec % 60;
+
+  setVal('hcc-d-val', String(days));
+  setVal('hcc-h-val', pad(hrs));
+  setVal('hcc-m-val', pad(mins));
+  setVal('hcc-s-val', pad(secs));
+
+  // Hide "Day" unit when 0 days remain
+  var dUnit = document.getElementById('hcc-d');
+  var dSep  = dUnit && dUnit.nextElementSibling;
+  if (dUnit) dUnit.style.display = days === 0 ? 'none' : '';
+  if (dSep)  dSep.style.display  = days === 0 ? 'none' : '';
+}
+
+function _startMontageCountdown() {
+  if (montageCountdownTimer) clearInterval(montageCountdownTimer);
+
+  function tick() {
+    _checkMontageWindow();
+    if (montageUnlocked) {
+      clearInterval(montageCountdownTimer);
+      _unlockMontageOverlay();
+      updateMontageCard();
+      return;
+    }
+    var m = gwConfig && gwConfig.montage;
+    if (!m) return;
+    var now   = new Date();
+    var dateS = gwConfig.eventDate || '';
+    var from  = _parseDayTime(dateS, m.availableFrom || '14:00');
+    var cdEl  = document.getElementById('montage-countdown');
+    if (!cdEl) return;
+
+    if (now < from) {
+      var diff  = from - now;
+      var hh = Math.floor(diff / 3600000);
+      var mm = Math.floor((diff % 3600000) / 60000);
+      var ss = Math.floor((diff % 60000) / 1000);
+      var pad = function(n){ return String(n).padStart(2,'0'); };
+      cdEl.innerHTML = (LANG==='zh'?'距开放还有':'Available in')
+        + '<strong>'+(hh?pad(hh)+':':'')+pad(mm)+':'+pad(ss)+'</strong>';
+    } else {
+      cdEl.textContent = '';
+    }
+  }
+  tick();
+  montageCountdownTimer = setInterval(tick, 1000);
+}
+
+function _unlockMontageOverlay() {
+  var overlay = document.getElementById('montage-overlay');
+  var video   = document.getElementById('montage-video');
+  var m = gwConfig && gwConfig.montage;
+  if (!m || !m.videoUrl) return;
+  if (overlay) overlay.classList.add('hidden');
+  if (video && !video.src) {
+    video.src = m.videoUrl;
+    video.load();
+  }
+}
+
+function _lockMontageOverlay() {
+  var overlay = document.getElementById('montage-overlay');
+  var video   = document.getElementById('montage-video');
+  if (overlay) overlay.classList.remove('hidden');
+  if (video) { video.pause(); video.src = ''; }
+}
+
+// ================================================================
+// NAVIGATION
+// ================================================================
+var currentSection = 'home';   // 'home' | 'seat' | 'menu' | 'montage'
+
+function goHome() {
+  showGwScreen('home');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function enterSeat() {
+  currentSection = 'seat';
+  showScreen('cat');
+}
+
+function enterMenu() {
+  currentSection = 'menu';
+  bcStack = [
+    { labelKey:'bcHome', action: goHome },
+    { labelKey:'bcMenu', action: enterMenu }
+  ];
+  showGwScreen('menu');
+  buildBreadcrumb();
+}
+
+
+// The new top-level screen switcher (wraps the old showScreen for seat sub-screens)
+function showGwScreen(id) {
+  var allScreens = ['home','menu','montage','cat','tables','table-direct','alpha','list','viz'];
+  allScreens.forEach(function(s){ var el=document.getElementById('screen-'+s); if(el) el.classList.remove('active'); });
+  var target = document.getElementById('screen-'+id);
+  if (target) target.classList.add('active');
+
+  if (id === 'home') {
+    bcStack = [];
+    setBar({ back: null });
+    if (montageCountdownTimer) { clearInterval(montageCountdownTimer); montageCountdownTimer = null; }
+    _lockMontageOverlay();
+    updateMontageCard();
+    buildBreadcrumb();
+  } else if (id === 'menu' || id === 'montage') {
+    _stopHomeCardCountdown();
+    setBar({ back: goHome, backLabelKey: 'back' });
+    // breadcrumb built by caller (enterMenu/enterMontage)
+  } else {
+    _stopHomeCardCountdown();
+    // breadcrumb built by showScreen() which wraps this
+  }
+}
+
+// ================================================================
+// BREADCRUMB
+// ================================================================
+var bcStack = [];
+var barBackAction   = null;
+var barBackLabelKey = 'back';
+
+function buildBreadcrumb() {
+  var el = document.getElementById('breadcrumb');
+  if (!el) return;
+  if (!bcStack.length) { el.classList.remove('visible'); el.innerHTML = ''; return; }
+  el.classList.add('visible');
+  var html = '';
+  bcStack.forEach(function(seg, i) {
+    var label  = seg.customLabel || t(seg.labelKey);
+    var isLast = (i === bcStack.length - 1);
+    var isFn   = typeof seg.action === 'function';
+    // Home (i===0) is always clickable unless it is the only segment
+    var clickable = isFn && (!isLast || i === 0);
+    html += (i > 0 ? '<span class="bc-sep">&#8250;</span>' : '');
+    html += '<button class="bc-item'+(i===0?' bc-home':'')+(isLast?' bc-current':'')+'"'
+          + (clickable ? ' onclick="bcGoTo('+i+')"' : '')+'>'
+          + esc(label)+'</button>';
+  });
+  el.innerHTML = html;
+}
+function bcGoTo(idx) {
+  var seg = bcStack[idx];
+  if (!seg || typeof seg.action !== 'function') return;
+  // Always navigate — whether home or mid-stack
+  bcStack = bcStack.slice(0, idx + 1);
+  seg.action();
+}
+
+function barBack() { if (typeof barBackAction === 'function') barBackAction(); }
+
+function setBar(opts) {
+  var bar      = document.getElementById('find-seat-bar');
+  var findBtn  = document.getElementById('find-seat-btn');
+  var toggleBtn= document.getElementById('toggle-names-btn');
+  var backBtn  = document.getElementById('bar-back-btn');
+  var backTxt  = document.getElementById('bar-back-txt');
+  findBtn.style.display    = 'none';
+  toggleBtn.style.display  = 'none';
+  barBackAction   = opts.back   || null;
+  barBackLabelKey = opts.backLabelKey || 'back';
+  if (opts.back) {
+    backBtn.style.display = '';
+    backTxt.textContent   = t(barBackLabelKey);
+    bar.classList.add('visible');
+  } else {
+    backBtn.style.display = 'none';
+    bar.classList.remove('visible');
+  }
+  if (opts.findSeat) {
+    findBtn.style.display = ''; bar.classList.add('visible'); updateFindSeatBarCount();
+  }
+  if (opts.toggleNames) {
+    toggleBtn.style.display = ''; bar.classList.add('visible');
+    var lbl = document.getElementById('t-toggle-names-btn');
+    if (lbl) lbl.textContent = svgNamesVisible ? t('hideNames') : t('showNames');
+    toggleBtn.classList.toggle('active', svgNamesVisible);
+  }
+}
+
+// showScreen() — handles seat sub-screens, keeps breadcrumb in sync
+var currentScreenId = 'home';
+function _catBreadcrumbLabel() {
+  if (!selCat) return t('bcStep1');
+  var emoji = CAT_EMOJI[selCat] || '';
+  var label = (t('catLabels')[selCat] || CAT_FULL[selCat] || selCat);
+  // emoji is an HTML entity string — use text fallback for breadcrumb
+  var emojiMap = {
+    'bride-family':'🌸','bride-rel':'🌺','bride-friend':'💧',
+    'groom-family':'🔵','groom-rel':'🟢','groom-friend':'🤝'
+  };
+  var em = emojiMap[selCat] || '';
+  return em ? em + ' ' + label : label;
+}
+
+function showScreen(id) {
+  showGwScreen(id);
+  currentScreenId = id;
+
+  if (id === 'cat') {
+    bcStack = [
+      { labelKey:'bcHome', action: goHome },
+      { labelKey:'bcSeat', action: function(){ showScreen('cat'); } }
+    ];
+    setBar({ back: goHome, backLabelKey: 'back' });
+  } else if (id === 'alpha') {
+    bcStack = [
+      { labelKey:'bcHome', action: goHome },
+      { labelKey:'bcSeat', action: function(){ showScreen('cat'); } },
+      { customLabel: _catBreadcrumbLabel(), action: function(){ showScreen('alpha'); } }
+    ];
+    setBar({ back: function(){ showScreen('cat'); }, backLabelKey:'back' });
+  } else if (id === 'list') {
+    var alphaLbl = selAlpha || t('bcStep2');
+    bcStack = [
+      { labelKey:'bcHome', action: goHome },
+      { labelKey:'bcSeat', action: function(){ showScreen('cat'); } }
+    ];
+    if (selCat) bcStack.push({ customLabel: _catBreadcrumbLabel(), action: function(){ goBackFromList(); } });
+    bcStack.push({ customLabel: alphaLbl, action: function(){ showScreen('list'); } });
+    setBar({ back: function(){ goBackFromList(); }, backLabelKey:'back', findSeat: true });
+    updateFindSeatBarCount();
+    // Always scroll up so the sticky header + find-seat-bar are visible,
+    // hiding the banner above it
+    var header = document.querySelector('.gw-header');
+    if (header) {
+      var offsetTop = header.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: offsetTop, behavior: 'smooth' });
+    }
+  } else if (id === 'viz') {
+    bcStack.push({ labelKey:'bcViz', action: function(){ showScreen('viz'); } });
+    setBar({ back: function(){ showScreen('list'); }, backLabelKey:'backToList' });
+  } else if (id === 'tables') {
+    bcStack = [
+      { labelKey:'bcHome', action: goHome },
+      { labelKey:'bcSeat', action: function(){ showScreen('cat'); } },
+      { labelKey:'bcTables', action: function(){ showScreen('tables'); } }
+    ];
+    setBar({ back: function(){ showScreen('cat'); }, backLabelKey:'back' });
+  } else if (id === 'table-direct') {
+    var tname = (document.getElementById('tdir-table-name')||{}).textContent || '';
+    var fromTables = currentTableDirectFrom !== 'cat';
+    bcStack = [{ labelKey:'bcHome', action: goHome }, { labelKey:'bcSeat', action: function(){ showScreen('cat'); } }];
+    if (fromTables) bcStack.push({ labelKey:'bcTables', action: function(){ history.replaceState(null,'',location.pathname); showScreen('tables'); } });
+    bcStack.push({ customLabel: tname, action: null });
+    setBar({ back: function(){
+      history.replaceState(null,'',location.pathname);
+      bcStack = bcStack.slice(0,-1);
+      showScreen(currentTableDirectFrom||'tables');
+    }, backLabelKey: fromTables?'backTables':'back', toggleNames: true });
+  }
+  buildBreadcrumb();
+}
+
+// ================================================================
+// HOME DATE
+// ================================================================
+function updateHomeDate() {
+  var el = document.getElementById('home-date');
+  if (!el) return;
+  var dateStr = gwConfig && gwConfig.eventDate;
+  if (!dateStr) { el.textContent = ''; return; }
+  var p = dateStr.split('-');
+  var d = new Date(+p[0], +p[1]-1, +p[2]);
+  var opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  var loc  = LANG === 'zh' ? 'zh-CN' : 'en-US';
+  try { el.textContent = d.toLocaleDateString(loc, opts); } catch(e) { el.textContent = dateStr; }
+}
+
+// ================================================================
+// MENU RENDERING
+// ================================================================
+// ================================================================
+// DEFAULT MENU — hardcoded fallback (overridden by config.json menu[])
+// ================================================================
+var DEFAULT_MENU = [{ items: [
+  { nameZh:'五福喜臨門', nameEn:'Five Blessings Platter',           emoji:'🥗🌟' },
+  { nameZh:'紅燒蟹皇翅', nameEn:"Braised Shark's Fin with Crab Meat", emoji:'🦀🍲' },
+  { nameZh:'鴛鴦雞鴨拼', nameEn:'Roast Chicken & Duck Platter',      emoji:'🍗🦆' },
+  { nameZh:'清蒸七星斑', nameEn:'Steamed Seven-Star Grouper',        emoji:'🐟✨' },
+  { nameZh:'金粟奶油蝦', nameEn:'Golden Corn Creamy Butter Prawns',  emoji:'🍤🌽' },
+  { nameZh:'無錫靚骨支', nameEn:'Wuxi Style Braised Spare Ribs',     emoji:'🥩🍖' },
+  { nameZh:'三拼西蘭花', nameEn:'Broccoli with Three Treasures',     emoji:'🥦🌿' },
+  { nameZh:'珍珠荷葉飯', nameEn:'Pearl Rice in Lotus Leaf',          emoji:'🍚🪷' },
+  { nameZh:'云桃雪花飛', nameEn:'Snow Fungus with Peach Gum',        emoji:'🍑❄️' },
+  { nameZh:'美點映雙輝', nameEn:'Premium Double Pastries',           emoji:'🥮🍮' }
+]}];
+
+function _menuStr(obj, zhKey, enKey, fallback) {
+  if (LANG === 'zh') return obj[zhKey] || obj[enKey] || obj[fallback] || '';
+  return obj[enKey] || obj[zhKey] || obj[fallback] || '';
+}
+
+function renderMenuContent() {
+  var el = document.getElementById('menu-content');
+  if (!el) return;
+  var menu = (gwConfig && gwConfig.menu && gwConfig.menu.length)
+    ? gwConfig.menu
+    : DEFAULT_MENU;
+
+  var html = '<div class="menu-section menu-scroll">';
+  var dishNum = 0;
+  menu.forEach(function(section, si) {
+    var courseLabel = _menuStr(section, 'courseZh', 'courseEn', 'course');
+    if (courseLabel) {
+      html += '<div class="menu-section-head">'+esc(courseLabel)+'</div>';
+    }
+    var items = section.items || [];
+    html += '<div class="menu-items">';
+    items.forEach(function(item) {
+      dishNum++;
+      var primary   = LANG === 'zh'
+        ? (item.nameZh || item.name || item.nameEn || '')
+        : (item.nameEn || item.name || item.nameZh || '');
+      var secondary = LANG === 'zh'
+        ? (item.nameEn || '')
+        : (item.nameZh || '');
+      var desc    = _menuStr(item, 'descZh', 'descEn', 'desc');
+      var emoji   = item.emoji ? '<span class="menu-item-emoji">'+item.emoji+'</span>' : '';
+      html += '<div class="menu-item" data-num="'+dishNum+'">'
+            + '<div class="menu-item-inner">'
+            + '<div class="menu-dish-num">'+dishNum+'</div>'
+            + emoji
+            + '<div class="menu-item-text">'
+            + '<div class="menu-item-name">'+esc(primary)+'</div>'
+            + (secondary ? '<div class="menu-item-name-alt">'+esc(secondary)+'</div>' : '')
+            + (desc      ? '<div class="menu-item-desc">'+esc(desc)+'</div>' : '')
+            + '</div></div></div>';
+    });
+    html += '</div>';
+    if (si < menu.length - 1) html += '<div style="height:4px"></div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ================================================================
+// TABLE COLOR PALETTE (shared with seat logic)
+// ================================================================
+var TABLE_PALETTE = [
+  '#c0392b','#8e44ad','#2471a3','#1a8a4a','#d4850a',
+  '#16a085','#a04000','#2e4057','#922b21','#6c3483'
+];
+var tableColorMap = {};
+function initTableColors(guests) {
+  var seqs = [];
+  var seen = {};
+  guests.forEach(function(g){ if(g.assigned && !seen[g.tableSeq]){ seen[g.tableSeq]=true; seqs.push(g.tableSeq); }});
+  seqs.sort(function(a,b){return a-b;});
+  seqs.forEach(function(s,i){ tableColorMap[s] = TABLE_PALETTE[i % TABLE_PALETTE.length]; });
+}
+function getTableColor(s){ return tableColorMap[s] || TABLE_PALETTE[0]; }
+
+// ================================================================
+// SEAT FINDER STATE
+// ================================================================
+var sfFiltered  = [];
+var selectedIds = {};
+var selCat      = null;
+var selAlpha    = null;
+var ALPHA_GROUPS = ['AB','CD','EF','GH','IJ','KL','MN','OP','QR','ST','UV','WX','YZ'];
+var svgNamesVisible = false;
+var currentTableSeqDirect = null;
+var currentTableDirectFrom = 'tables';
+var CAT_EMOJI = {
+  'bride-family':'&#127800;','bride-rel':'&#127802;','bride-friend':'&#128167;',
+  'groom-family':'&#128306;','groom-rel':'&#128311;','groom-friend':'&#129360;'
+};
+var CAT_FULL = {
+  'bride-family':"Bride's Family",'bride-rel':'Bride Relative','bride-friend':"Bride's Friend",
+  'groom-family':"Groom's Family",'groom-rel':'Groom Relative','groom-friend':"Groom's Friend"
+};
+
+// ================================================================
+// BOOT
+// ================================================================
+window.addEventListener('DOMContentLoaded', function() {
+  showNicknames = getCookie(NICK_COOKIE) === '1';
+  applyTranslations();
+
+  var catGrid = document.getElementById('cat-grid');
+  if (catGrid) catGrid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px 0;color:var(--muted);font-size:14px;">Loading\u2026</div>';
+
+  // 1. Load config.json first (optional), then guests.json (required)
+  fetch('./data/config.json?v=' + Date.now())
+    .then(function(r){ return r.ok ? r.json() : {}; })
+    .catch(function(){ return {}; })
+    .then(function(cfg) {
+      gwConfig = cfg;
+      updateMontageCard();
+      renderMenuContent();
+      return fetch('./data/guests.json?v=' + Date.now());
+    })
+    .then(function(r){
+      if (!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    })
+    .then(function(data) {
+      sfData   = data;
+      sfGuests = data.guests || [];
+      if (!gwConfig.projectName) {
+        gwConfig.projectName = data.projectName || 'Wedding Banquet';
+      }
+      initTableColors(sfGuests);
+      var d = data.exportedAt ? new Date(data.exportedAt).toLocaleDateString() : '';
+      document.getElementById('gw-footer').textContent = (gwConfig.projectName||'Wedding') + (d?' - '+d:'');
+      buildCatGrid();
+      buildAlphaGrid(sfGuests);
+      requestAnimationFrame(function(){ handleHashNavigation(); });
+    })
+    .catch(function() {
+      var isLocal = location.protocol==='file:' || location.hostname==='localhost' || location.hostname==='127.0.0.1';
+      var banner = document.getElementById('no-data-banner');
+      if (banner) {
+        banner.style.display = 'block';
+        banner.innerHTML = isLocal
+          ? '<div class="icon">&#128421;</div><h3>Running on localhost</h3>'
+            + '<p>Host this page online so guests can access it.<br><br>'
+            + '<b>Steps:</b><br>1. Click <b>&#128279; Seat Finder</b> in the Wedding Planner<br>'
+            + '2. Download <code>guests.json</code><br>'
+            + '3. Drag <code>planner-app/public/</code> to <b>netlify.com/drop</b><br>'
+            + '4. Upload <code>guests.json</code> (and optionally <code>config.json</code>) to the <code>pages/data/</code> folder<br>'
+            + '5. Paste the Netlify URL into the modal to get the QR code</p>'
+          : '<div class="icon">&#9888;&#65039;</div><h3>'+t('errTitle')+'</h3>'
+            + '<p>Could not load <code>guests.json</code>.<br><br>'
+            + '1. Export from Wedding Planner<br>2. Upload to <code>pages/data/</code> folder<br>3. Refresh</p>';
+      }
+      var cg = document.getElementById('cat-grid'); if(cg) cg.innerHTML = '';
+    });
+
+  // Poll montage window every 30s to auto-unlock on time
+  setInterval(function(){
+    updateMontageCard();
+    var active = document.querySelector('.screen.active');
+    if (active && active.id === 'screen-montage') {
+      _checkMontageWindow();
+      if (montageUnlocked) _unlockMontageOverlay();
+      else _lockMontageOverlay();
+    }
+  }, 30000);
+});
+
+// ================================================================
+// HASH NAVIGATION
+// ================================================================
+function handleHashNavigation() {
+  var hash = location.hash;
+  var m = hash.match(/^#table=(\d+)$/);
+  if (m) { openTableDirect(parseInt(m[1],10), false); return; }
+  if (hash === '#tables=all') { openAllTables(); }
+}
+window.addEventListener('hashchange', function() {
+  if (!sfGuests.length) return;
+  var hash = location.hash;
+  var m = hash.match(/^#table=(\d+)$/);
+  if (m) { openTableDirect(parseInt(m[1],10), false); return; }
+  if (hash === '#tables=all') { openAllTables(); return; }
+  if (hash===''||hash==='#') { goHome(); }
+});
+
+// ================================================================
+// CATEGORY GRID
+// ================================================================
+function buildCatGrid() {
+  var grid = document.getElementById('cat-grid');
+  if (!grid) return;
+  var cats = [
+    {key:'bride-family'},{key:'bride-rel'},{key:'bride-friend'},
+    {key:'groom-family'},{key:'groom-rel'},{key:'groom-friend'}
+  ];
+  var html = '';
+  cats.forEach(function(c) {
+    var count = sfGuests.filter(function(g){return g.cat===c.key&&g.assigned;}).length;
+    if (!count) return;
+    var label = (t('catLabels')[c.key]||CAT_FULL[c.key]);
+    html += '<button class="cat-card" onclick="selectCat(\''+c.key+'\')">'
+          + '<span class="cat-emoji">'+(CAT_EMOJI[c.key]||'&#128101;')+'</span>'
+          + '<span class="cat-name">'+esc(label)+'</span>'
+          + '<span class="cat-sub">'+count+' '+(count===1?t('guests').trim():t('guestsPlural').trim())+'</span>'
+          + '</button>';
+  });
+  // Skip card
+  var total = sfGuests.filter(function(g){return g.assigned;}).length;
+  html += '<button class="cat-card skip-card" onclick="showAllAlpha()">'
+        + '<span class="cat-emoji">&#128101;</span>'
+        + '<span class="cat-name">'+t('skipLabel')+'</span>'
+        + '<span class="cat-sub">'+t('skipSub')+'</span>'
+        + '</button>';
+  grid.innerHTML = html;
+}
+
+// ================================================================
+// ALPHA GRID
+// ================================================================
+function buildAlphaGrid(pool) {
+  var grid = document.getElementById('alpha-grid');
+  if (!grid) return;
+  var initials = {};
+  pool.forEach(function(g){
+    if (!g.assigned) return;
+    var ch = (toPinyin(g.lastName)||'?')[0].toUpperCase();
+    ALPHA_GROUPS.forEach(function(grp){ if(grp.includes(ch)) initials[grp]=(initials[grp]||0)+1; });
+  });
+  var html = '';
+  ALPHA_GROUPS.forEach(function(grp) {
+    var cnt = initials[grp]||0;
+    html += '<button class="alpha-card'+(cnt?'':' dimmed')+'" onclick="selectAlpha(\''+grp+'\')">'
+          + grp + '<span class="alpha-count">'+(cnt||'—')+'</span></button>';
+  });
+  grid.innerHTML = html;
+}
+
+function selectCat(catKey) {
+  selCat = catKey;
+  var pool = sfGuests.filter(function(g){return g.cat===catKey&&g.assigned;});
+  buildAlphaGrid(pool);
+  showScreen('alpha');
+}
+function selectAlpha(grp) {
+  selAlpha = grp;
+  var base = selCat ? sfGuests.filter(function(g){return g.cat===selCat;}) : sfGuests;
+  var pool = base.filter(function(g){
+    if (!g.assigned) return false;
+    var ch = (toPinyin(g.lastName)||'?')[0].toUpperCase();
+    return grp.includes(ch);
+  });
+  renderGuestList(pool, false);
+  showScreen('list');
+}
+function showAllAlpha() {
+  selCat = null;
+  buildAlphaGrid(sfGuests);
+  showScreen('alpha');
+}
+
+// ================================================================
+// SEARCH
+// ================================================================
+function onSFSearch(val) {
+  var vl = (val||'').trim().toLowerCase();
+  if (vl === 'show nickname') { if (!showNicknames) _showNickModal(); return; }
+  if (vl === 'hide nickname') {
+    if (showNicknames) { showNicknames=false; deleteCookie(NICK_COOKIE); }
+    renderGuestList(sfGuests.filter(function(g){return g.assigned;}), true);
+    return;
+  }
+  var base = selCat ? sfGuests.filter(function(g){return g.cat===selCat;}) : sfGuests;
+  if (vl) {
+    var pool = base.filter(function(g){ return g.assigned && matchGuest(g,vl); });
+    renderGuestList(pool, true);
+  } else {
+    var base2 = selAlpha
+      ? base.filter(function(g){
+          if(!g.assigned) return false;
+          var ch=(toPinyin(g.lastName)||'?')[0].toUpperCase();
+          return selAlpha.includes(ch);
+        })
+      : base.filter(function(g){return g.assigned;});
+    renderGuestList(base2, false);
+  }
+}
+function clearSFSearch() {
+  var inp = document.getElementById('sf-search');
+  if (inp) inp.value = '';
+  onSFSearch('');
+}
+function sortByName(a,b){
+  var pa=toPinyin(a.lastName+a.firstName), pb=toPinyin(b.lastName+b.firstName);
+  return pa<pb?-1:pa>pb?1:0;
+}
+function renderGuestList(pool, flat) {
+  sfFiltered = pool;
+  var area = document.getElementById('guest-list-area');
+  if (!area) return;
+  if (!pool.length) {
+    area.innerHTML='<div class="empty-state"><span class="empty-icon">&#128269;</span><p>'+t('noGuests')+'</p></div>';
+    return;
+  }
+  if (flat) {
+    var sorted = pool.slice().sort(sortByName);
+    area.innerHTML = '<div class="guest-list">'+sorted.map(buildListBlock).join('')+'</div>';
+  } else {
+    var byGroup = {};
+    ALPHA_GROUPS.forEach(function(g){ byGroup[g]=[]; });
+    pool.forEach(function(g){
+      var ch=(toPinyin(g.lastName)||'?')[0].toUpperCase();
+      var found=false;
+      ALPHA_GROUPS.forEach(function(grp){ if(grp.includes(ch)){ byGroup[grp].push(g); found=true; }});
+      if(!found){ byGroup['YZ']=byGroup['YZ']||[]; byGroup['YZ'].push(g); }
+    });
+    var html='';
+    ALPHA_GROUPS.forEach(function(grp){
+      if(!byGroup[grp].length) return;
+      html+='<div class="alpha-section-head">'+grp+'</div>';
+      html+='<div class="guest-list">'+byGroup[grp].sort(sortByName).map(buildListBlock).join('')+'</div>';
+    });
+    area.innerHTML = html;
+  }
+}
+function buildListBlock(g) {
+  var color  = getTableColor(g.tableSeq);
+  var name   = esc(g.lastName)+' '+esc(g.firstName);
+  var nick   = (showNicknames && g.nickName) ? ' <span class="g-nick">('+esc(g.nickName)+')</span>' : '';
+  var badge  = g.assigned ? ('<div class="g-table-badge" style="background:'+color+'">'+t('tablePrefix')+' '+esc(g.tableName||'T'+g.tableSeq)+'</div>') : '<div class="g-table-badge" style="background:var(--muted)">'+t('unassigned')+'</div>';
+  var seat   = g.assigned && g.seat ? '<div class="g-seat-num">'+t('seat')+' '+esc(String(g.seat))+'</div>' : '';
+  var isSelected = !!selectedIds[g.id];
+  return '<div class="guest-item'+(isSelected?' selected':'')+'" data-id="'+g.id+'" onclick="toggleSelect('+g.id+')">'
+       + '<div class="g-table-strip" style="background:'+color+'"></div>'
+       + '<div class="g-sel-box"></div>'
+       + '<div class="g-name">'+name+nick+'</div>'
+       + '<div class="g-table-col">'+badge+seat+'</div>'
+       + '</div>';
+}
+
+// ================================================================
+// SELECTION + VIZ
+// ================================================================
+function toggleSelect(guestId) {
+  if (selectedIds[guestId]) delete selectedIds[guestId]; else selectedIds[guestId]=true;
+  var item = document.querySelector('.guest-item[data-id="'+guestId+'"]');
+  if (item) item.classList.toggle('selected', !!selectedIds[guestId]);
+  updateFindSeatBar();
+}
+function updateFindSeatBarCount() {
+  var ids = Object.keys(selectedIds);
+  var btn = document.getElementById('find-seat-btn');
+  var cntEl = document.getElementById('find-seat-count');
+  if (btn) btn.style.display = ids.length ? '' : 'none';
+  if (cntEl) cntEl.textContent = ids.length;
+  var bar = document.getElementById('find-seat-bar');
+  if (bar) bar.classList.toggle('visible', ids.length > 0 || !!barBackAction);
+}
+function updateFindSeatBar(){ updateFindSeatBarCount(); }
+function goBackFromList() { selectedIds={}; updateFindSeatBar(); showScreen('alpha'); }
+
+function showViz() {
+  var ids = Object.keys(selectedIds).map(Number);
+  var highlighted = sfGuests.filter(function(g){ return ids.includes(g.id); });
+  if (!highlighted.length) return;
+  var byTable = {};
+  highlighted.forEach(function(g){
+    if (!byTable[g.tableSeq]) byTable[g.tableSeq]=[];
+    byTable[g.tableSeq].push(g);
+  });
+  var svgSize = Math.min(window.innerWidth - 32, 360);
+  var html = '';
+  Object.keys(byTable).sort(function(a,b){return a-b;}).forEach(function(seq) {
+    var hl   = byTable[seq];
+    var tablemates = sfGuests.filter(function(g){ return g.tableSeq===+seq && g.assigned; });
+    var color = getTableColor(+seq);
+    var tname = tablemates[0] ? tablemates[0].tableName||('#'+seq) : '#'+seq;
+    var guestCards = hl.map(function(g){
+      return '<div class="viz-guest-card">'
+        +'<div class="viz-seat-circle" style="background:'+color+'">'+esc(String(g.seat||'?'))+'</div>'
+        +'<div class="viz-guest-info">'
+        +'<div class="viz-guest-name">'+esc(g.lastName+' '+g.firstName)+'</div>'
+        +(showNicknames&&g.nickName?'<div class="viz-guest-nick-name">'+esc(g.nickName)+'</div>':'')
+        +'</div></div>';
+    }).join('');
+    var blockId = 'vtb-'+seq;
+    html += '<div class="viz-table-block open" id="'+blockId+'">'
+          + '<div class="viz-table-header" onclick="toggleTableBlock(\''+blockId+'\')">'
+          + '<div class="viz-table-color-dot" style="background:'+color+'"></div>'
+          + '<div class="viz-table-header-text">'
+          + '<div class="viz-table-title">'+esc(tname)+'</div>'
+          + '<div class="viz-table-subtitle">'+hl.length+' of '+tablemates.length+' highlighted</div>'
+          + '</div>'
+          + '<div class="viz-table-chevron">&#8964;</div>'
+          + '</div>'
+          + '<div class="viz-table-body">'
+          + '<div class="viz-svg-wrap">'+buildTableSVG(tablemates, hl, color, svgSize, +seq)+'</div>'
+          + '<div class="viz-guest-cards">'+guestCards+'</div>'
+          + '</div></div>';
+  });
+  document.getElementById('viz-tables-container').innerHTML = html;
+  document.getElementById('viz-title').textContent  = t('vizTitle');
+  document.getElementById('viz-desc').textContent   = t('vizDesc');
+  showScreen('viz');
+}
+
+function toggleTableBlock(id) {
+  var b = document.getElementById(id); if(b) b.classList.toggle('open');
+}
+
+// ================================================================
+// TABLE LIST SCREEN
+// ================================================================
+function showTableList() {
+  var area = document.getElementById('table-list-area');
+  if (!area) return;
+  var tableSeqs=[]; var tableIndex={};
+  sfGuests.forEach(function(g){
+    if(g.assigned && tableIndex[g.tableSeq]===undefined){
+      tableIndex[g.tableSeq]={seq:g.tableSeq,name:g.tableName||'',count:0};
+      tableSeqs.push(g.tableSeq);
+    }
+    if(g.assigned) tableIndex[g.tableSeq].count++;
+  });
+  tableSeqs.sort(function(a,b){return a-b;});
+  var svgSize=Math.min(window.innerWidth-32,360);
+  var html='';
+  tableSeqs.forEach(function(seq){
+    var info=tableIndex[seq];
+    var color=getTableColor(seq);
+    html+='<div class="table-list-item" onclick="openTableDirect('+seq+', true)">'
+        +'<div class="tli-dot" style="background:'+color+'"></div>'
+        +'<div class="tli-info"><div class="tli-name">'+t('tablePrefix')+' '+esc(info.name||('#'+seq))+'</div>'
+        +'<div class="tli-sub">'+info.count+' '+(info.count===1?t('guests').trim():t('guestsPlural').trim())+'</div>'
+        +'</div>'
+        +'<div class="tli-arrow">&#8250;</div>'
+        +'</div>';
+  });
+  // ALL item
+  html+='<div class="table-list-item" style="border-style:dashed;color:var(--accent-dk)" onclick="openAllTables()">'
+      +'<div class="tli-dot" style="background:var(--accent)"></div>'
+      +'<div class="tli-info"><div class="tli-name" style="color:var(--accent-dk)">'+t('allTablesItem')+'</div></div>'
+      +'<div class="tli-arrow">&#8250;</div>'
+      +'</div>';
+  area.innerHTML = html;
+  showScreen('tables');
+}
+
+// ================================================================
+// TABLE DIRECT VIEW
+// ================================================================
+function openTableDirect(tableSeq, fromList) {
+  var tablemates = sfGuests.filter(function(g){ return g.tableSeq===tableSeq&&g.assigned; });
+  if (!tablemates.length) return;
+  var color    = getTableColor(tableSeq);
+  var tname    = tablemates[0].tableName||('#'+tableSeq);
+  currentTableSeqDirect  = tableSeq;
+  currentTableDirectFrom = fromList ? 'tables' : 'cat';
+  svgNamesVisible = false;
+  document.getElementById('tdir-table-name').textContent = tname;
+  document.getElementById('tdir-back-txt').textContent   = fromList ? t('backTables') : t('back');
+  var svgSize = Math.min(window.innerWidth-32, 360);
+  document.getElementById('tdir-svg-area').innerHTML = buildTableSVG(tablemates, [], color, svgSize, tableSeq);
+  var qrWrap = document.getElementById('tdir-qr-wrap');
+  var qrCanvas = document.getElementById('tdir-qr-canvas');
+  qrCanvas.innerHTML='';
+  var tableUrl = location.href.split('#')[0]+'#table='+tableSeq;
+  if (window.QRCode) {
+    try { new QRCode(qrCanvas,{text:tableUrl,width:160,height:160,correctLevel:QRCode.CorrectLevel.M});
+      document.getElementById('tdir-qr-label').textContent = t('tdirQrLabel');
+      qrWrap.style.display='block';
+    } catch(e){ qrWrap.style.display='none'; }
+  } else { qrWrap.style.display='none'; }
+  history.pushState(null,'','#table='+tableSeq);
+  showScreen('table-direct');
+}
+
+function openAllTables() {
+  var tableSeqs=[]; var seenSeqs={};
+  sfGuests.forEach(function(g){ if(g.assigned&&!seenSeqs[g.tableSeq]){ seenSeqs[g.tableSeq]=true; tableSeqs.push(g.tableSeq); }});
+  tableSeqs.sort(function(a,b){return a-b;});
+  currentTableSeqDirect  = null;
+  currentTableDirectFrom = 'tables';
+  svgNamesVisible = false;
+  document.getElementById('tdir-table-name').textContent = t('allTablesItem').replace(' \u2014 View All Tables','').replace(' \u2014 \u67e5\u770b\u6240\u6709\u5ea7\u4f4d','');
+  document.getElementById('tdir-back-txt').textContent   = t('backTables');
+  document.getElementById('tdir-qr-wrap').style.display  = 'none';
+  var svgSize=Math.min(window.innerWidth-32,360);
+  var html='';
+  tableSeqs.forEach(function(seq){
+    var tm=sfGuests.filter(function(g){return g.tableSeq===seq&&g.assigned;});
+    var col=getTableColor(seq);
+    var tn=tm[0]?tm[0].tableName||('#'+seq):'#'+seq;
+    html+='<div style="margin-bottom:24px">'
+        +'<div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px">'
+        +'<span style="width:10px;height:10px;border-radius:50%;background:'+col+';display:inline-block;flex-shrink:0"></span>'
+        +esc(tn)+'</div>'
+        +buildTableSVG(tm,[],col,svgSize,seq)
+        +'</div>';
+  });
+  document.getElementById('tdir-svg-area').innerHTML=html;
+  history.pushState(null,'','#tables=all');
+  showScreen('table-direct');
+}
+
+function toggleSvgNames() {
+  svgNamesVisible=!svgNamesVisible;
+  var lbl=document.getElementById('t-toggle-names-btn');
+  var btn=document.getElementById('toggle-names-btn');
+  if(lbl) lbl.textContent=svgNamesVisible?t('hideNames'):t('showNames');
+  if(btn) btn.classList.toggle('active',svgNamesVisible);
+  rebuildTdirSVG();
+}
+function rebuildTdirSVG() {
+  var svgSize=Math.min(window.innerWidth-32,360);
+  if (currentTableSeqDirect!==null) {
+    var tm=sfGuests.filter(function(g){return g.tableSeq===currentTableSeqDirect&&g.assigned;});
+    var color=getTableColor(currentTableSeqDirect);
+    document.getElementById('tdir-svg-area').innerHTML=buildTableSVG(tm,[],color,svgSize,currentTableSeqDirect);
+  } else {
+    var seqs=[]; var seen={};
+    sfGuests.forEach(function(g){if(g.assigned&&!seen[g.tableSeq]){seen[g.tableSeq]=true;seqs.push(g.tableSeq);}});
+    seqs.sort(function(a,b){return a-b;});
+    var html='';
+    seqs.forEach(function(seq){
+      var tm=sfGuests.filter(function(g){return g.tableSeq===seq&&g.assigned;});
+      var col=getTableColor(seq);
+      var tn=tm[0]?tm[0].tableName||('#'+seq):'#'+seq;
+      html+='<div style="margin-bottom:24px"><div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px">'
+          +'<span style="width:10px;height:10px;border-radius:50%;background:'+col+';display:inline-block;flex-shrink:0"></span>'
+          +esc(tn)+'</div>'+buildTableSVG(tm,[],col,svgSize,seq)+'</div>';
+    });
+    document.getElementById('tdir-svg-area').innerHTML=html;
+  }
+}
+
+// ================================================================
+// SVG TABLE DIAGRAM
+// ================================================================
+function escSVG(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function buildTableSVG(tablemates, highlighted, color, size, tableSeq) {
+  var MIN_SEATS = 10;
+  var seatCount = Math.max(tablemates.length, MIN_SEATS);
+  var pad    = size * 0.17;
+  var inner  = size - pad * 2;
+  var cx = size/2, cy = size/2;
+  var tableR = inner * 0.30;
+  var seatR  = inner * 0.094;
+  var orbitR = tableR + seatR + inner * 0.05;
+  var labelR = orbitR + seatR + inner * 0.07;
+
+  var seatMap = {};
+  tablemates.forEach(function(g){ seatMap[g.seat]=g; });
+  var hlSeats = {};
+  highlighted.forEach(function(g){ hlSeats[g.seat]=true; });
+
+  var tname = tablemates[0] ? tablemates[0].tableName||('#'+tableSeq) : ('#'+tableSeq);
+  var fs = seatCount <= 10 ? {tableLabel:16, seatNum:13}
+         : seatCount <= 14 ? {tableLabel:13, seatNum:11}
+         :                   {tableLabel:11, seatNum:9};
+
+  var svgParts = [
+    '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" xmlns="http://www.w3.org/2000/svg" style="touch-action:manipulation">',
+    '<circle cx="'+cx+'" cy="'+cy+'" r="'+tableR.toFixed(1)+'" fill="'+color+'18" stroke="'+color+'" stroke-width="2.5"/>',
+    '<text x="'+cx+'" y="'+(cy+0.5)+'" text-anchor="middle" dominant-baseline="middle" fill="'+color+'" font-weight="700" font-size="'+fs.tableLabel+'">'+escSVG(tname)+'</text>'
+  ];
+
+  for (var i=1; i<=seatCount; i++) {
+    var angle  = ((i-1)/seatCount)*Math.PI*2 - Math.PI/2;
+    var sx = cx + orbitR*Math.cos(angle);
+    var sy = cy + orbitR*Math.sin(angle);
+    var isHL    = !!hlSeats[i];
+    var guest   = seatMap[i]||null;
+    var isEmpty = !guest;
+    var onclick = 'onclick="showTooltipForSeat('+tableSeq+','+i+')"';
+
+    if (isHL) {
+      svgParts.push(
+        '<g '+onclick+' style="cursor:pointer">',
+        '<circle cx="'+sx.toFixed(1)+'" cy="'+sy.toFixed(1)+'" r="'+(seatR+5).toFixed(1)+'" fill="'+color+'28"/>',
+        '<circle cx="'+sx.toFixed(1)+'" cy="'+sy.toFixed(1)+'" r="'+seatR.toFixed(1)+'" fill="'+color+'" stroke="#fff" stroke-width="2.5"/>',
+        '<text x="'+sx.toFixed(1)+'" y="'+(sy+0.5).toFixed(1)+'" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-weight="800" font-size="'+fs.seatNum+'">'+i+'</text>',
+        '</g>'
+      );
+    } else {
+      var fillCol  = isEmpty ? '#f0efe8' : '#ffffff';
+      var numCol   = isEmpty ? '#c8c4bc' : color+'aa';
+      var strokeCol= color+'55';
+      svgParts.push(
+        '<g '+onclick+' style="cursor:pointer">',
+        '<circle cx="'+sx.toFixed(1)+'" cy="'+sy.toFixed(1)+'" r="'+seatR.toFixed(1)+'" fill="'+fillCol+'" stroke="'+strokeCol+'" stroke-width="1.5"/>',
+        '<text x="'+sx.toFixed(1)+'" y="'+(sy+0.5).toFixed(1)+'" text-anchor="middle" dominant-baseline="middle" fill="'+numCol+'" font-size="'+fs.seatNum+'">'+i+'</text>',
+        '</g>'
+      );
+    }
+
+    // Name label — outside both branches, applies to all seats
+    if (guest && (svgNamesVisible || isHL)) {
+      var nameLine = (guest.lastName||'')+(guest.firstName?' '+guest.firstName:'');
+      var lx = cx + labelR*Math.cos(angle);
+      var ly = cy + labelR*Math.sin(angle);
+      svgParts.push(
+        '<text x="'+lx.toFixed(1)+'" y="'+(ly+0.5).toFixed(1)+'" text-anchor="middle" dominant-baseline="middle" fill="'+color+'" font-weight="600" font-size="12">'+escSVG(nameLine)+'</text>'
+      );
+    }
+  }
+  svgParts.push('</svg>');
+  return svgParts.join('\n');
+}
+
+// ================================================================
+// TOOLTIP
+// ================================================================
+function showTooltipForSeat(tableSeq, seatNum) {
+  var guest = sfGuests.find(function(g){ return g.tableSeq===tableSeq&&g.seat===seatNum&&g.assigned; });
+  var color = getTableColor(tableSeq);
+  var tguest = sfGuests.find(function(g){ return g.tableSeq===tableSeq; });
+  var tname  = tguest ? (tguest.tableName||'') : '';
+  var badge  = document.getElementById('tt-seat-badge');
+  var nameEl = document.getElementById('tt-guest-name');
+  var tEl    = document.getElementById('tt-table-name');
+  var sEl    = document.getElementById('tt-seat-label');
+  var emEl   = document.getElementById('tt-empty-label');
+  if(badge) badge.style.background=color;
+  if(badge) badge.textContent=seatNum;
+  if(guest) {
+    if(nameEl)  nameEl.textContent  = (guest.lastName||'')+' '+(guest.firstName||'');
+    if(emEl)    emEl.textContent    = '';
+    if(tEl)     tEl.textContent     = tname;
+    if(sEl)     sEl.textContent     = t('seat')+' '+seatNum;
+  } else {
+    if(nameEl)  nameEl.textContent  = '';
+    if(emEl)    emEl.textContent    = 'Empty seat';
+    if(tEl)     tEl.textContent     = tname;
+    if(sEl)     sEl.textContent     = '';
+  }
+  var tt = document.getElementById('seat-tooltip');
+  if(tt) tt.classList.add('visible');
+}
+function hideTooltip() {
+  var tt=document.getElementById('seat-tooltip'); if(tt) tt.classList.remove('visible');
+}
+</script>
+</body>
+</html>

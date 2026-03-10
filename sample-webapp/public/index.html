@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planners — Homestay & Wedding Banquet</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/shared.css">
+<style>
+  body {
+    background: #0d0f14;
+    color: #e8eaf0;
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    padding: 60px 20px;
+  }
+  .hero h1 {
+    font-size: 36px;
+    font-weight: 800;
+    color: #f0c060;
+    letter-spacing: -1px;
+    text-align: center;
+  }
+  .hero p {
+    color: #6b7a99;
+    font-size: 14px;
+    text-align: center;
+    max-width: 400px;
+    line-height: 1.6;
+  }
+  .app-cards {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .app-card {
+    background: #161b25;
+    border: 1px solid #2a3448;
+    border-radius: 16px;
+    padding: 32px 28px;
+    width: 240px;
+    text-decoration: none;
+    color: #e8eaf0;
+    transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .app-card:hover {
+    border-color: #f0c060;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(240,192,96,0.12);
+  }
+  .app-card .icon { font-size: 40px; }
+  .app-card h2 { font-size: 18px; font-weight: 700; }
+  .app-card p  { font-size: 12px; color: #6b7a99; line-height: 1.5; }
+  .app-card .arrow {
+    margin-top: auto;
+    font-size: 11px;
+    color: #f0c060;
+    font-family: 'DM Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<nav class="app-nav">
+  <a class="nav-brand" href="index.html">🏠💒 Planners</a>
+  <div class="nav-links">
+    <a class="nav-link" href="pages/homestay.html">🏠 Homestay Planner</a>
+    <a class="nav-link" href="pages/wedding.html">💒 Wedding Banquet</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div>
+    <h1>🏠💒 Planners</h1>
+    <p>Two powerful planning tools to organise your homestay room assignments and wedding banquet seating — all in your browser, data saved locally.</p>
+  </div>
+  <div class="app-cards">
+    <a class="app-card" href="pages/homestay.html">
+      <div class="icon">🏠</div>
+      <h2>Homestay Planner</h2>
+      <p>Assign guests to rooms with drag &amp; drop. Track occupancy, search, sort, and undo.</p>
+      <div class="arrow">Open → </div>
+    </a>
+    <a class="app-card" href="pages/wedding.html">
+      <div class="icon">💒</div>
+      <h2>Wedding Banquet</h2>
+      <p>Arrange tables on a visual canvas. Assign seats, categorise guests, drag and drop.</p>
+      <div class="arrow">Open → </div>
+    </a>
+  </div>
+</div>
+
+</body>
+</html>

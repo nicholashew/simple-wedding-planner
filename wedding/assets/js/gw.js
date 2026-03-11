@@ -192,9 +192,10 @@
 
   async function loadData() {
     if (config && guests !== null) return { config, guests };
+    const v = new Date().toISOString().replace(/\D/g, '').slice(0, 14);
     const [cfgRes, gstRes] = await Promise.all([
-      fetch(DATA_BASE + 'config.json'),
-      fetch(DATA_BASE + 'guests.json'),
+      fetch(DATA_BASE + 'config.json?v=' + v),
+      fetch(DATA_BASE + 'guests.json?v=' + v),
     ]);
     config = await cfgRes.json();
     const gstData = await gstRes.json();

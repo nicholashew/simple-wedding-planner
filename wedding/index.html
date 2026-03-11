@@ -64,7 +64,7 @@
 <body>
 
 <img id="gw-banner" src="assets/data/banner.jpg" alt=""
-  onload="this.style.display='block'"
+  onload="this.style.display='block';document.documentElement.style.setProperty('--banner-h',this.offsetHeight+'px')"
   onerror="this.style.display='none'">
 
 <div class="gw-header">

@@ -18,17 +18,17 @@
     html { scroll-behavior: smooth; }
     body {
       font-family: 'Syne', 'Inter', -apple-system, sans-serif;
-      background: var(--bg); color: var(--text); min-height: 100dvh;
+      background: var(--surface); color: var(--text); min-height: 100dvh;
     }
 
-    /* App nav (shared admin style) */
+    /* App nav — dark theme */
     .app-nav {
       display: flex; align-items: center;
-      background: #ffffff; border-bottom: 2px solid var(--border);
+      background: #161b25; border-bottom: 2px solid #2a3448;
       padding: 0 20px; height: 44px;
       position: sticky; top: 0; z-index: 1000; gap: 0;
       font-family: 'Syne', sans-serif; flex-shrink: 0;
-      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+      box-shadow: 0 1px 4px rgba(0,0,0,.3);
     }
     .app-nav .nav-brand {
       font-size: 13px; font-weight: 800; color: var(--accent);
@@ -38,20 +38,20 @@
     .app-nav .nav-link {
       display: inline-flex; align-items: center; gap: 6px;
       padding: 6px 14px; border-radius: 8px;
-      font-size: 12px; font-weight: 600; color: var(--muted);
+      font-size: 12px; font-weight: 600; color: #6b7a99;
       text-decoration: none; transition: background .15s, color .15s;
     }
-    .app-nav .nav-link:hover { background: var(--surface2); color: var(--text); }
-    .app-nav .nav-link.active { background: var(--surface2); color: var(--accent); border-bottom: 2px solid var(--accent); border-radius: 8px 8px 0 0; }
+    .app-nav .nav-link:hover { background: #1e2535; color: #e8eaf0; }
+    .app-nav .nav-link.active { background: #1e2535; color: var(--accent); border-bottom: 2px solid var(--accent); border-radius: 8px 8px 0 0; }
     .nav-logout {
-      margin-left: auto; background: none; border: 1px solid var(--border2); border-radius: 6px;
-      color: var(--muted); font-size: 11px; font-family: inherit;
+      margin-left: auto; background: none; border: 1px solid #3a4560; border-radius: 6px;
+      color: #6b7a99; font-size: 11px; font-family: inherit;
       padding: 4px 10px; cursor: pointer; transition: all .15s;
     }
     .nav-logout:hover { border-color: var(--danger); color: var(--danger); }
 
     /* Layout */
-    .main { max-width: 640px; margin: 0 auto; padding: 20px 16px 60px; }
+    .main { padding: 20px 20px 60px; }
 
     /* Tabs */
     .tabs { display: flex; gap: 6px; margin-bottom: 24px; }
@@ -92,7 +92,12 @@
     }
 
     /* Category grid */
-    .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .cat-grid { display: flex; flex-direction: column; gap: 14px; margin-bottom: 10px; }
+    .cat-group-label {
+      font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+      color: var(--muted); padding-bottom: 5px; border-bottom: 1px solid var(--border); margin-bottom: 6px;
+    }
+    .cat-group-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .cat-card {
       background: var(--surface); border: 1.5px solid var(--border);
       border-radius: var(--radius); padding: 16px 12px;
@@ -115,7 +120,7 @@
     }
     .alpha-card:hover { border-color: var(--accent); background: var(--surface2); }
     .alpha-card.dimmed { opacity: 0.25; cursor: default; pointer-events: none; }
-    .alpha-card.alpha-all { background: var(--surface2); border-color: var(--border2); font-family: inherit; font-size: 13px; }
+    .alpha-card.alpha-all { background: transparent; border-color: var(--border2); font-family: inherit; font-size: 13px; }
     .alpha-card.alpha-all:hover { border-color: var(--accent); }
     .alpha-count { font-size: 9px; color: var(--muted); display: block; margin-top: 3px; font-family: sans-serif; font-weight: 400; }
 
@@ -228,21 +233,42 @@
 
     /* Back button */
     .back-btn {
-      background: none; border: none; font-size: 13px; color: var(--muted);
-      cursor: pointer; font-family: inherit; padding: 0 0 16px;
-      display: flex; align-items: center; gap: 4px;
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(255,255,255,0.7); border: 1.5px solid rgba(200,168,74,0.35);
+      border-radius: 18px; padding: 6px 14px; cursor: pointer;
+      font-size: 13px; font-weight: 600; color: var(--text2); font-family: inherit;
+      margin-bottom: 16px; text-decoration: none;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      transition: all .2s cubic-bezier(.34,1.56,.64,1);
     }
-    .back-btn:hover { color: var(--text); }
+    .back-btn:hover { color: var(--accent); border-color: var(--accent); background: rgba(255,255,255,0.95); }
 
     /* Breadcrumb */
     .breadcrumb {
-      display: flex; align-items: center; gap: 4px;
-      font-size: 11px; color: var(--muted); margin-bottom: 16px;
-      flex-wrap: wrap;
+      display: flex; align-items: center; gap: 5px;
+      font-size: 11.5px; margin-bottom: 16px; flex-wrap: wrap;
     }
-    .bc-item { cursor: pointer; }
-    .bc-item:hover { color: var(--accent); }
-    .bc-sep { color: var(--border2); }
+    .bc-item {
+      cursor: pointer; font-weight: 600; color: var(--text2);
+      /*background: var(--surface2);*/ border: 1px solid var(--border2);
+      border-radius: 20px; padding: 3px 11px;
+      transition: all .12s;
+    }
+    .bc-item:hover { background: var(--accent-lt); border-color: rgba(176,120,32,.45); color: var(--accent-dk); }
+    .bc-sep { color: var(--border2); font-size: 12px; font-weight: 700; }
+    .bc-current { font-size: 11.5px; font-weight: 700; color: var(--text); padding: 3px 4px; }
+
+    /* Breadcrumb side accent colors */
+    .bc-bride  .bc-item { border-color: rgba(210,90,120,.5); color: rgba(180,50,85,.9); }
+    .bc-bride  .bc-item:hover { border-color: rgba(210,90,120,.9); background: rgba(210,90,120,.07); color: rgba(180,50,85,1); }
+    .bc-bride  .bc-sep  { color: rgba(210,90,120,.5); }
+    .bc-groom  .bc-item { border-color: rgba(60,130,210,.5); color: rgba(30,90,180,.9); }
+    .bc-groom  .bc-item:hover { border-color: rgba(60,130,210,.9); background: rgba(60,130,210,.07); color: rgba(30,90,180,1); }
+    .bc-groom  .bc-sep  { color: rgba(60,130,210,.5); }
+    .bc-others .bc-item { border-color: rgba(100,160,100,.5); color: rgba(50,120,50,.9); }
+    .bc-others .bc-item:hover { border-color: rgba(100,160,100,.9); background: rgba(100,160,100,.07); color: rgba(50,120,50,1); }
+    .bc-others .bc-sep  { color: rgba(100,160,100,.5); }
 
     /* Table list (screen-tables) */
     .table-list {
@@ -262,15 +288,22 @@
     #table-list-wrap { max-height: calc(100dvh - 210px); overflow-y: auto; padding-bottom: 8px; }
     @media (min-width: 900px) { #table-list-wrap { max-height: calc(100dvh - 150px); } }
 
-    /* "View All Tables" cat-card accent style */
-    .cat-card-tables { border-color: var(--accent); background: var(--accent-lt); }
-    .cat-card-tables:hover { background: var(--accent); }
-    .cat-card-tables:hover .cat-name,
-    .cat-card-tables:hover .cat-sub { color: #ffffff; }
+    /* "View All Tables" cat-card — same style as All Guests (default cat-card) */
+
+    /* Per-group cat-card border colors */
+    .cat-group-bride .cat-card  { border-color: rgba(210, 90, 120, 0.45); }
+    .cat-group-bride .cat-card:hover  { border-color: rgba(210, 90, 120, 0.85); background: rgba(210,90,120,0.06); }
+    .cat-group-groom .cat-card  { border-color: rgba(60, 130, 210, 0.45); }
+    .cat-group-groom .cat-card:hover  { border-color: rgba(60, 130, 210, 0.85); background: rgba(60,130,210,0.06); }
+    .cat-group-others .cat-card { border-color: rgba(100, 160, 100, 0.45); }
+    .cat-group-others .cat-card:hover { border-color: rgba(100, 160, 100, 0.85); background: rgba(100,160,100,0.06); }
 
     @media (min-width: 480px) {
-      .cat-grid  { grid-template-columns: repeat(3,1fr); }
+      .cat-group-grid { grid-template-columns: repeat(3, 1fr); }
       .alpha-grid { grid-template-columns: repeat(7,1fr); }
+    }
+    @media (min-width: 768px) {
+      .cat-group-grid { grid-template-columns: repeat(4, 1fr); }
     }
     @media (min-width: 640px) {
       .alpha-grid { grid-template-columns: repeat(7,1fr); }
@@ -285,7 +318,7 @@
     .search-main.panel-active { display: block; }
 
     @media (min-width: 900px) {
-      .main { max-width: 780px; }
+      .main { padding: 24px 32px 60px; }
     }
 
     /* Sort bar (table result view) */
@@ -551,6 +584,26 @@
       background: none; border: 1.5px solid var(--border2); color: var(--text2);
     }
     .qr-action-copy-img:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Scan QR tab layout */
+    .scan-wrap { max-width: 480px; margin: 0 auto; }
+    .scan-method-card {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 16px; padding: 28px 24px; text-align: center;
+    }
+    .scan-method-icon { font-size: 40px; display: block; margin-bottom: 12px; }
+    .scan-method-title { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+    .scan-method-desc {
+      font-size: 12.5px; color: var(--muted); margin-bottom: 18px;
+      line-height: 1.55; max-width: 320px; margin-left: auto; margin-right: auto;
+    }
+    .scan-or-divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 14px 0; color: var(--muted); font-size: 12px; font-weight: 600;
+    }
+    .scan-or-divider::before, .scan-or-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
   </style>
   <link href="https://cdn.jsdelivr.net/npm/choices.js@11.2.1/public/assets/styles/choices.min.css" rel="stylesheet">
 </head>
@@ -574,32 +627,46 @@
 
   <!-- Tabs -->
   <div class="tabs">
-    <button class="tab-btn active" id="tab-scan-btn" onclick="switchTab('scan')">&#128247; Scan QR</button>
-    <button class="tab-btn"        id="tab-search-btn" onclick="switchTab('search')">&#128269; Search</button>
+    <button class="tab-btn"        id="tab-scan-btn"   onclick="switchTab('scan')">&#128247; Scan QR</button>
+    <button class="tab-btn active" id="tab-search-btn" onclick="switchTab('search')">&#128269; Search</button>
   </div>
 
   <!-- ─── QR SCAN TAB ─── -->
-  <div class="section active" id="tab-scan">
-    <div class="step-label">Camera scan or upload image</div>
-    <button class="btn btn-primary" id="cam-start-btn" onclick="startCamera()">
-      &#128247; Start Camera
-    </button>
-    <video id="camera-video" playsinline autoplay style="display:none;"></video>
-    <button class="btn btn-outline" id="cam-stop-btn" style="display:none;" onclick="stopCamera()">
-      &#9632; Stop Camera
-    </button>
+  <div class="section" id="tab-scan">
+    <div class="scan-wrap">
+      <!-- Camera card -->
+      <div class="scan-method-card" id="cam-card">
+        <span class="scan-method-icon">&#128247;</span>
+        <div class="scan-method-title">Scan with Camera</div>
+        <div class="scan-method-desc">Point the camera at a guest QR code for instant table lookup</div>
+        <button class="btn btn-primary" id="cam-start-btn" onclick="startCamera()">
+          &#128247; Start Camera
+        </button>
+        <video id="camera-video" playsinline autoplay style="display:none;"></video>
+        <button class="btn btn-outline" id="cam-stop-btn" style="display:none;" onclick="stopCamera()">
+          &#9632; Stop Camera
+        </button>
+      </div>
 
-    <div style="text-align:center;font-size:12px;color:var(--muted);margin:8px 0;">— or upload QR image —</div>
-    <button class="btn btn-outline" onclick="document.getElementById('qr-file').click()">
-      &#128193; Upload QR Image
-    </button>
-    <input type="file" id="qr-file" accept="image/*" style="display:none;">
+      <div class="scan-or-divider"><span>or</span></div>
+
+      <!-- Upload card -->
+      <div class="scan-method-card">
+        <span class="scan-method-icon">&#128444;&#65039;</span>
+        <div class="scan-method-title">Upload QR Image</div>
+        <div class="scan-method-desc">Choose a saved QR code image from your device or screenshot</div>
+        <button class="btn btn-outline" onclick="document.getElementById('qr-file').click()">
+          &#128193; Choose Image
+        </button>
+        <input type="file" id="qr-file" accept="image/*" style="display:none;">
+      </div>
+    </div>
 
     <div id="scan-result"></div>
   </div>
 
   <!-- ─── SEARCH TAB ─── -->
-  <div class="section" id="tab-search">
+  <div class="section active" id="tab-search">
     <div class="search-wrapper">
 
       <!-- Left nav panel -->
@@ -1091,25 +1158,51 @@ function buildCatGrid() {
     grid.innerHTML = '<div class="empty-state">No categories found.</div>';
     return;
   }
-  grid.innerHTML = categories.map(cat => `
-    <button class="cat-card" onclick="selectCat('${cat.key}')">
-      <span class="cat-emoji">${cat.label.match(/\p{Emoji}/u)?.[0] || '👥'}</span>
-      <span class="cat-name">${cat.label.replace(/^\p{Emoji}\s*/u, '')}</span>
-      <span class="cat-sub">${allGuests.filter(g => g.cat === cat.key).length} guests</span>
-      <span role="button" class="cat-qr-btn" title="QR for ${cat.label.replace(/^\p{Emoji}\s*/u, '')}" onclick="event.stopPropagation();openQrForCat('${cat.key}')">&#127915;</span>
-    </button>
-  `).join('');
-  grid.innerHTML += `
-    <button class="cat-card" onclick="selectCat(null)">
-      <span class="cat-emoji">🔍</span>
-      <span class="cat-name">All Guests</span>
-      <span class="cat-sub">${allGuests.length} total</span>
-    </button>
-    <button class="cat-card cat-card-tables" style="grid-column:1/-1;" onclick="selectViewAllTables()">
-      <span class="cat-emoji">🪑</span>
-      <span class="cat-name">View All Tables</span>
-      <span class="cat-sub">Browse guests by table assignment</span>
-    </button>`;
+  const brideCats = categories.filter(c => c.key.startsWith('bride-'));
+  const groomCats = categories.filter(c => c.key.startsWith('groom-'));
+  const otherCats = categories.filter(c => !c.key.startsWith('bride-') && !c.key.startsWith('groom-'));
+  function renderCards(cats) {
+    return cats.map(cat => `
+      <button class="cat-card" onclick="selectCat('${cat.key}')">
+        <span class="cat-emoji">${cat.label.match(/\p{Emoji}/u)?.[0] || '👥'}</span>
+        <span class="cat-name">${cat.label.replace(/^\p{Emoji}\s*/u, '')}</span>
+        <span class="cat-sub">${allGuests.filter(g => g.cat === cat.key).length} guests</span>
+        <span role="button" class="cat-qr-btn" title="QR for ${cat.label.replace(/^\p{Emoji}\s*/u, '')}" onclick="event.stopPropagation();openQrForCat('${cat.key}')">&#127915;</span>
+      </button>`).join('');
+  }
+  function renderGroup(label, cats, groupCls) {
+    if (!cats.length) return '';
+    return `<div class="cat-group ${groupCls || ''}">
+      <div class="cat-group-label">${label}</div>
+      <div class="cat-group-grid">${renderCards(cats)}</div>
+    </div>`;
+  }
+  grid.innerHTML =
+    renderGroup('👰 Bride Side', brideCats, 'cat-group-bride') +
+    renderGroup('🤵 Groom Side', groomCats, 'cat-group-groom') +
+    (otherCats.length ? renderGroup('🏷️ Others', otherCats, 'cat-group-others') : '') +
+    `<div class="cat-group cat-group-others">
+      <div class="cat-group-label">🔎 Others</div>
+      <div class="cat-group-grid">
+        <button class="cat-card" onclick="selectCat(null)">
+          <span class="cat-emoji">🔍</span>
+          <span class="cat-name">All Guests</span>
+          <span class="cat-sub">${allGuests.length} total</span>
+        </button>
+        <button class="cat-card cat-card-tables" onclick="selectViewAllTables()">
+          <span class="cat-emoji">🪑</span>
+          <span class="cat-name">View All Tables</span>
+          <span class="cat-sub">Browse guests by table assignment</span>
+        </button>
+      </div>
+    </div>`;
+}
+
+function getSideClass(catKey) {
+  if (!catKey) return '';
+  if (catKey.startsWith('bride-')) return 'bc-bride';
+  if (catKey.startsWith('groom-')) return 'bc-groom';
+  return 'bc-others';
 }
 
 function selectCat(catKey) {
@@ -1118,6 +1211,11 @@ function selectCat(catKey) {
   buildAlphaGrid(catKey);
   showSearchScreen('alpha');
   const cat = categories.find(c => c.key === catKey);
+  const sideClass = getSideClass(catKey);
+  ['bc-alpha', 'bc-name'].forEach(id => {
+    const el = document.getElementById(id);
+    el.className = 'breadcrumb' + (sideClass ? ' ' + sideClass : '');
+  });
   document.getElementById('bc-alpha').innerHTML =
     `<span class="bc-item" onclick="showSearchScreen('cat')">Groups</span>
      <span class="bc-sep">›</span>

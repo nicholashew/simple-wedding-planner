@@ -92,7 +92,7 @@
     <button type="submit" class="login-btn">Sign In</button>
   </form>
 
-  <a class="back-link" href="/">&#8592; Back to guest site</a>
+  <a class="back-link" href="../index.html">&#8592; Back to guest site</a>
 </div>
 
 <script>
@@ -107,15 +107,15 @@ async function doLogin(e) {
   errorEl.textContent = '';
 
   try {
-    const res = await fetch('/assets/data/config.json');
+    const res = await fetch('../assets/data/config.json');
     const config = await res.json();
     const validUser = config.adminUser || 'admin';
     const validPin  = config.adminPin  || 'password';
 
     if (username === validUser && password === validPin) {
       // Set session cookie (expires end of browser session)
-      document.cookie = 'gw_admin=1; path=/admin; SameSite=Strict';
-      window.location.href = '/admin/index.html';
+      document.cookie = 'gw_admin=1; path=/; SameSite=Strict';
+      window.location.href = 'index.html';
     } else {
       errorEl.textContent = 'Incorrect username or password.';
     }
@@ -126,7 +126,7 @@ async function doLogin(e) {
 
 // Redirect if already logged in
 if (document.cookie.includes('gw_admin=1')) {
-  window.location.href = '/admin/index.html';
+  window.location.href = 'index.html';
 }
 </script>
 </body>

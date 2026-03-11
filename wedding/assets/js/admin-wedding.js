@@ -102,12 +102,15 @@ const COLORS=[
   '#c08040','#6080c0','#a04060','#40a080','#d06080','#8060a0',
 ];
 const CAT={
-  'bride-family':{short:'🌸 Bride Family',  cls:'cat-bride-family'},
-  'bride-rel':   {short:'🌺 Bride Relative',cls:'cat-bride-rel'},
-  'bride-friend':{short:'🪷 Bride Friend',  cls:'cat-bride-friend'},
-  'groom-family':{short:'💠 Groom Family',  cls:'cat-groom-family'},
-  'groom-rel':   {short:'🔷 Groom Relative',cls:'cat-groom-rel'},
-  'groom-friend':{short:'🫐 Groom Friend',  cls:'cat-groom-friend'},
+  'bride-family':    {short:'🌸 Bride Family',    cls:'cat-bride-family'},
+  'bride-rel':       {short:'🌺 Bride Relative',  cls:'cat-bride-rel'},
+  'bride-friend':    {short:'🪷 Bride Friend',    cls:'cat-bride-friend'},
+  'bride-colleague': {short:'🌹 Bride Colleague', cls:'cat-bride-colleague'},
+  'groom-family':    {short:'💠 Groom Family',    cls:'cat-groom-family'},
+  'groom-rel':       {short:'🔷 Groom Relative',  cls:'cat-groom-rel'},
+  'groom-friend':    {short:'🫐 Groom Friend',    cls:'cat-groom-friend'},
+  'groom-colleague': {short:'🔵 Groom Colleague', cls:'cat-groom-colleague'},
+  'others':          {short:'✨ Others',           cls:'cat-others'},
 };
 const SEAT_COUNT=10, DISC_R=80, SEAT_W=108, TW=500;
 const SEAT_GAP=60; // gap between disc edge and seat edge
@@ -277,6 +280,8 @@ function _syncSlider(sliderId, inputId, labelId, unit) {
   };
 }
 document.addEventListener('DOMContentLoaded', () => {
+  // Restore last export time on toolbar button
+  _updateExportJsonBtn(localStorage.getItem('sf-export-time'));
   // Auto-Align sliders
   _syncSlider('arrange-row-tol','arrange-row-tol-num','arrange-row-tol-lbl','px');
   _syncSlider('arrange-h-gap','arrange-h-gap-num','arrange-h-gap-lbl','px');
@@ -669,7 +674,7 @@ function renderCSVMapUI(){
   fields.forEach(f=>{const s=document.getElementById('csv-map-'+f.key);if(s&&_csvColMap[f.key]!=='')s.value=_csvColMap[f.key];});
   refreshCSVPreview();
 }
-const CAT_IMPORT_MAP={'bride family':'bride-family','bridefamily':'bride-family','bride relative':'bride-rel','briderel':'bride-rel','bride friend':'bride-friend','bridefriend':'bride-friend','groom family':'groom-family','groomfamily':'groom-family','groom relative':'groom-rel','groomrel':'groom-rel','groom friend':'groom-friend','groomfriend':'groom-friend'};
+const CAT_IMPORT_MAP={'bride family':'bride-family','bridefamily':'bride-family','bride relative':'bride-rel','briderel':'bride-rel','bride friend':'bride-friend','bridefriend':'bride-friend','bride colleague':'bride-colleague','bridecolleague':'bride-colleague','groom family':'groom-family','groomfamily':'groom-family','groom relative':'groom-rel','groomrel':'groom-rel','groom friend':'groom-friend','groomfriend':'groom-friend','groom colleague':'groom-colleague','groomcolleague':'groom-colleague','others':'others'};
 function mapCat(raw,def){if(!raw)return def;const k=raw.toLowerCase().trim();return CAT_IMPORT_MAP[k]||(CAT[k]?k:def);}
 function getCSVMapping(){
   const get=id=>{const v=document.getElementById('csv-map-'+id)?.value;return v===''||v===undefined?null:parseInt(v);};
@@ -1820,17 +1825,19 @@ function confirmDelObj(id){
 // ══════════════════════════════════════════════════════
 
 const CAT_FULL = {
-  'bride-family': '🌸 Bride Family',
-  'bride-rel':    '🌺 Bride Relative',
-  'bride-friend': '🪷 Bride Friend',
-  'groom-family': '💠 Groom Family',
-  'groom-rel':    '🔷 Groom Relative',
-  'groom-friend': '🫐 Groom Friend',
+  'bride-family':    '🌸 Bride Family',
+  'bride-rel':       '🌺 Bride Relative',
+  'bride-friend':    '🪷 Bride Friend',
+  'bride-colleague': '🌹 Bride Colleague',
+  'groom-family':    '💠 Groom Family',
+  'groom-rel':       '🔷 Groom Relative',
+  'groom-friend':    '🫐 Groom Friend',
+  'groom-colleague': '🔵 Groom Colleague',
+  'others':          '✨ Others',
 };
 
 // Column definitions — id, label, always-shown toggle
 const GL_COLS = [
-  {id:'seq',      label:'Seq',          always:true},
   {id:'table',    label:'Table',        always:true},
   {id:'seat',     label:'Seat',         always:true},
   {id:'cat',      label:'Relationship', always:false},
@@ -1843,7 +1850,7 @@ const GL_COLS = [
   {id:'attended', label:'Attended',     always:true},
 ];
 // Default visible cols
-let glVisibleCols = new Set(['seq','table','seat','cat','subCat','lastName','firstName','nickName','notes','group','attended']);
+let glVisibleCols = new Set(['table','seat','cat','subCat','lastName','firstName','nickName','notes','group','attended']);
 
 function openGuestListModal(){
   const tSel = document.getElementById('gl-filter-table');
@@ -2280,7 +2287,10 @@ function _setProjectName(name){
 function exportJSON(){
   const name = _getProjectName();
   const slug = name.replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase() || 'banquet';
-  const data={v:3,at:new Date().toISOString(),projectName:name,gId,tId,oId,guests,tables,objects};
+  // v:4 — seats serialized as 1-based (internal state is 0-based; add 1 at boundary)
+  const data={v:4,at:new Date().toISOString(),projectName:name,gId,tId,oId,
+    guests:guests.map(g=>({...g,seat:g.seat!=null?g.seat+1:null})),
+    tables,objects};
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
   a.download=`${slug}.json`;a.click();
@@ -2301,6 +2311,8 @@ function onFileLoad(ev){
           if(g.cat==='groom')g.cat='groom-family';
           if(g.cat==='family')g.cat='bride-family';
           if(g.cat==='friend')g.cat='bride-friend';
+          // v:4+ stores seats as 1-based; convert back to 0-based internal
+          if((d.v||0)>=4 && g.seat!=null) g.seat=g.seat-1;
         });
         gId=d.gId||1;tId=d.tId||1;oId=d.oId||1;
       });
@@ -2361,14 +2373,16 @@ function _sfBuildPayload() {
       const t = tables.find(x => x.id === g.tableId);
       return {
         id        : g.id,
+        cat       : g.cat       || '',
         lastName  : g.lastName  || '',
         firstName : g.firstName || '',
         nickName  : g.nickName  || '',
-        cat       : g.cat       || '',
+        subCat    : g.subCat    || '',
+        notes     : g.notes     || '',
         group     : g.group     || '',
         tableName : t ? t.name  : '',
         tableSeq  : t ? (t.seq || 0) : 9999,
-        seat      : g.tableId ? (g.seat !== undefined ? g.seat + 1 : '—') : '—',
+        seat      : g.tableId ? (g.seat != null ? g.seat + 1 : null) : null,
         assigned  : !!g.tableId,
       };
     }),
@@ -2387,7 +2401,19 @@ function exportGuestsJson() {
   localStorage.setItem('sf-export-time', now);
   const statusEl = document.getElementById('sf-export-status');
   if (statusEl) statusEl.textContent = '✅ Exported at ' + new Date(now).toLocaleString();
-  toast('guests.json downloaded — upload it to your Netlify pages/ folder', 'success');
+  _updateExportJsonBtn(now);
+  toast('guests.json downloaded — upload it to /assets/data/ to publish guest data', 'success');
+}
+function _updateExportJsonBtn(isoStr) {
+  const btn = document.getElementById('toolbar-export-json-btn');
+  if (!btn) return;
+  const label = isoStr
+    ? `⬇ guests.json · ${new Date(isoStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+    : '⬇ guests.json';
+  btn.textContent = label;
+  btn.title = isoStr
+    ? `Last exported: ${new Date(isoStr).toLocaleString()} — upload to /assets/data/ to publish guest data`
+    : 'Download guests.json — upload to /assets/data/ to publish guest data';
 }
 
 function _drawSFQR(url) {

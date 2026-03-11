@@ -14,7 +14,14 @@
  */
 
 (function () {
-  const DATA_BASE = '/assets/data/';
+  // Derive base URL from this script's own src so the site works when hosted
+  // in any subdirectory (e.g. S3 bucket at /wedding/ instead of /).
+  // gw.js lives at {root}/assets/js/gw.js → strip that suffix to get root.
+  const _src = (typeof document !== 'undefined' && document.currentScript)
+    ? document.currentScript.src : '';
+  const DATA_BASE = _src
+    ? _src.replace(/assets\/js\/gw\.js[\s\S]*$/, '') + 'assets/data/'
+    : '/assets/data/';
 
   // ── Category colours (matches wedding planner palette)
   const CAT_COLORS = [
@@ -68,10 +75,30 @@
       videoInfoText:    'Our love story montage — a journey through the moments that led us here.',
       captureWarn:      'Please enjoy the video without recording',
       // Table page
-      uploadTitle:      'Tap to upload QR code',
-      uploadSub:        'JPG or PNG image of your invitation QR code',
-      scanWithCamera:   'Scan with Camera',
+      uploadTitle:      'Choose from Gallery',
+      uploadSub:        'Select a photo of your invitation QR code',
+      takePhoto:        'Take Photo',
+      scanWithCamera:   'Scan Live with Camera',
       orDivider:        'or',
+      // Table result
+      welcome:          'Welcome',
+      andParty:         '& party',
+      guestsAt:         'Guests at',
+      leadGuestLabel:   'Lead Guest',
+      guestLabel:       'Guest',
+      guestsLabel:      'guests',
+      yourTable:        'Your Table',
+      yourTables:       'Your Tables',
+      highlightedSeatBelow: 'Your highlighted seat is shown below.',
+      highlightedSeatsBelow: 'Your highlighted seats are shown below.',
+      showSeatingPlan:  'Show Seating Plan',
+      hideSeatingPlan:  'Hide Seating Plan',
+      tablePrefix:      'Table',
+      seatLabel:        'Seat',
+      seatRefLabel:     'Ref. #',
+      dataLoadError:    'Could not load guest data. Please contact the organiser.',
+      scanAnother:      'Scan another QR code',
+      seatVisualizationNote: '🪑 Seat numbers are for reference only — actual seats are first come, first served on the day.',
       // Breadcrumb
       breadcrumbHome:   'Home',
       bcFindTable:      'Find My Table',
@@ -106,10 +133,30 @@
       videoInfoText:    '我們的愛情故事短片 — 記錄我們一路走來的美好時光',
       captureWarn:      '請勿錄影，感謝配合',
       // Table page
-      uploadTitle:      '點擊上傳二維碼',
-      uploadSub:        '請上傳邀請函二維碼的 JPG 或 PNG 圖片',
-      scanWithCamera:   '使用相機掃描',
+      uploadTitle:      '從相簿選取',
+      uploadSub:        '選取邀請函二維碼的相片',
+      takePhoto:        '拍照',
+      scanWithCamera:   '即時相機掃描',
       orDivider:        '或',
+      // Table result
+      welcome:          '歡迎',
+      andParty:         '及家屬',
+      guestsAt:         '座位賓客',
+      leadGuestLabel:   '主賓',
+      guestLabel:       '賓客',
+      guestsLabel:      '位賓客',
+      yourTable:        '您的座位',
+      yourTables:       '您的座位（多桌）',
+      highlightedSeatBelow: '您的座位已在下方標示',
+      highlightedSeatsBelow: '您的座位已在下方標示',
+      showSeatingPlan:  '顯示座位圖',
+      hideSeatingPlan:  '隱藏座位圖',
+      tablePrefix:      '桌号',
+      seatLabel:        '座位',
+      seatRefLabel:     '參考座位 #',
+      dataLoadError:    '未能載入賓客資料，請聯絡主辦人。',
+      scanAnother:      '再次掃描二維碼',
+      seatVisualizationNote: '🪑 座位號碼僅供參考 — 當天實際座位先到先坐。',
       // Breadcrumb
       breadcrumbHome:   '主頁',
       bcFindTable:      '查詢座位',

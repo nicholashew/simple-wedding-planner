@@ -48,9 +48,12 @@
         <option value="bride-family">🌸 Bride Family</option>
         <option value="bride-rel">🌺 Bride Relative</option>
         <option value="bride-friend">🪷 Bride Friend</option>
+        <option value="bride-colleague">🌹 Bride Colleague</option>
         <option value="groom-family">💠 Groom Family</option>
         <option value="groom-rel">🔷 Groom Relative</option>
         <option value="groom-friend">🫐 Groom Friend</option>
+        <option value="groom-colleague">🔵 Groom Colleague</option>
+        <option value="others">✨ Others</option>
       </select>
     </div>
     <div class="mfield"><label>Sub-Category <span style="color:var(--muted);font-weight:400">(optional)</span></label>
@@ -161,9 +164,12 @@
         <option value="bride-family">🌸 Bride Family</option>
         <option value="bride-rel">🌺 Bride Relative</option>
         <option value="bride-friend">🪷 Bride Friend</option>
+        <option value="bride-colleague">🌹 Bride Colleague</option>
         <option value="groom-family">💠 Groom Family</option>
         <option value="groom-rel">🔷 Groom Relative</option>
         <option value="groom-friend">🫐 Groom Friend</option>
+        <option value="groom-colleague">🔵 Groom Colleague</option>
+        <option value="others">✨ Others</option>
       </select>
     </div>
     <div class="mfield"><label>Color Tag</label><div class="colors" id="bulk-colors"></div></div>
@@ -278,7 +284,7 @@
       <button class="btn btn-ghost btn-sm" onclick="openModal('modal-export-full')" title="Export entire canvas as PNG image">🖼 Export Full Image</button>
       <button class="btn btn-ghost btn-sm" onclick="openExportTablesModal()" title="Export each table as a separate PNG image">🖼 Export Tables Images</button>
       <div class="toolbar-sep"></div>
-      <button class="btn btn-ghost btn-sm" onclick="openSeatFinderShare()" title="Share / open mobile seat finder page">🔗 Seat Finder</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportGuestsJson()" title="Download guests.json — upload to /assets/data/ to publish guest data" id="toolbar-export-json-btn">⬇ guests.json</button>
       <button class="btn btn-ghost btn-sm" onclick="toggleHistoryPanel()" title="View undo/redo history">⏪ History</button>
       <div class="toolbar-sep"></div>
       <button class="btn btn-sm" onclick="window.print()">🖨 Print</button>
@@ -312,9 +318,12 @@
           <option value="bride-family">🌸 Bride Family</option>
           <option value="bride-rel">🌺 Bride Relative</option>
           <option value="bride-friend">🪷 Bride Friend</option>
+          <option value="bride-colleague">🌹 Bride Colleague</option>
           <option value="groom-family">💠 Groom Family</option>
           <option value="groom-rel">🔷 Groom Relative</option>
           <option value="groom-friend">🫐 Groom Friend</option>
+          <option value="groom-colleague">🔵 Groom Colleague</option>
+          <option value="others">✨ Others</option>
         </select>
       </div>
       <div class="sb-row">

@@ -7,7 +7,7 @@
   <title>Find My Table</title>
   <link rel="stylesheet" href="assets/css/gw.css">
   <style>
-    /* Upload screen */
+    /* ── Upload screen */
     .upload-area {
       border: 2.5px dashed rgba(200,168,74,0.5);
       border-radius: 18px; padding: 40px 24px;
@@ -20,7 +20,7 @@
     .upload-area:hover, .upload-area.drag-over {
       border-color: var(--gold); background: rgba(255,248,230,0.7);
     }
-    .upload-icon { font-size: 48px; display: block; margin-bottom: 12px; }
+    .upload-icon  { font-size: 48px; display: block; margin-bottom: 12px; }
     .upload-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
     .upload-sub   { font-size: 13px; color: var(--muted); }
     #file-input   { display: none; }
@@ -31,60 +31,118 @@
     }
     .or-divider::before, .or-divider::after {
       content: ''; position: absolute; top: 50%;
-      width: calc(50% - 24px); height: 1px;
-      background: var(--border);
+      width: calc(50% - 24px); height: 1px; background: var(--border);
     }
     .or-divider::before { left: 0; }
     .or-divider::after  { right: 0; }
 
-    /* Result screen */
+    /* ── Result screen */
     #result-screen { display: none; }
 
     .welcome-banner {
       background: rgba(255,255,255,0.75);
       border: 1.5px solid rgba(200,168,74,0.4);
-      border-radius: 18px; padding: 24px 20px; text-align: center;
-      margin-bottom: 20px;
+      border-radius: 18px; padding: 20px 20px 16px; text-align: center;
+      margin-bottom: 16px;
       backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
     }
-    .welcome-banner .welcome-emoji { font-size: 36px; display: block; margin-bottom: 8px; }
-    .welcome-banner h2 {
+    .welcome-banner > h2 {
       font-family: Georgia, serif; font-size: 22px; font-weight: 400;
-      color: var(--text); margin-bottom: 4px;
+      color: var(--text); margin-bottom: 12px;
     }
-    .welcome-banner .table-highlight {
-      font-size: 28px; font-weight: 800; color: var(--accent-dk);
-      font-family: Georgia, serif; letter-spacing: 1px; margin-top: 6px;
+    .viz-intro { border-top: 1px solid rgba(200,168,74,0.25); padding-top: 12px; }
+    .viz-intro h2 {
+      font-family: Georgia, serif; font-size: 17px; font-weight: 600;
+      color: var(--accent-dk); margin-bottom: 3px;
     }
-
-    .table-section { margin-bottom: 20px; }
-    .table-section-head {
-      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
-      color: var(--muted); font-weight: 600; margin-bottom: 10px;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .table-section-head::after {
-      content: ''; flex: 1; height: 1px; background: var(--border);
-    }
-    .table-name-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: var(--accent); color: #fff; border-radius: 50px;
-      padding: 6px 16px; font-size: 16px; font-weight: 700;
-      margin-bottom: 12px;
+    .viz-intro p { font-size: 13px; color: var(--text2); line-height: 1.5; }
+    .viz-seat-note {
+      margin-top: 7px; font-size: 12px; color: var(--muted);
+      background: rgba(200,168,74,0.07); border-radius: 8px;
+      padding: 6px 10px; border-left: 3px solid rgba(200,168,74,0.4);
     }
 
-    .guest-card {
-      background: rgba(255,255,255,0.75); border: 1px solid var(--border);
-      border-radius: 12px; padding: 13px 16px;
-      display: flex; align-items: center; gap: 12px;
-      margin-bottom: 8px;
+    /* ── Table viz blocks */
+    .viz-table-block {
+      background: rgba(255,255,255,0.85); border-radius: 14px;
+      border: 1px solid var(--border); margin-bottom: 14px; overflow: hidden;
+      box-shadow: 0 1px 8px rgba(0,0,0,.05);
     }
-    .guest-card-strip { width: 4px; border-radius: 3px; align-self: stretch; min-height: 38px; flex-shrink: 0; }
-    .guest-card-info  { flex: 1; min-width: 0; }
-    .guest-card-name  { font-size: 16px; font-weight: 600; color: var(--text); }
-    .guest-card-meta  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .viz-table-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+    .viz-table-color-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .viz-table-header-text { flex: 1; }
+    .viz-table-title    { font-size: 16px; font-weight: 700; }
+    .viz-table-subtitle { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    .viz-table-body     { padding: 0 16px 16px; }
 
-    /* Error state */
+    /* ── SVG accordion (default hidden, toggle to expand) */
+    .viz-svg-toggle {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 9px 16px; margin-bottom: 12px;
+      background: var(--accent-lt); border: 1px solid rgba(200,168,74,0.3);
+      border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600;
+      color: var(--accent-dk); font-family: inherit; transition: background .15s;
+    }
+    .viz-svg-toggle:hover { background: rgba(200,168,74,0.15); }
+    .viz-svg-chevron { transition: transform .2s; display: inline-block; line-height: 1; }
+    .viz-svg-accordion.open .viz-svg-chevron { transform: rotate(180deg); }
+    .viz-svg-wrap { display: none; text-align: center; margin: 0 auto 12px; overflow: visible; }
+    .viz-svg-accordion.open .viz-svg-wrap { display: block; }
+
+    /* ── Global seating plan toggle */
+    .viz-all-toggle {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 10px 16px; margin-bottom: 14px;
+      background: rgba(255,255,255,0.7); border: 1.5px solid rgba(200,168,74,0.4);
+      border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: 600;
+      color: var(--accent-dk); font-family: inherit; transition: background .15s;
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    }
+    .viz-all-toggle:hover { background: rgba(255,248,230,0.85); }
+    .viz-all-toggle .viz-svg-chevron { transition: transform .2s; display: inline-block; line-height: 1; }
+    .viz-all-toggle.open .viz-svg-chevron { transform: rotate(180deg); }
+
+    /* ── Guest cards */
+    .viz-guest-cards { display: flex; flex-direction: column; gap: 8px; }
+    .viz-guest-card  {
+      background: var(--bg); border-radius: 10px; border: 1px solid var(--border);
+      padding: 12px 14px; display: flex; align-items: center; gap: 12px;
+    }
+    .viz-seat-circle {
+      width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; font-weight: 800; color: #fff;
+    }
+    .viz-guest-info { flex: 1; min-width: 0; }
+    .viz-guest-name { font-size: 16px; font-weight: 600; }
+    .viz-guest-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .viz-guest-lead { font-size: 12px; font-weight: 700; color: var(--accent-dk); flex-shrink: 0; text-align: right; }
+    .viz-guest-other{ font-size: 12px; color: var(--muted); opacity: .65; flex-shrink: 0; text-align: right; }
+
+    /* ── Seat tooltip overlay */
+    #seat-tooltip { display: none; position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,.5); align-items: center; justify-content: center; }
+    #seat-tooltip.visible { display: flex; }
+    #seat-tooltip-inner {
+      background: #fff; border-radius: 20px; padding: 28px 24px;
+      min-width: 240px; max-width: 320px; text-align: center;
+      position: relative; box-shadow: 0 12px 48px rgba(0,0,0,.22);
+      animation: popIn .18s ease;
+    }
+    @keyframes popIn { from { transform: scale(.88); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    #tt-seat-badge {
+      width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; font-weight: 800; color: #fff;
+    }
+    #tt-guest-name { font-size: 20px; font-weight: 700; color: var(--text); line-height: 1.25; margin-bottom: 4px; }
+    #tt-guest-meta { font-size: 13px; color: var(--text2); margin-bottom: 3px; }
+    #tt-seat-label { font-size: 12px; color: var(--muted); }
+    #tt-close {
+      position: absolute; top: 12px; right: 14px;
+      background: none; border: none; font-size: 22px; color: var(--muted); cursor: pointer; line-height: 1;
+    }
+
+    /* ── Error state */
     .error-box {
       background: #fff8e8; border: 1.5px solid var(--gold);
       border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 16px;
@@ -108,7 +166,7 @@
     </div>
   </div>
   <div class="gw-breadcrumb">
-    <a class="gw-bc-item" href="/" data-i18n="breadcrumbHome">Home</a>
+    <a class="gw-bc-item" href="index.html" data-i18n="breadcrumbHome">Home</a>
     <span class="gw-bc-sep">›</span>
     <span class="gw-bc-current" data-i18n="bcFindTable">Find My Table</span>
   </div>
@@ -123,17 +181,21 @@
     <p class="page-subtitle" data-i18n="findTableSub">Upload your invitation QR code</p>
 
     <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
-      <span class="upload-icon">&#128247;</span>
-      <div class="upload-title" id="upload-title" data-i18n="uploadTitle">Tap to upload QR code</div>
-      <div class="upload-sub" data-i18n="uploadSub">JPG or PNG image of your invitation QR code</div>
-      <input type="file" id="file-input" accept="image/*" capture="environment">
+      <span class="upload-icon">&#128444;&#65039;</span>
+      <div class="upload-title" id="upload-title" data-i18n="uploadTitle">Choose from Gallery</div>
+      <div class="upload-sub" data-i18n="uploadSub">Select a photo of your invitation QR code</div>
+      <input type="file" id="file-input" accept="image/*">
     </div>
+
+    <button class="gw-btn-outline" onclick="document.getElementById('file-input-camera').click()" style="margin-bottom:12px;">
+      &#128247; <span data-i18n="takePhoto">Take Photo</span>
+    </button>
+    <input type="file" id="file-input-camera" accept="image/*" capture="environment" style="display:none">
 
     <div class="or-divider" data-i18n="orDivider">or</div>
 
-    <!-- Camera scan button -->
     <button class="gw-btn" id="scan-btn" onclick="startCamera()" style="margin-bottom:12px;">
-      &#128247; <span data-i18n="scanWithCamera">Scan with Camera</span>
+      &#127909; <span data-i18n="scanWithCamera">Scan Live with Camera</span>
     </button>
 
     <div id="camera-section" style="display:none; margin-bottom:16px;">
@@ -155,15 +217,23 @@
     <button class="back-btn" onclick="showUpload()">&#8592; <span data-i18n="backHome">Back</span></button>
 
     <div class="welcome-banner">
-      <span class="welcome-emoji">&#127881;</span>
-      <h2>Welcome!</h2>
-      <div class="table-highlight" id="result-tables"></div>
+      <h2 id="welcome-banner-text"></h2>
+      <div class="viz-intro">
+        <h2 id="viz-title"></h2>
+        <p id="viz-desc"></p>
+        <p id="viz-seat-note" class="viz-seat-note"></p>
+      </div>
     </div>
+
+    <button class="viz-all-toggle" id="viz-all-toggle-btn" onclick="toggleAllVizSvg()" style="display:none;">
+      <span class="viz-svg-chevron">&#8964;</span>
+      <span id="viz-all-toggle-label"></span>
+    </button>
 
     <div id="result-tables-detail"></div>
 
     <button class="gw-btn-outline" onclick="showUpload()" style="margin-top:8px;">
-      &#8592; Scan another QR code
+      &#8592; <span data-i18n="scanAnother">Scan another QR code</span>
     </button>
   </div>
 
@@ -172,6 +242,17 @@
 <footer class="gw-footer">
   <span id="gw-footer-names"></span>
 </footer>
+
+<!-- Seat tooltip overlay -->
+<div id="seat-tooltip" onclick="hideTooltip()">
+  <div id="seat-tooltip-inner" onclick="event.stopPropagation()">
+    <button id="tt-close" onclick="hideTooltip()">&#10005;</button>
+    <div id="tt-seat-badge"></div>
+    <div id="tt-guest-name"></div>
+    <div id="tt-guest-meta"></div>
+    <div id="tt-seat-label"></div>
+  </div>
+</div>
 
 <!-- jsQR for QR decoding -->
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
@@ -193,18 +274,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (footerEl) footerEl.textContent = config.projectName || '';
   } catch (e) {
     console.warn('Could not load data:', e);
+    showError(GW.t('dataLoadError'));
   }
 
   // Check URL param ?qr=...
   const params = new URLSearchParams(location.search);
   const qrParam = params.get('qr');
   if (qrParam) {
-    const ids = GW.decodeGuestIds(qrParam);
-    if (ids.length) showResult(ids);
+    const payload = decodeQrPayload(qrParam);
+    if (payload) showResult(payload);
   }
 
-  // Wire file input
+  // Wire file inputs (gallery + camera capture)
   document.getElementById('file-input').addEventListener('change', handleFileUpload);
+  document.getElementById('file-input-camera').addEventListener('change', handleFileUpload);
 
   // Drag & drop
   const area = document.getElementById('upload-area');
@@ -253,7 +336,6 @@ function startCamera() {
   const video   = document.getElementById('camera-video');
   section.style.display = 'block';
   hideError();
-
   navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
     .then(stream => {
       cameraStream = stream;
@@ -285,90 +367,320 @@ function scanFrame(video) {
   scanAnimFrame = requestAnimationFrame(() => scanFrame(video));
 }
 
+// ── Unicode-safe base64 decode (handles non-ASCII subCat values e.g. Chinese)
+function b64DecodeJson(str) {
+  try {
+    const bin = atob(str);
+    const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch {}
+  try { return JSON.parse(atob(str)); } catch {}
+  return null;
+}
+
+// ── Decode QR payload — handles Mode 1 (ID-array), Mode 2 (single group), Mode 3 (multi-group)
+function decodeQrPayload(encoded) {
+  const decoded = b64DecodeJson(encoded);
+  if (!decoded) return null;
+  if (Array.isArray(decoded) && decoded.length)
+    return { type: 'ids', ids: decoded, leadId: decoded[0] };
+  if (decoded.v === 2 && decoded.cat)
+    return { type: 'group', groups: [{ cat: decoded.cat, subCat: decoded.subCat || null }], leadId: decoded.lead || null };
+  if (decoded.v === 3 && Array.isArray(decoded.groups) && decoded.groups.length)
+    return { type: 'group', groups: decoded.groups, leadId: decoded.lead || null };
+  return null;
+}
+
 // ── QR data handler
 function handleQrData(raw) {
-  // Try URL format: table.html?qr=...
-  let ids = [];
+  let payload = null;
   try {
     const url = new URL(raw, location.href);
     const qrParam = url.searchParams.get('qr');
-    if (qrParam) ids = GW.decodeGuestIds(qrParam);
+    if (qrParam) payload = decodeQrPayload(qrParam);
   } catch {}
-  // Fallback: raw is base64 encoded ids
-  if (!ids.length) ids = GW.decodeGuestIds(raw);
-  // Fallback: raw is JSON array
-  if (!ids.length) { try { ids = JSON.parse(raw); } catch {} }
+  if (!payload) payload = decodeQrPayload(raw);
+  // Legacy: raw is plain JSON array
+  if (!payload) { try { const ids = JSON.parse(raw); if (Array.isArray(ids) && ids.length) payload = { type: 'ids', ids, leadId: ids[0] }; } catch {} }
+  if (payload) showResult(payload);
+  else showError('QR code format not recognised. Please contact the organiser.');
+}
 
-  if (ids.length) {
-    showResult(ids);
-  } else {
-    showError('QR code format not recognised. Please contact the organiser.');
+// ── Table palette — unique color per table
+const TABLE_PALETTE = [
+  '#e74c3c','#2980b9','#27ae60','#f39c12','#8e44ad',
+  '#16a085','#a04000','#2e4057','#b7950b','#6c3483',
+  '#1a5276','#7b241c','#1d8348','#6e2f8d','#935116',
+];
+
+// Seat lookup for tooltip: { tableIdx: { seatNum: guestObj } }
+const currentSeatLookup = {};
+const currentTableColors = {};
+let currentPayload = null;
+let allSeatsOpen = false;
+
+// Called by gw.js when language changes — re-render result if visible
+function onLangChange() {
+  if (currentPayload && document.getElementById('result-screen').style.display !== 'none') {
+    _renderResult(currentPayload);
   }
 }
 
 // ── Show result
-function showResult(guestIds) {
-  const matched = guestData.filter(g => guestIds.includes(g.id));
-  if (!matched.length) {
-    showError('No guests found for this QR code. Please check with the organiser.');
-    return;
-  }
-
-  // Group by table
-  const tableMap = {};
-  matched.forEach(g => {
-    const key = g.tableName;
-    if (!tableMap[key]) tableMap[key] = { name: key, seq: g.tableSeq, guests: [] };
-    tableMap[key].guests.push(g);
-  });
-  const tables = Object.values(tableMap).sort((a, b) => a.seq - b.seq);
-
-  // Header: star tables
-  const tableNames = tables.map(t => `TABLE ${t.name}`).join(', ');
-  document.getElementById('result-tables').textContent = '⭐ ' + tableNames;
-
-  // Detail per table
-  const detailEl = document.getElementById('result-tables-detail');
-  detailEl.innerHTML = '';
-
-  tables.forEach(table => {
-    const section = document.createElement('div');
-    section.className = 'table-section';
-    section.innerHTML = `
-      <div class="table-section-head">Guests at Table ${table.name}</div>
-    `;
-
-    // Also show all guests at this table (not just QR guests)
-    const tableGuests = guestData
-      .filter(g => g.tableName === table.name && g.assigned)
-      .sort((a, b) => a.seat - b.seat);
-
-    tableGuests.forEach(g => {
-      const isHighlighted = guestIds.includes(g.id);
-      const cat = categories.find(c => c.key === g.cat);
-      const color = GW.getCatColor(g.cat);
-      const card = document.createElement('div');
-      card.className = 'guest-card';
-      card.style.borderColor = isHighlighted ? 'rgba(200,168,74,0.6)' : '';
-      card.style.background  = isHighlighted ? 'rgba(253,245,230,0.9)' : '';
-      const meta = [cat ? cat.label : '', g.group].filter(Boolean).join(' · ');
-      card.innerHTML = `
-        <div class="guest-card-strip" style="background:${color}"></div>
-        <div class="guest-card-info">
-          <div class="guest-card-name">${g.lastName} ${g.firstName}${g.nickName ? ` <span style="font-size:12px;color:var(--muted);">(${g.nickName})</span>` : ''}</div>
-          ${meta ? `<div class="guest-card-meta">${meta}</div>` : ''}
-        </div>
-        ${isHighlighted ? '<span style="font-size:18px;">&#11088;</span>' : ''}
-      `;
-      section.appendChild(card);
-    });
-
-    detailEl.appendChild(section);
-  });
-
+function showResult(payload) {
+  currentPayload = payload;
+  if (!_renderResult(payload)) return;
   document.getElementById('upload-screen').style.display = 'none';
   document.getElementById('result-screen').style.display = 'block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function _renderResult(payload) {
+  let matchedGuests, leadId;
+  if (payload.type === 'ids') {
+    matchedGuests = guestData.filter(g => payload.ids.some(id => String(id) === String(g.id)));
+    leadId = payload.leadId;
+  } else {
+    matchedGuests = guestData.filter(g =>
+      payload.groups.some(sg =>
+        g.cat === sg.cat && (sg.subCat === null || (g.subCat || '') === sg.subCat)
+      )
+    );
+    leadId = payload.leadId;
+  }
+
+  if (!matchedGuests.length) {
+    showError('No guests found for this QR code. Please check with the organiser.');
+    return false;
+  }
+
+  const lead = leadId != null
+    ? guestData.find(g => String(g.id) === String(leadId))
+    : matchedGuests[0];
+
+  // Group QR guests by table
+  const tableMap = {};
+  matchedGuests.forEach(g => {
+    const key = g.tableName || '—';
+    if (!tableMap[key]) tableMap[key] = { name: key, seq: g.tableSeq || 0, guests: [] };
+    tableMap[key].guests.push(g);
+  });
+  const tables = Object.values(tableMap).sort((a, b) => (a.seq || 0) - (b.seq || 0));
+
+  // Assign unique color per table
+  const tableColorMap = {};
+  tables.forEach((t, i) => { tableColorMap[t.name] = TABLE_PALETTE[i % TABLE_PALETTE.length]; });
+
+  // Reset seat/color lookups
+  Object.keys(currentSeatLookup).forEach(k => delete currentSeatLookup[k]);
+  Object.keys(currentTableColors).forEach(k => delete currentTableColors[k]);
+
+  // Welcome banner
+  const leadName = lead ? `${lead.lastName} ${lead.firstName}` : '';
+  const partyStr = matchedGuests.length > 1 ? ' ' + GW.t('andParty') : '';
+  const nameStr  = leadName ? `, ${leadName}${partyStr}` : '';
+  const isMultiTable = tables.length > 1;
+  document.getElementById('welcome-banner-text').textContent = GW.t('welcome') + nameStr + '!';
+  document.getElementById('viz-title').textContent = isMultiTable ? GW.t('yourTables') : GW.t('yourTable');
+  document.getElementById('viz-desc').textContent  = isMultiTable ? GW.t('highlightedSeatsBelow') : GW.t('highlightedSeatBelow');
+  document.getElementById('viz-seat-note').textContent = GW.t('seatVisualizationNote');
+
+  // Reset global toggle state
+  allSeatsOpen = false;
+  const toggleBtn = document.getElementById('viz-all-toggle-btn');
+  const toggleLabel = document.getElementById('viz-all-toggle-label');
+  if (toggleBtn) toggleBtn.classList.remove('open');
+  if (toggleLabel) toggleLabel.textContent = GW.t('showSeatingPlan');
+  if (toggleBtn) toggleBtn.style.display = tables.length ? 'flex' : 'none';
+
+  // Build table blocks
+  const detailEl = document.getElementById('result-tables-detail');
+  detailEl.innerHTML = '';
+  const svgSize = Math.min(window.innerWidth - 32, 360);
+
+  tables.forEach((table, tableIdx) => {
+    const tableColor = table.name !== '—' ? tableColorMap[table.name] : '#9a9590';
+    currentTableColors[tableIdx] = tableColor;
+
+    // QR guests at this table, sorted by seat
+    const tableGuests = table.guests.slice().sort((a, b) => (a.seat ?? 999) - (b.seat ?? 999));
+
+    // All assigned guests at table (for SVG seat layout context)
+    const tablemates = table.name === '—'
+      ? matchedGuests.filter(g => !g.tableName)
+      : guestData.filter(g => g.tableName === table.name && g.assigned)
+          .sort((a, b) => (a.seat ?? 999) - (b.seat ?? 999));
+
+    // Build seat lookup (only QR guests are in lookup → only they get tooltips)
+    currentSeatLookup[tableIdx] = {};
+    tableGuests.forEach(g => { if (g.seat != null) currentSeatLookup[tableIdx][g.seat] = g; });
+
+    // Lead seat for this table (for SVG star marker)
+    const leadSeatForTable = (lead && lead.seat != null && tableGuests.some(g => String(g.id) === String(leadId)))
+      ? lead.seat : null;
+
+    // Guest cards HTML
+    const guestCardsHtml = tableGuests.map(g => {
+      const isLead  = leadId != null && String(g.id) === String(leadId);
+      const cat     = categories.find(c => c.key === g.cat);
+      const meta    = [cat ? cat.label : '', g.subCat].filter(Boolean).join(' · ');
+      const seatNum = g.seat != null ? g.seat : '?';
+      return `
+        <div class="viz-guest-card">
+          <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;gap:2px;">
+            <div class="viz-seat-circle" style="background:${tableColor}">${isLead ? '&#11088;' : seatNum}</div>
+            <span style="font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.02em;">${GW.t('seatRefLabel')}${seatNum}</span>
+          </div>
+          <div class="viz-guest-info">
+            <div class="viz-guest-name">${g.lastName} ${g.firstName}${g.nickName ? ` <span style="font-size:12px;color:var(--muted);">(${g.nickName})</span>` : ''}</div>
+            ${meta ? `<div class="viz-guest-meta">${meta}</div>` : ''}
+          </div>
+          ${isLead
+            ? `<div class="viz-guest-lead">${GW.t('leadGuestLabel')}</div>`
+            : `<div class="viz-guest-other">&#9651;<br>${GW.t('guestLabel')}</div>`}
+        </div>`;
+    }).join('');
+
+    // SVG table diagram
+    const svgHtml  = buildTableSVG(tablemates, tableGuests, tableColor, svgSize, tableIdx, leadSeatForTable);
+    const accId    = `viz-acc-${tableIdx}`;
+    const gCount   = tableGuests.length;
+    const subtitle = `${gCount} ${gCount === 1 ? GW.t('guestLabel') : GW.t('guestsLabel')}`;
+    const title    = table.name !== '—' ? `${GW.t('tablePrefix')}: ${table.name}` : '—';
+
+    const block = document.createElement('div');
+    block.className = 'viz-table-block';
+    block.innerHTML = `
+      <div class="viz-table-header">
+        <div class="viz-table-color-dot" style="background:${tableColor}"></div>
+        <div class="viz-table-header-text">
+          <div class="viz-table-title">${title}</div>
+          <div class="viz-table-subtitle">${subtitle}</div>
+        </div>
+      </div>
+      <div class="viz-table-body">
+        <div class="viz-svg-accordion" id="${accId}">
+          <div class="viz-svg-wrap">${svgHtml}</div>
+        </div>
+        <div class="viz-guest-cards">${guestCardsHtml}</div>
+      </div>`;
+    detailEl.appendChild(block);
+  });
+
+  return true;
+}
+
+// ── Global seating plan toggle (show/hide all tables at once)
+function toggleAllVizSvg() {
+  allSeatsOpen = !allSeatsOpen;
+  document.querySelectorAll('.viz-svg-accordion').forEach(el => {
+    el.classList.toggle('open', allSeatsOpen);
+  });
+  const btn   = document.getElementById('viz-all-toggle-btn');
+  const label = document.getElementById('viz-all-toggle-label');
+  if (btn)   btn.classList.toggle('open', allSeatsOpen);
+  if (label) label.textContent = allSeatsOpen ? GW.t('hideSeatingPlan') : GW.t('showSeatingPlan');
+}
+
+// ── Build circular table SVG
+// tablemates = all assigned guests at table (for seat context)
+// highlighted = QR guests at table (colored seats with onclick)
+// Only highlighted seats get onclick → tooltip
+function escSvg(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function buildTableSVG(tablemates, highlighted, color, size, tableIdx, leadSeat = null) {
+  const MIN_SEATS = 10;
+  const seatCount = Math.max(tablemates.length, MIN_SEATS);
+  const pad    = size * 0.17;
+  const inner  = size - pad * 2;
+  const cx = size / 2, cy = size / 2;
+  const tableR = inner * 0.30;
+  const seatR  = inner * 0.094;
+  const orbitR = tableR + seatR + inner * 0.05;
+  const labelR = orbitR + seatR + inner * 0.07;
+
+  const seatMap = {};
+  tablemates.forEach(g => { if (g.seat != null) seatMap[g.seat] = g; });
+  const hlSeats = {};
+  highlighted.forEach(g => { if (g.seat != null) hlSeats[g.seat] = true; });
+
+  const tname = tablemates[0] ? (tablemates[0].tableName || '') : '';
+  const fs = seatCount <= 10 ? { tableLabel: 16, seatNum: 13 }
+           : seatCount <= 14 ? { tableLabel: 13, seatNum: 11 }
+           :                   { tableLabel: 11, seatNum: 9 };
+
+  const parts = [
+    `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" style="touch-action:manipulation">`,
+    `<circle cx="${cx}" cy="${cy}" r="${tableR.toFixed(1)}" fill="${color}18" stroke="${color}" stroke-width="2.5"/>`,
+    `<text x="${cx}" y="${(cy + 0.5).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" fill="${color}" font-weight="700" font-size="${fs.tableLabel}">${escSvg(tname)}</text>`,
+  ];
+
+  for (let i = 1; i <= seatCount; i++) {
+    // Seat 1 at 12 o'clock, clockwise
+    const angle = ((i - 1) / seatCount) * Math.PI * 2 - Math.PI / 2;
+    const sx = cx + orbitR * Math.cos(angle);
+    const sy = cy + orbitR * Math.sin(angle);
+    const isHL    = !!hlSeats[i];
+    const isEmpty = !seatMap[i];
+
+    if (isHL) {
+      // Highlighted (QR) seat — clickable, shows tooltip
+      const isLeadSeat = leadSeat !== null && i === leadSeat;
+      parts.push(
+        `<g onclick="showTooltipForSeat(${tableIdx},${i})" style="cursor:pointer">`,
+        `<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="${(seatR + 5).toFixed(1)}" fill="${color}28"/>`,
+        `<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="${seatR.toFixed(1)}" fill="${color}" stroke="#fff" stroke-width="2.5"/>`,
+        `<text x="${sx.toFixed(1)}" y="${(sy + 0.5).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-weight="800" font-size="${fs.seatNum}">${i}</text>`,
+        isLeadSeat ? `<text x="${(sx + seatR * 0.7).toFixed(1)}" y="${(sy - seatR * 0.7).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" fill="#ffd700" font-size="${Math.round(seatR * 0.9)}" stroke="#fff" stroke-width="0.8" paint-order="stroke">&#9733;</text>` : '',
+        `</g>`,
+      );
+      // Name label outside seat circle (only for highlighted)
+      const g = seatMap[i];
+      if (g) {
+        const lx = cx + labelR * Math.cos(angle);
+        const ly = cy + labelR * Math.sin(angle);
+        parts.push(
+          `<text x="${lx.toFixed(1)}" y="${(ly + 0.5).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" fill="${color}" font-weight="600" font-size="12">${escSvg((g.lastName || '') + (g.firstName ? ' ' + g.firstName : ''))}</text>`,
+        );
+      }
+    } else {
+      // Other seat — no onclick, names hidden
+      const fillCol   = isEmpty ? '#f0efe8' : '#ffffff';
+      const numCol    = isEmpty ? '#c8c4bc' : color + 'aa';
+      const strokeCol = color + '55';
+      parts.push(
+        `<g>`,
+        `<circle cx="${sx.toFixed(1)}" cy="${sy.toFixed(1)}" r="${seatR.toFixed(1)}" fill="${fillCol}" stroke="${strokeCol}" stroke-width="1.5"/>`,
+        `<text x="${sx.toFixed(1)}" y="${(sy + 0.5).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" fill="${numCol}" font-size="${fs.seatNum}">${i}</text>`,
+        `</g>`,
+      );
+    }
+  }
+  parts.push('</svg>');
+  return parts.join('\n');
+}
+
+// ── Tooltip — only shows for QR (highlighted) guests
+function showTooltipForSeat(tableIdx, seatNum) {
+  const lookup = currentSeatLookup[tableIdx];
+  if (!lookup || !lookup[seatNum]) return;
+  const guest = lookup[seatNum];
+  const color = currentTableColors[tableIdx] || '#9a9590';
+  const cat   = categories.find(c => c.key === guest.cat);
+  const meta  = [cat ? cat.label : '', guest.subCat].filter(Boolean).join(' · ');
+
+  document.getElementById('tt-seat-badge').style.background = color;
+  document.getElementById('tt-seat-badge').textContent      = seatNum;
+  document.getElementById('tt-guest-name').textContent      = `${guest.lastName} ${guest.firstName}`;
+  document.getElementById('tt-guest-meta').textContent      = meta;
+  document.getElementById('tt-seat-label').textContent      = GW.t('seatRefLabel') + seatNum;
+  document.getElementById('seat-tooltip').classList.add('visible');
+}
+
+function hideTooltip() {
+  document.getElementById('seat-tooltip').classList.remove('visible');
 }
 
 // ── Error helpers

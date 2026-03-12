@@ -8,6 +8,85 @@
   <link rel="stylesheet" href="assets/css/gw.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <style>
+    body { padding-top: 65px; }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,.16);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo img { height: 38px; width: 38px; flex-shrink: 0; }
+    .nav-logo-name {
+      font-family: Georgia, serif; font-size: 17px;
+      color: var(--accent-dk); font-style: italic; letter-spacing: 0.3px;
+    }
+    .hamburger-btn {
+      background: none; border: none; cursor: pointer;
+      width: 40px; height: 40px;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 5px; padding: 4px;
+      border-radius: 8px; transition: background .15s;
+    }
+    .hamburger-btn:hover { background: var(--accent-lt); }
+    .hamburger-btn span {
+      display: block; width: 22px; height: 2px;
+      background: var(--text); border-radius: 2px; transition: all .25s ease;
+    }
+    .hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger-btn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    /* ── DRAWER ── */
+    .nav-drawer {
+      position: fixed; top: 0; right: -290px; bottom: 0;
+      width: 270px; z-index: 200; background: var(--surface);
+      border-left: 1px solid var(--border);
+      box-shadow: -4px 0 24px rgba(0,0,0,.12);
+      opacity: 0;
+      transition: right .28s cubic-bezier(.4,0,.2,1), opacity .22s ease;
+      display: flex; flex-direction: column; padding: 20px 0 32px;
+    }
+    .nav-drawer.open {
+      right: 0; opacity: 1;
+      background:
+        linear-gradient(rgba(255,255,255,0.60), rgba(255,255,255,0.60)),
+        url('assets/data/floral-background.jpg');
+      background-size: auto, contain; background-repeat: repeat, repeat;
+    }
+    .nav-drawer-close {
+      position: absolute; top: 14px; right: 20px;
+      background: none; border: none; cursor: pointer;
+      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+      font-size: 22px; color: var(--muted); padding: 4px; line-height: 1; border-radius: 8px;
+      transition: background .15s;
+    }
+    .nav-drawer-close:hover { background: var(--accent-lt); color: var(--text); }
+    .nav-drawer-header { padding: 0 24px 16px; border-bottom: 1px solid var(--border); }
+    .nav-drawer-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .nav-drawer-brand img { height: 36px; width: 36px; flex-shrink: 0; }
+    .nav-drawer-title {
+      font-family: Georgia, serif; font-size: 17px; font-style: italic; color: var(--accent-dk);
+    }
+    .nav-drawer-lang { display: flex; gap: 8px; }
+    .nav-drawer a {
+      display: flex; align-items: center; gap: 14px;
+      padding: 15px 24px; text-decoration: none;
+      color: var(--text); font-size: 15px; font-weight: 500;
+      border-bottom: 1px solid var(--border); transition: background .12s, color .12s;
+    }
+    .nav-drawer a:hover { background: var(--accent-lt); color: var(--accent-dk); }
+    .nav-drawer a i { width: 20px; text-align: center; color: var(--accent); font-size: 16px; }
+    .nav-overlay {
+      display: none; position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,.3);
+    }
+    .nav-overlay.open { display: block; }
+
+    /* ── Gallery ── */
     .gallery-grid {
       columns: 2 140px;
       gap: 10px;
@@ -23,9 +102,7 @@
       transition: transform .2s, box-shadow .2s;
     }
     .gallery-item:hover { transform: scale(1.02); box-shadow: 0 4px 16px rgba(0,0,0,.12); }
-    .gallery-item img {
-      width: 100%; height: auto; display: block;
-    }
+    .gallery-item img { width: 100%; height: auto; display: block; }
 
     /* Lightbox */
     #lightbox {
@@ -52,15 +129,13 @@
     #lb-prev { left: 12px; }
     #lb-next { right: 12px; }
 
-    .coming-soon {
-      text-align: center; padding: 60px 20px;
+    .demo-notice {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--accent-lt); border: 1.5px dashed var(--accent);
+      border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;
+      font-size: 13px; color: var(--accent-dk);
     }
-    .coming-soon .cs-icon { font-size: 56px; display: block; margin-bottom: 16px; }
-    .coming-soon h3 {
-      font-family: Georgia, serif; font-size: 22px; font-weight: 400;
-      color: var(--text); margin-bottom: 8px;
-    }
-    .coming-soon p { font-size: 14px; color: var(--muted); }
+    .demo-notice i { font-size: 16px; flex-shrink: 0; }
 
     @media (min-width: 480px) { .gallery-grid { columns: 3 140px; } }
     @media (min-width: 640px) { .gallery-grid { columns: 4 140px; gap: 12px; } }
@@ -68,39 +143,47 @@
 </head>
 <body>
 
+<!-- ── TOP NAV ── -->
+<nav class="top-nav">
+  <a class="nav-logo" href="index.html">
+    <img src="assets/data/logo.svg" alt="Wedding">
+    <span class="nav-logo-name" id="nav-couple-name"></span>
+  </a>
+  <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
 
-<div class="gw-header">
-  <div class="gw-header-inner">
-    <div style="width:60px;flex-shrink:0;"></div>
-    <div class="gw-header-text">
-      <div class="gw-event-name" id="gw-event-date"></div>
-      <h1><em id="gw-couple-names">Our Wedding</em></h1>
+<!-- ── NAV OVERLAY ── -->
+<div class="nav-overlay" id="navOverlay"></div>
+
+<!-- ── NAV DRAWER ── -->
+<div class="nav-drawer" id="navDrawer">
+  <button class="nav-drawer-close" id="drawerClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+  <div class="nav-drawer-header" style="padding-top: 5px;">
+    <div class="nav-drawer-brand">
+      <img src="assets/data/logo.svg" alt="Wedding">
+      <div class="nav-drawer-title" id="drawer-couple-name">Our Wedding</div>
     </div>
-    <div class="lang-toggle">
+    <div class="nav-drawer-lang">
       <button class="lang-btn active" data-lang="en">EN</button>
       <button class="lang-btn" data-lang="zh">中</button>
     </div>
   </div>
-  <div class="gw-breadcrumb">
-    <a class="gw-bc-item" href="index.html" data-i18n="breadcrumbHome">Home</a>
-    <span class="gw-bc-sep">›</span>
-    <span class="gw-bc-current" data-i18n="bcGallery">Photo Gallery</span>
-  </div>
+  <a href="index.html"><i class="fa-solid fa-house"></i> <span data-i18n="breadcrumbHome">Home</span></a>
+  <a href="table.html"><i class="fa-solid fa-chair"></i> <span data-i18n="findTable">Find my seat</span></a>
+  <a href="menu.html"><i class="fa-solid fa-utensils"></i> <span data-i18n="weddingMenu">See banquet menu</span></a>
+  <a href="video.html"><i class="fa-solid fa-circle-play"></i> <span data-i18n="loveStory">Our love story</span></a>
+  <a href="gallery.html"><i class="fa-solid fa-images"></i> <span data-i18n="photoGallery">Photo Gallery</span></a>
+  <a href="wish.html"><i class="fa-solid fa-envelope-open-text"></i> <span data-i18n="sendWishes">Share your wishes</span></a>
 </div>
 
 <main class="gw-main">
   <button class="back-btn" onclick="history.back()"><i class="fa-solid fa-chevron-left" style="font-size:10px"></i> <span data-i18n="backHome">Back</span></button>
-  <h2 class="page-title" data-i18n="photoGallery">Photo Gallery</h2>
-  <p class="page-subtitle" data-i18n="photoGallerySub">Memories</p>
+  <h2 class="page-title"><i class="fa-solid fa-images"></i> <span data-i18n="cardTitleGallery">Captured Memories</span></h2>
+  <p class="page-subtitle" data-i18n="cardDescGallery">Every frame tells a story of where we've been and the love we've built.</p>
 
-  <div id="gallery-container">
-    <!-- Photos loaded from config.gallery array, or show coming soon -->
-    <div class="coming-soon">
-      <i class="fa-solid fa-camera cs-icon"></i>
-      <h3>Photos Coming Soon</h3>
-      <p>Wedding photos will be added here after the event.</p>
-    </div>
-  </div>
+  <div id="gallery-container"></div>
 </main>
 
 <footer class="gw-footer">
@@ -123,14 +206,43 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const { config } = await GW.loadData();
     GW.applyConfig();
+    const name = config.projectName || '';
+    document.getElementById('nav-couple-name').textContent = name;
+    document.getElementById('drawer-couple-name').textContent = name;
     const footerEl = document.getElementById('gw-footer-names');
-    if (footerEl) footerEl.textContent = config.projectName || '';
+    if (footerEl) {
+      const year = config.eventDate ? new Date(config.eventDate).getFullYear() : new Date().getFullYear();
+      footerEl.textContent = `© ${year} ${name}`;
+    }
 
-    // Load gallery from config.gallery (array of image URLs/paths)
     if (config.gallery && config.gallery.length) {
       photos = config.gallery;
-      renderGallery();
+    } else {
+      // Demo placeholders — shown when no gallery is configured
+      const mk = (w, h, bg, fg) =>
+        'data:image/svg+xml,' + encodeURIComponent(
+          `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">` +
+          `<rect width="${w}" height="${h}" fill="${bg}"/>` +
+          `<text x="${w/2}" y="${h/2}" font-size="${Math.min(w,h)*0.22}" ` +
+          `text-anchor="middle" dominant-baseline="middle" fill="${fg}">♥</text></svg>`
+        );
+      photos = [
+        mk(300, 420, '#f5dde8', '#c8799a'),
+        mk(420, 300, '#fdf3d4', '#c8a84a'),
+        mk(300, 300, '#dde8f5', '#7099c8'),
+        mk(300, 500, '#e8ddf5', '#9070c8'),
+        mk(420, 260, '#ddf5e4', '#5caa74'),
+        mk(300, 380, '#f5ead8', '#c49850'),
+        mk(420, 320, '#f5dde8', '#c8799a'),
+        mk(300, 280, '#fdf3d4', '#c8a84a'),
+      ];
+      document.getElementById('gallery-container').insertAdjacentHTML(
+        'beforebegin',
+        `<div class="demo-notice"><i class="fa-solid fa-circle-info"></i>` +
+        ` Demo mode — add photo URLs to <strong>config.json → gallery</strong> to show real photos.</div>`
+      );
     }
+    renderGallery();
   } catch (e) {
     console.warn('Could not load config:', e);
   }
@@ -181,6 +293,18 @@ lb.addEventListener('touchend', e => {
   const dx = e.changedTouches[0].clientX - _lbTouchX;
   if (Math.abs(dx) > 48) lbNav(dx < 0 ? 1 : -1);
 }, { passive: true });
+
+// Hamburger / drawer toggle
+const hamburgerBtn = document.getElementById('hamburgerBtn');
+const navDrawer    = document.getElementById('navDrawer');
+const navOverlay   = document.getElementById('navOverlay');
+const drawerClose  = document.getElementById('drawerClose');
+function openDrawer()  { navDrawer.classList.add('open'); navOverlay.classList.add('open'); hamburgerBtn.classList.add('open'); }
+function closeDrawer() { navDrawer.classList.remove('open'); navOverlay.classList.remove('open'); hamburgerBtn.classList.remove('open'); }
+hamburgerBtn.addEventListener('click', openDrawer);
+drawerClose.addEventListener('click', closeDrawer);
+navOverlay.addEventListener('click', closeDrawer);
+window.addEventListener('pageshow', closeDrawer);
 </script>
 </body>
 </html>

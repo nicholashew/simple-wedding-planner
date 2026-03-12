@@ -1,0 +1,10 @@
+<svg id="Fish--Streamline-Carbon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" height="16" width="16">
+  <desc>
+    Fish Streamline Icon: https://streamlinehq.com
+  </desc>
+  <defs></defs>
+  <title>fish</title>
+  <path d="M11.5 3.4999a0.5 0.5 0 1 0 1 0 0.5 0.5 0 1 0 -1 0" fill="#000000" stroke-width="0.5"></path>
+  <path d="M13 1a8.00915 8.00915 0 0 0 -8 8v1H1.5a0.5 0.5 0 0 0 -0.3535 0.8535l4 4A0.5 0.5 0 0 0 6 14.5v-3.5h1A8.00915 8.00915 0 0 0 15 3V1ZM5 13.29285 2.70705 11H5ZM6 10v-1a6.9697 6.9697 0 0 1 1.954 -4.83885l3.885 3.88475A6.97 6.97 0 0 1 7 10ZM14 3a6.95815 6.95815 0 0 1 -1.49 4.30275L8.69725 3.49A6.95815 6.95815 0 0 1 13 2h1Z" fill="#000000" stroke-width="0.5"></path>
+  <path id="_Transparent_Rectangle_" d="M0 0h16v16H0Z" fill="none" stroke-width="0.5"></path>
+</svg>

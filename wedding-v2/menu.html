@@ -127,7 +127,8 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 10px; font-weight: 700; font-family: Georgia, serif;
     }
-    .menu-item-emoji { font-size: 20px; flex-shrink: 0; }
+    .menu-item-emoji { flex-shrink: 0; width: 64px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+    .menu-item-icon { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
     .menu-item-text { flex: 1; min-width: 0; }
     .menu-item-name {
       font-family: Georgia, serif; font-size: 16px; font-weight: 400;
@@ -293,7 +294,7 @@ function renderMenu(lang) {
         <div class="menu-item">
           <div class="menu-item-inner">
             <div class="menu-dish-num">${dishNum++}</div>
-            <div class="menu-item-emoji">${item.emoji || ''}</div>
+            <div class="menu-item-emoji">${(item.icon || []).map(ic => ic.type === 'emoji' ? `<span>${ic.value}</span>` : `<img class="menu-item-icon" src="assets/img/icons/${ic.value}" alt="">`).join('')}</div>
             <div class="menu-item-text">
               <div class="menu-item-name">${primary}</div>
               <div class="menu-item-name-alt">${secondary}</div>

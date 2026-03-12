@@ -88,14 +88,11 @@
 
     /* ── Banquet scroll style ── */
     .menu-scroll {
-      border: 1.5px solid var(--gold); border-radius: 18px;
+      border-radius: 18px;
       padding: 22px 20px; position: relative; overflow: hidden;
       background: rgba(255,255,255,0.75);
       backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-
-      border-top: 0;
-      border-top-left-radius: 0;
-      border-top-right-radius: 0;
+      z-index: 1;
     }
     .menu-scroll::before {
       content: '❧';
@@ -144,6 +141,12 @@
     .menu-empty { text-align: center; padding: 32px 20px; color: var(--muted); font-size: 14px; }
 
     /* ── Sticky course tabs ── */
+    #menu-container {
+      border: 1.5px solid var(--gold);
+      border-radius: 18px 18px;
+      background: var(--bg);
+    }
+
     .course-tabs {
       position: sticky; top: 65px; z-index: 90;
       display: flex; gap: 8px;
@@ -151,10 +154,6 @@
       -webkit-overflow-scrolling: touch;
       padding: 10px;
       margin: 0 0 0;
-      border: 1.5px solid var(--gold);
-      border-radius: 18px 18px 0 0;
-      border-bottom: 0;
-      background: var(--bg);
       transition: border-color .3s ease,
                   background .3s ease,
                   box-shadow .3s ease,
@@ -166,6 +165,7 @@
     }
     .course-tabs.scrolled {
       backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-radius: 18px;
     }
     .course-tabs::-webkit-scrollbar { display: none; }
     .course-tab {

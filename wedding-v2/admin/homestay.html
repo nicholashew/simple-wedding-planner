@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Homestay Planner</title>
+<link rel="stylesheet" href="../assets/css/app.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-backdrop hidden" id="modal-confirm">
+  <div class="modal">
+    <h3 id="hc-title">Confirm</h3>
+    <div id="hc-body" style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:4px;"></div>
+    <div class="mfooter">
+      <button class="btn btn-ghost" onclick="closeModal('modal-confirm')">Cancel</button>
+      <button class="btn" id="hc-confirm-btn" onclick="execConfirm()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT PERSON MODAL -->
+<div class="modal-overlay hidden" id="edit-person-modal">
+  <div class="modal">
+    <h2>✏️ Edit Person</h2>
+    <div class="field"><label>Name</label><input type="text" id="ep-name" placeholder="Full name..." /></div>
+    <div class="field"><label>Color tag</label><div class="colors" id="ep-colors"></div></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closePersonModal()">Cancel</button>
+      <button class="btn btn-sm" onclick="savePersonEdit()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT ROOM MODAL -->
+<div class="modal-overlay hidden" id="edit-room-modal">
+  <div class="modal">
+    <h2>✏️ Edit Room</h2>
+    <div class="field"><label>Room name</label><input type="text" id="er-name" placeholder="Room name..." /></div>
+    <div class="field"><label>Capacity</label><input type="number" id="er-cap" min="1" max="30" /></div>
+    <div class="field"><label>Description</label><textarea id="er-desc" placeholder="e.g. Ground floor, ensuite bathroom, AC..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeRoomModal()">Cancel</button>
+      <button class="btn btn-sm" onclick="saveRoomEdit()">💾 Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- BULK ADD MODAL -->
+<div class="modal-overlay hidden" id="bulk-modal">
+  <div class="modal">
+    <h2>⚡ Bulk Add Persons</h2>
+    <div class="field">
+      <label>Names — one per line or comma separated</label>
+      <textarea id="bulk-names" rows="7" placeholder="Alice&#10;Bob&#10;Charlie, Diana&#10;Eve"></textarea>
+    </div>
+    <div class="field"><label>Color tag for all</label><div class="colors" id="bulk-colors"></div></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeBulkModal()">Cancel</button>
+      <button class="btn btn-purple btn-sm" onclick="saveBulkAdd()">⚡ Add All</button>
+    </div>
+  </div>
+</div>
+
+<!-- UNDO BAR -->
+<div class="undo-bar hidden" id="undo-bar">
+  <span id="undo-msg">Action undone</span>
+  <button class="btn btn-sm btn-undo" onclick="doUndo()">↩ Undo</button>
+  <button class="icon-btn del" onclick="dismissUndo()">✕</button>
+</div>
+
+<!-- PAGE HEADER -->
+<header class="page-header">
+  <div class="page-title">
+    <h1>🏠 <span>Homestay</span> Planner</h1>
+    <input type="text" id="page-subtitle-input" class="page-subtitle-editable"
+      value="Homestay Room Assignment"
+      title="Click to rename — used as filename when exporting"
+      onkeydown="if(event.key==='Enter'||event.key==='Escape')this.blur()">
+    <div class="project-file-actions">
+      <button class="btn btn-ghost btn-sm" onclick="saveJSON()" title="Export layout project as JSON file">📤 Export Layout Project</button>
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer" title="Import a previously exported layout project">
+        📂 Import Layout Project
+        <input type="file" id="file-input" accept=".json" onchange="onFileLoad(event)" style="display:none">
+      </label>
+    </div>
+  </div>
+  <div class="header-search">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="search-input" placeholder="Search persons…" oninput="onSearch()" />
+      <button class="search-clear" id="search-clear" onclick="clearSearch()">✕</button>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="stats">
+      <div class="stat-pill">Persons <b id="stat-persons">0</b></div>
+      <div class="stat-pill">Assigned <b id="stat-assigned">0</b></div>
+      <div class="stat-pill">Rooms <b id="stat-rooms">0</b></div>
+      <div class="stat-pill">Cap <b id="stat-capacity">0</b></div>
+    </div>
+    <div class="file-actions">
+      <button class="btn btn-sm" onclick="window.print()">🖨 Print</button>
+    </div>
+  </div>
+</header>
+<input type="file" id="file-input-legacy" accept=".json" style="display:none" />
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-section collapsible" data-collapse-key="hs-add-person">
+      <div class="sb-title">Add Person</div>
+      <div class="sb-row">
+        <input type="text" id="person-name" placeholder="Full name…" />
+        <button class="btn btn-blue btn-sm" onclick="addPerson()">+ Add</button>
+      </div>
+      <span class="label-sm">Color tag:</span>
+      <div class="colors" id="person-colors"></div>
+      <div style="margin-top:8px">
+        <button class="btn btn-purple btn-sm" style="width:100%;justify-content:center" onclick="openBulkModal()">⚡ Bulk Add</button>
+      </div>
+    </div>
+    <div class="sb-section collapsible" data-collapse-key="hs-add-room">
+      <div class="sb-title">Add Room</div>
+      <div class="sb-row">
+        <input type="text" id="room-name" placeholder="Room name…" />
+        <input type="number" id="room-cap" min="1" max="30" value="4" />
+        <button class="btn btn-sm" onclick="addRoom()">+</button>
+      </div>
+      <span class="label-sm">Description (optional):</span>
+      <textarea id="room-desc" placeholder="e.g. Ground floor, ensuite, AC…" style="margin-top:5px;min-height:44px"></textarea>
+    </div>
+    <div class="sb-section" style="padding-bottom:6px">
+      <div class="sb-title">
+        Unassigned &nbsp;<span style="color:var(--accent);font-family:var(--font-mono)" id="unassigned-count">0</span>
+      </div>
+    </div>
+    <div class="main" style="padding:8px;gap:4px">
+      <div class="unassigned-zone" id="unassigned-zone"
+        ondragover="onDragOver(event,null)"
+        ondragleave="onDragLeave(event)"
+        ondrop="onDrop(event,null)">
+        <div class="room-empty" id="unassigned-empty">All assigned ✓</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="toolbar">
+      <span class="toolbar-label">Sort:</span>
+      <div class="sort-btns">
+        <button class="sort-btn active" data-sort="default" onclick="setSort('default')">Default</button>
+        <button class="sort-btn" data-sort="name"    onclick="setSort('name')">Name A–Z</button>
+        <button class="sort-btn" data-sort="fill"    onclick="setSort('fill')">Fullest</button>
+        <button class="sort-btn" data-sort="avail"   onclick="setSort('avail')">Available</button>
+      </div>
+      <div class="spacer"></div>
+      <span style="font-size:11px;color:var(--muted);font-family:var(--font-mono)" id="search-status"></span>
+    </div>
+    <div class="rooms-grid" id="rooms-grid">
+      <div class="empty-state" id="empty-state">
+        <div class="icon">🛏️</div>
+        <p>No rooms yet — add a room to get started!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/admin-shared-nav.js"></script>
+<script src="../assets/js/admin-homestay.js"></script>
+</body>
+</html>

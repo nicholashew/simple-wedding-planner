@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Love Story Video</title>
+  <link rel="stylesheet" href="assets/css/gw.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body { padding-top: 65px; }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,.16);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; }
+    .nav-logo img { height: 38px; width: 38px; flex-shrink: 0; }
+    .nav-logo-name {
+      font-family: Georgia, serif; font-size: 17px;
+      color: var(--accent-dk); font-style: italic; letter-spacing: 0.3px;
+    }
+    .hamburger-btn {
+      background: none; border: none; cursor: pointer;
+      width: 40px; height: 40px;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 5px; padding: 4px;
+      border-radius: 8px; transition: background .15s;
+    }
+    .hamburger-btn:hover { background: var(--accent-lt); }
+    .hamburger-btn span {
+      display: block; width: 22px; height: 2px;
+      background: var(--text); border-radius: 2px; transition: all .25s ease;
+    }
+    .hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger-btn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    /* ── DRAWER ── */
+    .nav-drawer {
+      position: fixed; top: 0; right: -290px; bottom: 0;
+      width: 270px; z-index: 200; background: var(--surface);
+      border-left: 1px solid var(--border);
+      box-shadow: -4px 0 24px rgba(0,0,0,.12);
+      transition: right .28s cubic-bezier(.4,0,.2,1);
+      display: flex; flex-direction: column; padding: 20px 0 32px;
+    }
+    .nav-drawer.open {
+      right: 0;
+      background:
+        linear-gradient(rgba(255,255,255,0.60), rgba(255,255,255,0.60)),
+        url('assets/data/floral-background.jpg');
+      background-size: auto, contain; background-repeat: repeat, repeat;
+    }
+    .nav-drawer-close {
+      position: absolute; top: 14px; right: 20px;
+      background: none; border: none; cursor: pointer;
+      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+      font-size: 22px; color: var(--muted); padding: 4px; line-height: 1; border-radius: 8px;
+      transition: background .15s;
+    }
+    .nav-drawer-close:hover { background: var(--accent-lt); color: var(--text); }
+    .nav-drawer-header { padding: 0 24px 16px; border-bottom: 1px solid var(--border); }
+    .nav-drawer-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .nav-drawer-brand img { height: 36px; width: 36px; flex-shrink: 0; }
+    .nav-drawer-title {
+      font-family: Georgia, serif; font-size: 17px; font-style: italic; color: var(--accent-dk);
+    }
+    .nav-drawer-lang { display: flex; gap: 8px; }
+    .nav-drawer a {
+      display: flex; align-items: center; gap: 14px;
+      padding: 15px 24px; text-decoration: none;
+      color: var(--text); font-size: 15px; font-weight: 500;
+      border-bottom: 1px solid var(--border); transition: background .12s, color .12s;
+    }
+    .nav-drawer a:hover { background: var(--accent-lt); color: var(--accent-dk); }
+    .nav-drawer a i { width: 20px; text-align: center; color: var(--accent); font-size: 16px; }
+    .nav-overlay {
+      display: none; position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,.3);
+    }
+    .nav-overlay.open { display: block; }
+
+    /* ── Video wrapper ── */
+    #montage-wrap {
+      position: relative; background: #000;
+      border-radius: 14px; overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,.18);
+      aspect-ratio: 16/9; margin-bottom: 20px;
+    }
+    #montage-video {
+      width: 100%; height: 100%; display: block; object-fit: cover;
+      filter: saturate(0.92) brightness(0.97) contrast(1.02);
+    }
+    /* Watermark over video */
+    #montage-wrap::after {
+      content: attr(data-wm);
+      position: absolute; inset: 0; z-index: 5;
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(12px,3vw,18px); font-weight: 600;
+      color: rgba(255,255,255,.18); pointer-events: none;
+      text-align: center; padding: 16px;
+      text-shadow: 0 1px 3px rgba(0,0,0,.4);
+      white-space: pre-wrap; word-break: break-all;
+    }
+    /* Lock overlay */
+    #montage-overlay {
+      position: absolute; inset: 0; z-index: 10;
+      background: rgba(10,8,5,.92);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: #fff; text-align: center; padding: 24px;
+    }
+    #montage-overlay.hidden { display: none; }
+    .lock-icon  { font-size: 36px; }
+    .lock-title {
+      font-family: Georgia, serif; font-size: 16px; font-weight: 400;
+      margin-bottom: 8px; color: var(--gold);
+    }
+    .lock-desc { font-size: 14px; color: rgba(255,255,255,.65); line-height: 1.6; margin-bottom: 20px; }
+    /* Countdown */
+    .lock-countdown { width: 100%; max-width: 320px; }
+    .lock-countdown-label {
+      font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase;
+      color: rgba(255,255,255,.45); font-weight: 600; margin-bottom: 8px;
+    }
+    .hcc-units { display: flex; gap: 5px; align-items: center; }
+    .hcc-unit {
+      display: flex; flex-direction: column; align-items: center;
+      background: rgba(255,255,255,.1); border: 1.5px solid rgba(255,255,255,.18);
+      border-radius: 8px; padding: 6px 10px; min-width: 44px; flex: 1;
+    }
+    .hcc-val {
+      font-size: 20px; font-weight: 800; color: #fff; line-height: 1;
+      font-variant-numeric: tabular-nums; font-family: Georgia, serif;
+    }
+    .hcc-lbl {
+      font-size: 9px; color: rgba(255,255,255,.45); margin-top: 3px;
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .hcc-sep {
+      font-size: 16px; font-weight: 700; color: rgba(255,255,255,.25);
+      padding-bottom: 10px; flex-shrink: 0;
+    }
+    /* Screen-record warning */
+    #capture-warn {
+      position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+      z-index: 9998; background: rgba(30,20,10,.92); color: #fff;
+      border: 1px solid var(--gold); border-radius: 50px;
+      padding: 10px 22px; font-size: 13px; font-weight: 600;
+      white-space: nowrap; pointer-events: none; opacity: 0;
+      transition: opacity .3s;
+    }
+    #capture-warn.show { opacity: 1; }
+    .video-info {
+      background: rgba(255,255,255,0.75);
+      border: 1.5px solid rgba(200,168,74,0.35);
+      border-radius: 14px; padding: 16px 18px;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .video-info p { font-size: 14px; color: var(--text2); line-height: 1.6; }
+    @media (min-width: 640px) { #montage-wrap { border-radius: 18px; } }
+  </style>
+</head>
+<body>
+
+<div id="capture-warn" data-i18n="captureWarn">Please enjoy the video without recording</div>
+
+<!-- ── TOP NAV ── -->
+<nav class="top-nav">
+  <div class="nav-logo">
+    <img src="assets/data/logo.svg" alt="ST&CJ Wedding">
+    <span class="nav-logo-name" id="nav-couple-name"></span>
+  </div>
+  <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- ── NAV OVERLAY ── -->
+<div class="nav-overlay" id="navOverlay"></div>
+
+<!-- ── NAV DRAWER ── -->
+<div class="nav-drawer" id="navDrawer">
+  <button class="nav-drawer-close" id="drawerClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+  <div class="nav-drawer-header" style="padding-top: 5px;">
+    <div class="nav-drawer-brand">
+      <img src="assets/data/logo.svg" alt="ST&CJ Wedding">
+      <div class="nav-drawer-title" id="drawer-couple-name">Our Wedding</div>
+    </div>
+    <div class="nav-drawer-lang">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+  </div>
+  <a href="index.html"><i class="fa-solid fa-house"></i> <span data-i18n="breadcrumbHome">Home</span></a>
+  <a href="table.html"><i class="fa-solid fa-chair"></i> <span data-i18n="findTable">Find my seat</span></a>
+  <a href="menu.html"><i class="fa-solid fa-utensils"></i> <span data-i18n="weddingMenu">See banquet menu</span></a>
+  <a href="video.html"><i class="fa-solid fa-circle-play"></i> <span data-i18n="loveStory">Our love story</span></a>
+  <a href="wish.html"><i class="fa-solid fa-envelope-open-text"></i> <span data-i18n="sendWishes">Share your wishes</span></a>
+</div>
+
+<main class="gw-main">
+  <button class="back-btn" onclick="history.back()"><i class="fa-solid fa-chevron-left" style="font-size:10px"></i> <span data-i18n="backHome">Back</span></button>
+  <h2 class="page-title"><i class="fa-solid fa-circle-play"></i> <span data-i18n="loveStory">Love Story Video</span></h2>
+  <p class="page-subtitle" data-i18n="loveStorySub">Our journey together</p>
+
+  <div id="montage-wrap" data-wm="">
+    <video id="montage-video" controls preload="none" playsinline></video>
+    <div id="montage-overlay">
+      <div class="lock-icon"><i class="fa-solid fa-lock"></i></div>
+      <div class="lock-title" data-i18n="videoUnavailable">Video Unavailable</div>
+      <div class="lock-desc" id="lock-desc" data-i18n="videoLockDefault">The love story video will be available during the banquet.</div>
+      <div class="lock-countdown" id="lock-countdown" style="display:none;">
+        <div class="lock-countdown-label" data-i18n="availableIn">Available in</div>
+        <div class="hcc-units">
+          <div class="hcc-unit"><span class="hcc-val" id="hcc-d">00</span><span class="hcc-lbl" data-i18n="days">Days</span></div>
+          <span class="hcc-sep">:</span>
+          <div class="hcc-unit"><span class="hcc-val" id="hcc-h">00</span><span class="hcc-lbl" data-i18n="hours">Hours</span></div>
+          <span class="hcc-sep">:</span>
+          <div class="hcc-unit"><span class="hcc-val" id="hcc-m">00</span><span class="hcc-lbl" data-i18n="mins">Mins</span></div>
+          <span class="hcc-sep">:</span>
+          <div class="hcc-unit"><span class="hcc-val" id="hcc-s">00</span><span class="hcc-lbl" data-i18n="secs">Secs</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="video-info">
+    <p data-i18n="videoInfoText">Our love story montage — a journey through the moments that led us here.</p>
+  </div>
+</main>
+
+<footer class="gw-footer">
+  <span id="gw-footer-names"></span>
+</footer>
+
+<script src="assets/js/gw.js"></script>
+<script>
+let _availFrom = '', _availDate = '';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const { config } = await GW.loadData();
+    GW.applyConfig();
+    const name = config.projectName || '';
+    document.getElementById('nav-couple-name').textContent = name;
+    document.getElementById('drawer-couple-name').textContent = name;
+    const footerEl = document.getElementById('gw-footer-names');
+    if (footerEl) {
+      const year = config.eventDate ? new Date(config.eventDate).getFullYear() : new Date().getFullYear();
+      footerEl.textContent = `© ${year} ${name}`;
+    }
+
+    document.getElementById('montage-wrap').dataset.wm = name || 'Wedding';
+
+    const montage  = config.montage || {};
+    const videoUrl = montage.videoUrl || '';
+    _availFrom     = montage.availableFrom || '00:00';
+    const availTo  = montage.availableTo   || '23:59';
+    _availDate     = montage.availableDate || config.eventDate || '';
+
+    document.getElementById('montage-video').dataset.src = videoUrl;
+
+    const now    = new Date();
+    const date   = _availDate || now.toISOString().slice(0, 10);
+    const fromDt = new Date(`${date}T${_availFrom}:00`);
+    const toDt   = new Date(`${date}T${availTo}:00`);
+
+    if (now >= fromDt) {
+      unlockVideo(videoUrl);
+    } else {
+      applyLockDesc();
+      document.getElementById('lock-countdown').style.display = 'block';
+      startCountdown(fromDt);
+    }
+  } catch (e) {
+    console.warn('Could not load config:', e);
+  }
+});
+
+// Re-apply translated dynamic text on lang switch
+window.onLangChange = () => applyLockDesc();
+
+function applyLockDesc() {
+  const el = document.getElementById('lock-desc');
+  if (!el || !_availDate) return;
+  el.textContent = GW.lang === 'zh'
+    ? `影片將於 ${_availDate} ${_availFrom} 開放`
+    : `The video will be available from ${_availFrom} on ${_availDate}.`;
+}
+
+function unlockVideo(src) {
+  document.getElementById('montage-overlay').classList.add('hidden');
+  document.getElementById('montage-video').src = src;
+}
+
+function startCountdown(targetDate) {
+  let timer = null;
+  function tick() {
+    const diff = targetDate - new Date();
+    if (diff <= 0) {
+      clearTimeout(timer);
+      unlockVideo(document.getElementById('montage-video').dataset.src || '');
+      return;
+    }
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    document.getElementById('hcc-d').textContent = String(d).padStart(2, '0');
+    document.getElementById('hcc-h').textContent = String(h).padStart(2, '0');
+    document.getElementById('hcc-m').textContent = String(m).padStart(2, '0');
+    document.getElementById('hcc-s').textContent = String(s).padStart(2, '0');
+    timer = setTimeout(tick, 1000);
+  }
+  tick();
+}
+
+// Screen-record warning
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    const warn = document.getElementById('capture-warn');
+    warn.classList.add('show');
+    setTimeout(() => warn.classList.remove('show'), 4000);
+  }
+});
+
+// Hamburger / drawer toggle
+const hamburgerBtn = document.getElementById('hamburgerBtn');
+const navDrawer    = document.getElementById('navDrawer');
+const navOverlay   = document.getElementById('navOverlay');
+const drawerClose  = document.getElementById('drawerClose');
+function openDrawer()  { navDrawer.classList.add('open'); navOverlay.classList.add('open'); hamburgerBtn.classList.add('open'); }
+function closeDrawer() { navDrawer.classList.remove('open'); navOverlay.classList.remove('open'); hamburgerBtn.classList.remove('open'); }
+hamburgerBtn.addEventListener('click', openDrawer);
+drawerClose.addEventListener('click', closeDrawer);
+navOverlay.addEventListener('click', closeDrawer);
+window.addEventListener('pageshow', closeDrawer);
+</script>
+</body>
+</html>

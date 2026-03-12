@@ -609,20 +609,21 @@
       content: ''; flex: 1; height: 1px; background: var(--border);
     }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link href="https://cdn.jsdelivr.net/npm/choices.js@11.2.1/public/assets/styles/choices.min.css" rel="stylesheet">
 </head>
 <body>
 
 <nav class="app-nav">
-  <a class="nav-brand" href="index.html">&#128274;&#128146; Admin</a>
+  <a class="nav-brand" href="index.html"><i class="fa-solid fa-lock"></i><i class="fa-solid fa-ring"></i> Admin</a>
   <div class="nav-links">
-    <a class="nav-link" href="homestay.html">&#127968; Homestay</a>
-    <a class="nav-link" href="wedding.html">&#128146; Wedding</a>
-    <a class="nav-link active" href="find-table.html">&#128269; Find Table</a>
-    <a class="nav-link" href="../index.html" target="_blank">&#128279; Guest Site</a>
+    <a class="nav-link" href="homestay.html"><i class="fa-solid fa-house"></i> Homestay</a>
+    <a class="nav-link" href="wedding.html"><i class="fa-solid fa-ring"></i> Wedding</a>
+    <a class="nav-link active" href="find-table.html"><i class="fa-solid fa-magnifying-glass"></i> Find Table</a>
+    <a class="nav-link" href="../index.html" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> Guest Site</a>
   </div>
   <span id="data-freshness" class="data-freshness"></span>
-  <button class="nav-logout" onclick="(function(){document.cookie='gw_admin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';window.location.replace('login.html');})()">&#8592; Logout</button>
+  <button class="nav-logout" onclick="(function(){document.cookie='gw_admin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';window.location.replace('login.html');})()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
 </nav>
 
 <div class="main">
@@ -631,8 +632,8 @@
 
   <!-- Tabs -->
   <div class="tabs">
-    <button class="tab-btn"        id="tab-scan-btn"   onclick="switchTab('scan')">&#128247; Scan QR</button>
-    <button class="tab-btn active" id="tab-search-btn" onclick="switchTab('search')">&#128269; Search</button>
+    <button class="tab-btn"        id="tab-scan-btn"   onclick="switchTab('scan')"><i class="fa-solid fa-camera"></i> Scan QR</button>
+    <button class="tab-btn active" id="tab-search-btn" onclick="switchTab('search')"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
   </div>
 
   <!-- ─── QR SCAN TAB ─── -->
@@ -640,15 +641,15 @@
     <div class="scan-wrap">
       <!-- Camera card -->
       <div class="scan-method-card" id="cam-card">
-        <span class="scan-method-icon">&#128247;</span>
+        <span class="scan-method-icon"><i class="fa-solid fa-camera"></i></span>
         <div class="scan-method-title">Scan with Camera</div>
         <div class="scan-method-desc">Point the camera at a guest QR code for instant table lookup</div>
         <button class="btn btn-primary" id="cam-start-btn" onclick="startCamera()">
-          &#128247; Start Camera
+          <i class="fa-solid fa-camera"></i> Start Camera
         </button>
         <video id="camera-video" playsinline autoplay style="display:none;"></video>
         <button class="btn btn-outline" id="cam-stop-btn" style="display:none;" onclick="stopCamera()">
-          &#9632; Stop Camera
+          <i class="fa-solid fa-stop"></i> Stop Camera
         </button>
       </div>
 
@@ -656,11 +657,11 @@
 
       <!-- Upload card -->
       <div class="scan-method-card">
-        <span class="scan-method-icon">&#128444;&#65039;</span>
+        <span class="scan-method-icon"><i class="fa-solid fa-image"></i></span>
         <div class="scan-method-title">Upload QR Image</div>
         <div class="scan-method-desc">Choose a saved QR code image from your device or screenshot</div>
         <button class="btn btn-outline" onclick="document.getElementById('qr-file').click()">
-          &#128193; Choose Image
+          <i class="fa-solid fa-folder-open"></i> Choose Image
         </button>
         <input type="file" id="qr-file" accept="image/*" style="display:none;">
       </div>
@@ -683,7 +684,7 @@
 
         <!-- Screen: alphabet -->
         <div id="screen-alpha" class="search-screen">
-          <button class="back-btn" onclick="clearGuestSelection(); showSearchScreen('cat')">&#8592; Back</button>
+          <button class="back-btn" onclick="clearGuestSelection(); showSearchScreen('cat')"><i class="fa-solid fa-chevron-left"></i> Back</button>
           <div class="breadcrumb" id="bc-alpha"></div>
           <div class="step-label">Step 2 — Select first letter of last name</div>
           <div class="alpha-grid" id="alpha-grid"></div>
@@ -691,7 +692,7 @@
 
         <!-- Screen: tables overview -->
         <div id="screen-tables" class="search-screen">
-          <button class="back-btn" onclick="showSearchScreen('cat')">&#8592; Back</button>
+          <button class="back-btn" onclick="showSearchScreen('cat')"><i class="fa-solid fa-chevron-left"></i> Back</button>
           <div class="step-label">Tables — Select a table to view seats</div>
           <div id="table-list-wrap"></div>
         </div>
@@ -702,7 +703,7 @@
         <!-- Placeholder (shown before a letter is selected) -->
         <div id="screen-placeholder" class="search-screen">
           <div class="search-placeholder">
-            <div class="search-placeholder-icon">&#128269;</div>
+            <div class="search-placeholder-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
             <div class="search-placeholder-text">Select a group &amp; letter</div>
             <div class="search-placeholder-sub">Choose a relationship group on the left, then pick a letter to search guests</div>
           </div>
@@ -710,32 +711,32 @@
 
         <!-- Screen: name search -->
         <div id="screen-name" class="search-screen">
-          <button class="back-btn" onclick="clearGuestSelection(); showSearchScreen('alpha')">&#8592; Back</button>
+          <button class="back-btn" onclick="clearGuestSelection(); showSearchScreen('alpha')"><i class="fa-solid fa-chevron-left"></i> Back</button>
           <div class="breadcrumb" id="bc-name"></div>
           <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
             <div class="step-label" style="margin-bottom:0; flex:1;">Step 3 — Search by name</div>
             <div class="name-actions" style="margin-bottom:0;">
               <span class="name-action-info" id="name-action-info"></span>
-              <button class="name-action-btn name-action-clear" id="name-clear-btn" disabled onclick="clearGuestSelection()">&#215; Clear</button>
-              <button class="name-action-btn name-action-view" id="name-view-btn" disabled onclick="showSelectedResult()">&#128205; View Seat</button>
-              <button class="name-action-btn name-action-qr" id="name-qr-btn" onclick="openQrModal()">&#127915; QR</button>
+              <button class="name-action-btn name-action-clear" id="name-clear-btn" disabled onclick="clearGuestSelection()"><i class="fa-solid fa-xmark"></i> Clear</button>
+              <button class="name-action-btn name-action-view" id="name-view-btn" disabled onclick="showSelectedResult()"><i class="fa-solid fa-location-dot"></i> View Seat</button>
+              <button class="name-action-btn name-action-qr" id="name-qr-btn" onclick="openQrModal()"><i class="fa-solid fa-qrcode"></i> QR</button>
             </div>
           </div>
           <div class="search-bar">
-            <span class="search-icon">&#128269;</span>
+            <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
             <input type="text" id="name-search" placeholder="Type a name or pinyin…" oninput="filterGuests(this.value)">
-            <button class="clear-btn" onclick="clearSearch()">&#215;</button>
+            <button class="clear-btn" onclick="clearSearch()"><i class="fa-solid fa-xmark"></i></button>
           </div>
           <div id="guest-list-wrap"></div>
         </div>
 
         <!-- Screen: result -->
         <div id="screen-result" class="search-screen">
-          <button class="back-btn" onclick="backToSearch()">&#8592; Back</button>
+          <button class="back-btn" onclick="backToSearch()"><i class="fa-solid fa-chevron-left"></i> Back</button>
           <div id="table-sort-bar" class="sort-bar" style="display:none;">
             <button class="sort-btn active" id="sort-btn-seat" onclick="sortTableResult('seat')">Sort by seat</button>
             <button class="sort-btn" id="sort-btn-relation" onclick="sortTableResult('relation')">Sort by Relationship &rsaquo; last name &rsaquo; first name</button>
-            <button class="sort-btn sort-btn-qr" id="table-qr-btn" onclick="openQrForTable()" style="display:none;">&#127915; QR for this table</button>
+            <button class="sort-btn sort-btn-qr" id="table-qr-btn" onclick="openQrForTable()" style="display:none;"><i class="fa-solid fa-qrcode"></i> QR for this table</button>
           </div>
           <div id="table-filter-bar" class="filter-bar" style="display:none;">
             <div class="filter-row">
@@ -748,7 +749,7 @@
             </div>
             <div class="filter-name-wrap">
               <input type="text" id="filter-name" placeholder="Search name or pinyin…" oninput="applyTableFilters()">
-              <button class="filter-name-clear" onclick="clearTableNameFilter()">&#215;</button>
+              <button class="filter-name-clear" onclick="clearTableNameFilter()"><i class="fa-solid fa-xmark"></i></button>
             </div>
           </div>
           <div id="result-detail"></div>
@@ -764,8 +765,8 @@
 <div id="qr-modal" style="display:none;" class="qr-modal" onclick="if(event.target===this)closeQrModal()">
   <div class="qr-modal-sheet">
     <div class="qr-modal-header">
-      <div class="qr-modal-title">&#127915; Generate QR Invitation</div>
-      <button class="qr-modal-close" onclick="closeQrModal()">&#10005;</button>
+      <div class="qr-modal-title"><i class="fa-solid fa-qrcode"></i> Generate QR Invitation</div>
+      <button class="qr-modal-close" onclick="closeQrModal()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="qr-mode-toggle">
       <button class="qr-mode-btn active" id="qr-mode-btn-ids" onclick="setQrMode('ids')">
@@ -791,13 +792,13 @@
     <div id="qr-url-text" class="qr-url-text" style="display:none;"></div>
     <div id="qr-decode-info" class="qr-decode-info" style="display:none;"></div>
     <div id="qr-group-note" class="qr-group-note" style="display:none;">
-      &#128275; Group mode QR is resolved by relationship &amp; sub-category at scan time &mdash; stays valid after guest ID migration.
+      <i class="fa-solid fa-lock-open"></i> Group mode QR is resolved by relationship &amp; sub-category at scan time &mdash; stays valid after guest ID migration.
     </div>
     <div class="qr-actions">
-      <button class="qr-action-btn qr-action-dl"       id="qr-dl-btn"       disabled onclick="downloadQr()">&#11015; Download</button>
-      <button class="qr-action-btn qr-action-copy"     id="qr-copy-btn"     disabled onclick="copyQrLink()">&#128279; Copy Link</button>
-      <button class="qr-action-btn qr-action-copy-img" id="qr-copy-img-btn" disabled onclick="copyQrImage()">&#128203; Copy Image</button>
-      <button class="qr-action-btn qr-action-share"    id="qr-share-btn"    disabled onclick="shareQr()">&#8679; Share</button>
+      <button class="qr-action-btn qr-action-dl"       id="qr-dl-btn"       disabled onclick="downloadQr()"><i class="fa-solid fa-download"></i> Download</button>
+      <button class="qr-action-btn qr-action-copy"     id="qr-copy-btn"     disabled onclick="copyQrLink()"><i class="fa-solid fa-link"></i> Copy Link</button>
+      <button class="qr-action-btn qr-action-copy-img" id="qr-copy-img-btn" disabled onclick="copyQrImage()"><i class="fa-solid fa-clipboard"></i> Copy Image</button>
+      <button class="qr-action-btn qr-action-share"    id="qr-share-btn"    disabled onclick="shareQr()"><i class="fa-solid fa-share-nodes"></i> Share</button>
     </div>
   </div>
 </div>
@@ -1171,7 +1172,7 @@ function buildCatGrid() {
         <span class="cat-emoji">${cat.label.match(/\p{Emoji}/u)?.[0] || '👥'}</span>
         <span class="cat-name">${cat.label.replace(/^\p{Emoji}\s*/u, '')}</span>
         <span class="cat-sub">${allGuests.filter(g => g.cat === cat.key).length} guests</span>
-        <span role="button" class="cat-qr-btn" title="QR for ${cat.label.replace(/^\p{Emoji}\s*/u, '')}" onclick="event.stopPropagation();openQrForCat('${cat.key}')">&#127915;</span>
+        <span role="button" class="cat-qr-btn" title="QR for ${cat.label.replace(/^\p{Emoji}\s*/u, '')}" onclick="event.stopPropagation();openQrForCat('${cat.key}')"><i class="fa-solid fa-qrcode"></i></span>
       </button>`).join('');
   }
   function renderGroup(label, cats, groupCls) {
@@ -1426,7 +1427,7 @@ async function copyQrImage() {
       resolve();
     }, 'image/png'));
     const btn = document.getElementById('qr-copy-img-btn');
-    if (btn) { const orig = btn.innerHTML; btn.innerHTML = '&#10003; Copied!'; setTimeout(() => btn.innerHTML = orig, 1800); }
+    if (btn) { const orig = btn.innerHTML; btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!'; setTimeout(() => btn.innerHTML = orig, 1800); }
   } catch (err) {
     alert('Could not copy image: ' + err.message);
   }
@@ -1683,7 +1684,7 @@ function buildDecodeInfoHtml(decoded) {
     const lead = decoded[0];
     const leadGuest = allGuests.find(g => String(g.id) === String(lead));
     const leadName = leadGuest ? `${leadGuest.lastName} ${leadGuest.firstName}` : String(lead);
-    return `<div class="qdi-mode">&#128274; ID-array (${decoded.length} guest${decoded.length !== 1 ? 's' : ''})</div>`
+    return `<div class="qdi-mode"><i class="fa-solid fa-lock"></i> ID-array (${decoded.length} guest${decoded.length !== 1 ? 's' : ''})</div>`
       + `<pre>lead: ${esc(leadName)} [id=${esc(String(lead))}]\nids: [${decoded.map(id => esc(String(id))).join(', ')}]</pre>`;
   }
   if (decoded.v === 2) {
@@ -1691,7 +1692,7 @@ function buildDecodeInfoHtml(decoded) {
     const catLabel = catObj ? catObj.label : decoded.cat;
     const leadGuest = decoded.lead != null ? allGuests.find(g => String(g.id) === String(decoded.lead)) : null;
     const leadName = leadGuest ? `${leadGuest.lastName} ${leadGuest.firstName}` : (decoded.lead != null ? String(decoded.lead) : '—');
-    return `<div class="qdi-mode">&#128101; Group v2 (single group)</div>`
+    return `<div class="qdi-mode"><i class="fa-solid fa-users"></i> Group v2 (single group)</div>`
       + `<pre>cat:    ${esc(catLabel)}\nsubCat: ${decoded.subCat != null ? esc(decoded.subCat) : 'ALL'}\nlead:   ${esc(leadName)}</pre>`;
   }
   if (decoded.v === 3) {
@@ -1702,10 +1703,10 @@ function buildDecodeInfoHtml(decoded) {
     }).join('\n');
     const leadGuest = decoded.lead != null ? allGuests.find(g => String(g.id) === String(decoded.lead)) : null;
     const leadName = leadGuest ? `${leadGuest.lastName} ${leadGuest.firstName}` : (decoded.lead != null ? String(decoded.lead) : '—');
-    return `<div class="qdi-mode">&#128101; Group v3 (${decoded.groups.length} group${decoded.groups.length !== 1 ? 's' : ''})</div>`
+    return `<div class="qdi-mode"><i class="fa-solid fa-users"></i> Group v3 (${decoded.groups.length} group${decoded.groups.length !== 1 ? 's' : ''})</div>`
       + `<pre>groups:\n${groupLines}\nlead: ${esc(leadName)}</pre>`;
   }
-  return `<div class="qdi-mode">&#128274; Unknown format</div><pre>${esc(JSON.stringify(decoded, null, 2))}</pre>`;
+  return `<div class="qdi-mode"><i class="fa-solid fa-lock"></i> Unknown format</div><pre>${esc(JSON.stringify(decoded, null, 2))}</pre>`;
 }
 function downloadQr() {
   const lead = qrLeadId !== null ? allGuests.find(g => String(g.id) === String(qrLeadId)) : null;
@@ -1737,7 +1738,7 @@ async function copyQrLink() {
     await navigator.clipboard.writeText(url);
     const btn = document.getElementById('qr-copy-btn');
     const orig = btn.innerHTML;
-    btn.innerHTML = '&#10003; Copied!';
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
     setTimeout(() => { btn.innerHTML = orig; }, 1800);
   } catch {}
 }

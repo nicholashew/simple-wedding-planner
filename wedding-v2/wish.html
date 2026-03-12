@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Send Wishes</title>
+  <link rel="stylesheet" href="assets/css/gw.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body { padding-top: 65px; }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,.16);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; }
+    .nav-logo img { height: 38px; width: 38px; flex-shrink: 0; }
+    .nav-logo-name {
+      font-family: Georgia, serif; font-size: 17px;
+      color: var(--accent-dk); font-style: italic; letter-spacing: 0.3px;
+    }
+    .hamburger-btn {
+      background: none; border: none; cursor: pointer;
+      width: 40px; height: 40px;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 5px; padding: 4px;
+      border-radius: 8px; transition: background .15s;
+    }
+    .hamburger-btn:hover { background: var(--accent-lt); }
+    .hamburger-btn span {
+      display: block; width: 22px; height: 2px;
+      background: var(--text); border-radius: 2px; transition: all .25s ease;
+    }
+    .hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger-btn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    /* ── DRAWER ── */
+    .nav-drawer {
+      position: fixed; top: 0; right: -290px; bottom: 0;
+      width: 270px; z-index: 200; background: var(--surface);
+      border-left: 1px solid var(--border);
+      box-shadow: -4px 0 24px rgba(0,0,0,.12);
+      transition: right .28s cubic-bezier(.4,0,.2,1);
+      display: flex; flex-direction: column; padding: 20px 0 32px;
+    }
+    .nav-drawer.open {
+      right: 0;
+      background:
+        linear-gradient(rgba(255,255,255,0.60), rgba(255,255,255,0.60)),
+        url('assets/data/floral-background.jpg');
+      background-size: auto, contain; background-repeat: repeat, repeat;
+    }
+    .nav-drawer-close {
+      position: absolute; top: 14px; right: 20px;
+      background: none; border: none; cursor: pointer;
+      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+      font-size: 22px; color: var(--muted); padding: 4px; line-height: 1; border-radius: 8px;
+      transition: background .15s;
+    }
+    .nav-drawer-close:hover { background: var(--accent-lt); color: var(--text); }
+    .nav-drawer-header { padding: 0 24px 16px; border-bottom: 1px solid var(--border); }
+    .nav-drawer-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .nav-drawer-brand img { height: 36px; width: 36px; flex-shrink: 0; }
+    .nav-drawer-title {
+      font-family: Georgia, serif; font-size: 17px; font-style: italic; color: var(--accent-dk);
+    }
+    .nav-drawer-lang { display: flex; gap: 8px; }
+    .nav-drawer a {
+      display: flex; align-items: center; gap: 14px;
+      padding: 15px 24px; text-decoration: none;
+      color: var(--text); font-size: 15px; font-weight: 500;
+      border-bottom: 1px solid var(--border); transition: background .12s, color .12s;
+    }
+    .nav-drawer a:hover { background: var(--accent-lt); color: var(--accent-dk); }
+    .nav-drawer a i { width: 20px; text-align: center; color: var(--accent); font-size: 16px; }
+    .nav-overlay {
+      display: none; position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,.3);
+    }
+    .nav-overlay.open { display: block; }
+
+    /* ── Form wrap ── */
+    .form-wrap {
+      background: rgba(255,255,255,0.75);
+      border: 1.5px solid rgba(200,168,74,0.35);
+      border-radius: 18px; overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      min-height: 500px;
+    }
+    .form-wrap iframe { width: 100%; min-height: 600px; border: none; display: block; }
+    .form-placeholder { padding: 48px 24px; text-align: center; }
+    .form-placeholder .icon { font-size: 48px; display: block; margin-bottom: 16px; }
+    .form-placeholder p {
+      font-size: 14px; color: var(--text2); line-height: 1.7; margin-bottom: 8px;
+    }
+    .form-placeholder code {
+      background: var(--accent-lt); border-radius: 4px;
+      padding: 2px 7px; font-size: 12px; color: var(--accent-dk);
+    }
+
+    /* ── iframe loader ── */
+    .form-loader {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 18px;
+      padding: 64px 24px; text-align: center;
+    }
+    .form-loader-spinner {
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 3px solid var(--accent-lt);
+      border-top-color: var(--accent);
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .form-loader-bar {
+      width: 180px; height: 4px; border-radius: 99px;
+      background: var(--accent-lt); overflow: hidden;
+    }
+    .form-loader-bar::after {
+      content: ''; display: block; height: 100%;
+      width: 40%; border-radius: 99px; background: var(--accent);
+      animation: slide 1.2s ease-in-out infinite;
+    }
+    @keyframes slide {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(350%); }
+    }
+    .form-loader p { font-size: 13px; color: var(--text2); margin: 0; }
+  </style>
+</head>
+<body>
+
+<!-- ── TOP NAV ── -->
+<nav class="top-nav">
+  <div class="nav-logo">
+    <img src="assets/data/logo.svg" alt="ST&CJ Wedding">
+    <span class="nav-logo-name" id="nav-couple-name"></span>
+  </div>
+  <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- ── NAV OVERLAY ── -->
+<div class="nav-overlay" id="navOverlay"></div>
+
+<!-- ── NAV DRAWER ── -->
+<div class="nav-drawer" id="navDrawer">
+  <button class="nav-drawer-close" id="drawerClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+  <div class="nav-drawer-header" style="padding-top: 5px;">
+    <div class="nav-drawer-brand">
+      <img src="assets/data/logo.svg" alt="ST&CJ Wedding">
+      <div class="nav-drawer-title" id="drawer-couple-name">Our Wedding</div>
+    </div>
+    <div class="nav-drawer-lang">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+  </div>
+  <a href="index.html"><i class="fa-solid fa-house"></i> <span data-i18n="breadcrumbHome">Home</span></a>
+  <a href="table.html"><i class="fa-solid fa-chair"></i> <span data-i18n="findTable">Find my seat</span></a>
+  <a href="menu.html"><i class="fa-solid fa-utensils"></i> <span data-i18n="weddingMenu">See banquet menu</span></a>
+  <a href="video.html"><i class="fa-solid fa-circle-play"></i> <span data-i18n="loveStory">Our love story</span></a>
+  <a href="wish.html"><i class="fa-solid fa-envelope-open-text"></i> <span data-i18n="sendWishes">Share your wishes</span></a>
+</div>
+
+<main class="gw-main">
+  <button class="back-btn" onclick="history.back()"><i class="fa-solid fa-chevron-left" style="font-size:10px"></i> <span data-i18n="backHome">Back</span></button>
+  <h2 class="page-title"><i class="fa-solid fa-envelope-open-text"></i> <span data-i18n="sendWishes">Send Wishes</span></h2>
+  <p class="page-subtitle" data-i18n="sendWishesSub">Leave a message for us</p>
+
+  <div class="form-wrap" id="form-wrap">
+    <!-- Google Form embed — set googleFormUrl in config.json -->
+    <div class="form-placeholder" id="form-placeholder">
+      <i class="fa-solid fa-pen-to-square icon"></i>
+      <p>To enable the wishes form, add your Google Form embed URL to <code>config.json</code>:</p>
+      <p><code>"googleFormUrl": "https://docs.google.com/forms/d/e/YOUR_FORM_ID/viewform?embedded=true"</code></p>
+    </div>
+  </div>
+</main>
+
+<footer class="gw-footer">
+  <span id="gw-footer-names"></span>
+</footer>
+
+<script src="assets/js/gw.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const { config } = await GW.loadData();
+    GW.applyConfig();
+    const name = config.projectName || '';
+    document.getElementById('nav-couple-name').textContent = name;
+    document.getElementById('drawer-couple-name').textContent = name;
+    const footerEl = document.getElementById('gw-footer-names');
+    if (footerEl) {
+      const year = config.eventDate ? new Date(config.eventDate).getFullYear() : new Date().getFullYear();
+      footerEl.textContent = `© ${year} ${name}`;
+    }
+
+    if (config.googleFormUrl) {
+      const wrap = document.getElementById('form-wrap');
+      const placeholder = document.getElementById('form-placeholder');
+      placeholder.remove();
+
+      // Loading indicator
+      const loader = document.createElement('div');
+      loader.className = 'form-loader';
+      loader.innerHTML = `
+        <div class="form-loader-spinner"></div>
+        <div class="form-loader-bar"></div>
+        <p data-i18n="loadingForm">Loading form…</p>
+      `;
+      wrap.appendChild(loader);
+
+      const iframe = document.createElement('iframe');
+      iframe.src = config.googleFormUrl;
+      iframe.title = 'Send Wishes';
+      iframe.setAttribute('allowfullscreen', '');
+      iframe.style.visibility = 'hidden';
+      iframe.style.position = 'absolute';
+
+      function revealForm() {
+        if (!loader.parentNode) return; // already revealed
+        loader.remove();
+        iframe.style.visibility = '';
+        iframe.style.position = '';
+      }
+
+      iframe.addEventListener('load', revealForm);
+      // Fallback: reveal after 20s if load event never fires
+      const fallbackTimer = setTimeout(revealForm, 20000);
+      iframe.addEventListener('load', () => clearTimeout(fallbackTimer));
+
+      wrap.appendChild(iframe);
+    }
+  } catch (e) {
+    console.warn('Could not load config:', e);
+  }
+});
+
+// Hamburger / drawer toggle
+const hamburgerBtn = document.getElementById('hamburgerBtn');
+const navDrawer    = document.getElementById('navDrawer');
+const navOverlay   = document.getElementById('navOverlay');
+const drawerClose  = document.getElementById('drawerClose');
+function openDrawer()  { navDrawer.classList.add('open'); navOverlay.classList.add('open'); hamburgerBtn.classList.add('open'); }
+function closeDrawer() { navDrawer.classList.remove('open'); navOverlay.classList.remove('open'); hamburgerBtn.classList.remove('open'); }
+hamburgerBtn.addEventListener('click', openDrawer);
+drawerClose.addEventListener('click', closeDrawer);
+navOverlay.addEventListener('click', closeDrawer);
+window.addEventListener('pageshow', closeDrawer);
+</script>
+</body>
+</html>

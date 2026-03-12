@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wedding Menu</title>
+  <link rel="stylesheet" href="assets/css/gw.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body { padding-top: 65px; }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,.16);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; }
+    .nav-logo img { height: 38px; width: 38px; flex-shrink: 0; }
+    .nav-logo-name {
+      font-family: Georgia, serif; font-size: 17px;
+      color: var(--accent-dk); font-style: italic; letter-spacing: 0.3px;
+    }
+    .hamburger-btn {
+      background: none; border: none; cursor: pointer;
+      width: 40px; height: 40px;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 5px; padding: 4px;
+      border-radius: 8px; transition: background .15s;
+    }
+    .hamburger-btn:hover { background: var(--accent-lt); }
+    .hamburger-btn span {
+      display: block; width: 22px; height: 2px;
+      background: var(--text); border-radius: 2px; transition: all .25s ease;
+    }
+    .hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger-btn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    /* ── DRAWER ── */
+    .nav-drawer {
+      position: fixed; top: 0; right: -290px; bottom: 0;
+      width: 270px; z-index: 200; background: var(--surface);
+      border-left: 1px solid var(--border);
+      box-shadow: -4px 0 24px rgba(0,0,0,.12);
+      transition: right .28s cubic-bezier(.4,0,.2,1);
+      display: flex; flex-direction: column; padding: 20px 0 32px;
+    }
+    .nav-drawer.open {
+      right: 0;
+      background:
+        linear-gradient(rgba(255,255,255,0.60), rgba(255,255,255,0.60)),
+        url('assets/data/floral-background.jpg');
+      background-size: auto, contain; background-repeat: repeat, repeat;
+    }
+    .nav-drawer-close {
+      position: absolute; top: 14px; right: 20px;
+      background: none; border: none; cursor: pointer;
+      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+      font-size: 22px; color: var(--muted); padding: 4px; line-height: 1; border-radius: 8px;
+      transition: background .15s;
+    }
+    .nav-drawer-close:hover { background: var(--accent-lt); color: var(--text); }
+    .nav-drawer-header { padding: 0 24px 16px; border-bottom: 1px solid var(--border); }
+    .nav-drawer-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .nav-drawer-brand img { height: 36px; width: 36px; flex-shrink: 0; }
+    .nav-drawer-title {
+      font-family: Georgia, serif; font-size: 17px; font-style: italic; color: var(--accent-dk);
+    }
+    .nav-drawer-lang { display: flex; gap: 8px; }
+    .nav-drawer a {
+      display: flex; align-items: center; gap: 14px;
+      padding: 15px 24px; text-decoration: none;
+      color: var(--text); font-size: 15px; font-weight: 500;
+      border-bottom: 1px solid var(--border); transition: background .12s, color .12s;
+    }
+    .nav-drawer a:hover { background: var(--accent-lt); color: var(--accent-dk); }
+    .nav-drawer a i { width: 20px; text-align: center; color: var(--accent); font-size: 16px; }
+    .nav-overlay {
+      display: none; position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,.3);
+    }
+    .nav-overlay.open { display: block; }
+
+    /* ── Banquet scroll style ── */
+    .menu-scroll {
+      border: 1.5px solid var(--gold); border-radius: 18px;
+      padding: 22px 20px; position: relative; overflow: hidden;
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .menu-scroll::before {
+      content: '❧';
+      position: absolute; top: 10px; right: 14px;
+      font-size: 18px; color: rgba(200,168,74,.35);
+      pointer-events: none; user-select: none;
+    }
+    .menu-section-head {
+      font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--gold); font-weight: 700; margin: 18px 0 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .menu-section-head::before,
+    .menu-section-head::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(to right, transparent, rgba(200,168,74,.5));
+    }
+    .menu-section-head::after {
+      background: linear-gradient(to left, transparent, rgba(200,168,74,.5));
+    }
+    .menu-section-head:first-child { margin-top: 0; }
+    .menu-item {
+      padding: 11px 6px;
+      border-bottom: 1px dashed rgba(200,168,74,.28); transition: background .15s;
+    }
+    .menu-item:last-child { border-bottom: none; }
+    .menu-item:hover { background: rgba(200,168,74,.06); border-radius: 8px; }
+    .menu-item-inner { display: flex; align-items: center; gap: 12px; }
+    .menu-dish-num {
+      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+      background: var(--gold); color: #fff; border: none;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; font-family: Georgia, serif;
+    }
+    .menu-item-emoji { font-size: 20px; flex-shrink: 0; }
+    .menu-item-text { flex: 1; min-width: 0; }
+    .menu-item-name {
+      font-family: Georgia, serif; font-size: 16px; font-weight: 400;
+      color: var(--text); line-height: 1.3;
+    }
+    .menu-item-name-alt { font-size: 15px; color: var(--muted); margin-top: 1px; line-height: 1.4; }
+    .menu-item-desc {
+      font-size: 13px; color: var(--muted); margin-top: 3px;
+      line-height: 1.5; font-style: italic;
+    }
+    .menu-empty { text-align: center; padding: 32px 20px; color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<!-- ── TOP NAV ── -->
+<nav class="top-nav">
+  <div class="nav-logo">
+    <img src="assets/data/logo.svg" alt="ST&CJ Wedding">
+    <span class="nav-logo-name" id="nav-couple-name"></span>
+  </div>
+  <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- ── NAV OVERLAY ── -->
+<div class="nav-overlay" id="navOverlay"></div>
+
+<!-- ── NAV DRAWER ── -->
+<div class="nav-drawer" id="navDrawer">
+  <button class="nav-drawer-close" id="drawerClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+  <div class="nav-drawer-header" style="padding-top: 5px;">
+    <div class="nav-drawer-brand">
+      <img src="assets/data/logo.svg" alt="ST&CJ Wedding">
+      <div class="nav-drawer-title" id="drawer-couple-name">Our Wedding</div>
+    </div>
+    <div class="nav-drawer-lang">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+  </div>
+  <a href="index.html"><i class="fa-solid fa-house"></i> <span data-i18n="breadcrumbHome">Home</span></a>
+  <a href="table.html"><i class="fa-solid fa-chair"></i> <span data-i18n="findTable">Find my seat</span></a>
+  <a href="menu.html"><i class="fa-solid fa-utensils"></i> <span data-i18n="weddingMenu">See banquet menu</span></a>
+  <a href="video.html"><i class="fa-solid fa-circle-play"></i> <span data-i18n="loveStory">Our love story</span></a>
+  <a href="wish.html"><i class="fa-solid fa-envelope-open-text"></i> <span data-i18n="sendWishes">Share your wishes</span></a>
+</div>
+
+<main class="gw-main">
+  <button class="back-btn" onclick="history.back()"><i class="fa-solid fa-chevron-left" style="font-size:10px"></i> <span data-i18n="backHome">Back</span></button>
+  <h2 class="page-title"><i class="fa-solid fa-utensils"></i> <span data-i18n="weddingMenu">Wedding Menu</span></h2>
+  <p class="page-subtitle" id="menu-subtitle" data-i18n="weddingMenuSub">Tonight's banquet courses</p>
+
+  <div id="menu-container">
+    <div class="menu-empty">Loading menu...</div>
+  </div>
+</main>
+
+<footer class="gw-footer">
+  <span id="gw-footer-names"></span>
+</footer>
+
+<script src="assets/js/gw.js"></script>
+<script>
+let currentLangMenu = 'en';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const { config } = await GW.loadData();
+    GW.applyConfig();
+    const name = config.projectName || '';
+    document.getElementById('nav-couple-name').textContent = name;
+    document.getElementById('drawer-couple-name').textContent = name;
+    const footerEl = document.getElementById('gw-footer-names');
+    if (footerEl) {
+      const year = config.eventDate ? new Date(config.eventDate).getFullYear() : new Date().getFullYear();
+      footerEl.textContent = `© ${year} ${name}`;
+    }
+    renderMenu(GW.lang);
+  } catch (e) {
+    document.getElementById('menu-container').innerHTML =
+      '<div class="menu-empty">Menu not available.</div>';
+  }
+});
+
+// Re-render on language change
+window.onLangChange = (lang) => renderMenu(lang);
+
+function renderMenu(lang) {
+  const config = GW.config;
+  if (!config || !config.menu) return;
+  const container = document.getElementById('menu-container');
+  const isZh = lang === 'zh';
+
+  let dishNum = 1;
+  let html = '<div class="menu-scroll">';
+
+  config.menu.forEach(section => {
+    const courseLabel = isZh ? section.courseZh : section.courseEn;
+    html += `<div class="menu-section-head">${courseLabel}</div>`;
+    section.items.forEach(item => {
+      const primary   = isZh ? item.nameZh   : item.nameEn;
+      const secondary = isZh ? item.nameEn   : item.nameZh;
+      const desc      = isZh ? item.descZh   : item.descEn;
+      html += `
+        <div class="menu-item">
+          <div class="menu-item-inner">
+            <div class="menu-dish-num">${dishNum++}</div>
+            <div class="menu-item-emoji">${item.emoji || ''}</div>
+            <div class="menu-item-text">
+              <div class="menu-item-name">${primary}</div>
+              <div class="menu-item-name-alt">${secondary}</div>
+              ${desc ? `<div class="menu-item-desc">${desc}</div>` : ''}
+            </div>
+          </div>
+        </div>`;
+    });
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// Hamburger / drawer toggle
+const hamburgerBtn = document.getElementById('hamburgerBtn');
+const navDrawer    = document.getElementById('navDrawer');
+const navOverlay   = document.getElementById('navOverlay');
+const drawerClose  = document.getElementById('drawerClose');
+function openDrawer()  { navDrawer.classList.add('open'); navOverlay.classList.add('open'); hamburgerBtn.classList.add('open'); }
+function closeDrawer() { navDrawer.classList.remove('open'); navOverlay.classList.remove('open'); hamburgerBtn.classList.remove('open'); }
+hamburgerBtn.addEventListener('click', openDrawer);
+drawerClose.addEventListener('click', closeDrawer);
+navOverlay.addEventListener('click', closeDrawer);
+window.addEventListener('pageshow', closeDrawer);
+</script>
+</body>
+</html>

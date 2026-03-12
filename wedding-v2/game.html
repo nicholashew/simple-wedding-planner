@@ -42,6 +42,8 @@
       border-radius: 8px; transition: background .15s, color .15s;
     }
     .nav-restart:hover { background: var(--accent-lt); color: var(--accent-dk); }
+    .nav-right { display: flex; align-items: center; gap: 4px; }
+    .nav-lang  { display: flex; gap: 4px; }
 
     /* ── DIFFICULTY TABS ── */
     .diff-tabs {
@@ -251,22 +253,29 @@
   <a class="nav-back" href="index.html">
     <i class="fa-solid fa-chevron-left"></i> <span id="nav-couple-name"></span>
   </a>
-  <div class="game-nav-title">🐈‍⬛ Midnight Feast</div>
-  <button class="nav-restart" id="navRestartBtn" title="Restart game">
-    <i class="fa-solid fa-rotate-right"></i>
-  </button>
+  <div class="game-nav-title" data-i18n="gameNavTitle">🐈‍⬛ Midnight Feast</div>
+  <div class="nav-right">
+    <div class="nav-lang">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+    <button class="nav-restart" id="navRestartBtn" title="Restart game">
+      <i class="fa-solid fa-rotate-right"></i>
+    </button>
+  </div>
 </nav>
 
 <!-- ── DIFFICULTY TABS ── -->
 <div class="diff-tabs">
-  <button class="diff-tab active" data-diff="easy">Easy</button>
-  <button class="diff-tab"        data-diff="normal">Normal</button>
-  <button class="diff-tab"        data-diff="hard">Hard</button>
+  <button class="diff-tab active" data-diff="easy"   data-i18n="gameDiffEasy">Easy</button>
+  <button class="diff-tab"        data-diff="normal" data-i18n="gameDiffNormal">Normal</button>
+  <button class="diff-tab"        data-diff="hard"   data-i18n="gameDiffHard">Hard</button>
+  <button class="diff-tab"        data-diff="expert" data-i18n="gameDiffExpert">Expert</button>
 </div>
 
 <!-- ── STATS ── -->
 <div class="game-stats">
-  <div class="stat"><i class="fa-solid fa-hand-pointer"></i> <span id="stat-moves">0</span> moves</div>
+  <div class="stat"><i class="fa-solid fa-hand-pointer"></i> <span id="stat-moves">0</span> <span data-i18n="gameMoves">moves</span></div>
   <div class="stat"><i class="fa-regular fa-clock"></i> <span id="stat-time">0:00</span></div>
   <div class="stat"><i class="fa-solid fa-circle-check"></i> <span id="stat-matched">0</span>/<span id="stat-total">0</span></div>
 </div>
@@ -277,7 +286,7 @@
 <!-- ── BOTTOM RESET ── -->
 <div class="game-controls">
   <button class="btn-reset" id="resetBtn">
-    <i class="fa-solid fa-shuffle"></i> Shuffle &amp; Restart
+    <i class="fa-solid fa-shuffle"></i> <span data-i18n="gameShuffle">Shuffle &amp; Restart</span>
   </button>
 </div>
 
@@ -285,27 +294,27 @@
 <div id="win-overlay">
   <div class="win-card">
     <div class="win-cat">😴🐈‍⬛</div>
-    <div class="win-title">Well Fed!</div>
-    <div class="win-subtitle">The midnight cat is satisfied 🐾</div>
+    <div class="win-title" data-i18n="gameWellFed">Well Fed!</div>
+    <div class="win-subtitle" data-i18n="gameWinSub">The midnight cat is satisfied 🐾</div>
     <div class="win-stats">
       <div class="win-stat">
         <div class="win-stat-val" id="win-moves">—</div>
-        <div class="win-stat-lbl">Moves</div>
+        <div class="win-stat-lbl" data-i18n="gameWinMoves">Moves</div>
       </div>
       <div class="win-stat">
         <div class="win-stat-val" id="win-time">—</div>
-        <div class="win-stat-lbl">Time</div>
+        <div class="win-stat-lbl" data-i18n="gameWinTime">Time</div>
       </div>
       <div class="win-stat">
         <div class="win-stat-val" id="win-pairs">—</div>
-        <div class="win-stat-lbl">Pairs</div>
+        <div class="win-stat-lbl" data-i18n="gameWinPairs">Pairs</div>
       </div>
     </div>
     <div class="win-fortune">
-      <span class="win-fortune-label">🔮 Your Lucky Fortune</span>
+      <span class="win-fortune-label" data-i18n="gameFortuneLbl">🔮 Your Lucky Fortune</span>
       <span id="win-fortune-text"></span>
     </div>
-    <button class="btn-play-again" id="playAgainBtn">Play Again</button>
+    <button class="btn-play-again" id="playAgainBtn" data-i18n="gamePlayAgain">Play Again</button>
   </div>
 </div>
 
@@ -314,29 +323,30 @@
 /* ── DATA ── */
 const CARD_POOL = [
   // Black cat moods
-  { id: 'cat1', emoji: '🐱',   label: 'Curious',   family: 'cat' },
-  { id: 'cat2', emoji: '😸',   label: 'Happy',     family: 'cat' },
-  { id: 'cat3', emoji: '😼',   label: 'Sneaky',    family: 'cat' },
-  { id: 'cat4', emoji: '🙀',   label: 'Shocked',   family: 'cat' },
-  { id: 'cat5', emoji: '😻',   label: 'Smitten',   family: 'cat' },
-  { id: 'cat6', emoji: '😺',   label: 'Greeting',  family: 'cat' },
+  { id: 'cat1', emoji: '🐱',   label: 'Curious',   labelZh: '好奇',   family: 'cat' },
+  { id: 'cat2', emoji: '😸',   label: 'Happy',     labelZh: '開心',   family: 'cat' },
+  { id: 'cat3', emoji: '😼',   label: 'Sneaky',    labelZh: '狡猾',   family: 'cat' },
+  { id: 'cat4', emoji: '🙀',   label: 'Shocked',   labelZh: '嚇到',   family: 'cat' },
+  { id: 'cat5', emoji: '😻',   label: 'Smitten',   labelZh: '深情',   family: 'cat' },
+  { id: 'cat6', emoji: '😺',   label: 'Greeting',  labelZh: '問好',   family: 'cat' },
   // Banquet dishes (mirror the wedding menu)
-  { id: 'food1', emoji: '🦈',  label: "Shark's Fin",    family: 'food' },
-  { id: 'food2', emoji: '🦆',  label: 'Roast Duck',     family: 'food' },
-  { id: 'food3', emoji: '🐟',  label: 'Steamed Fish',   family: 'food' },
-  { id: 'food4', emoji: '🦐',  label: 'Butter Prawns',  family: 'food' },
-  { id: 'food5', emoji: '🍚',  label: 'Lotus Rice',     family: 'food' },
-  { id: 'food6', emoji: '🍮',  label: 'Snow Jelly',     family: 'food' },
+  { id: 'food1', emoji: '🦈',  label: "Shark's Fin",   labelZh: '魚翅',   family: 'food' },
+  { id: 'food2', emoji: '🦆',  label: 'Roast Duck',    labelZh: '燒鴨',   family: 'food' },
+  { id: 'food3', emoji: '🐟',  label: 'Steamed Fish',  labelZh: '清蒸魚', family: 'food' },
+  { id: 'food4', emoji: '🦐',  label: 'Butter Prawns', labelZh: '奶油蝦', family: 'food' },
+  { id: 'food5', emoji: '🍚',  label: 'Lotus Rice',    labelZh: '荷葉飯', family: 'food' },
+  { id: 'food6', emoji: '🍮',  label: 'Snow Jelly',    labelZh: '雪花凍', family: 'food' },
   // Wedding symbols
-  { id: 'wed1', emoji: '💍',   label: 'Rings',        family: 'wedding' },
-  { id: 'wed2', emoji: '💐',   label: 'Bouquet',      family: 'wedding' },
-  { id: 'wed3', emoji: '🥂',   label: 'Cheers',       family: 'wedding' },
-  { id: 'wed4', emoji: '🎂',   label: 'Wedding Cake', family: 'wedding' },
-  { id: 'wed5', emoji: '🧧',   label: 'Red Packet',   family: 'wedding' },
-  { id: 'wed6', emoji: '🏮',   label: 'Lantern',      family: 'wedding' },
+  { id: 'wed1', emoji: '💍',   label: 'Rings',        labelZh: '戒指',   family: 'wedding' },
+  { id: 'wed2', emoji: '💐',   label: 'Bouquet',      labelZh: '花束',   family: 'wedding' },
+  { id: 'wed3', emoji: '🥂',   label: 'Cheers',       labelZh: '舉杯',   family: 'wedding' },
+  { id: 'wed4', emoji: '🎂',   label: 'Wedding Cake', labelZh: '婚蛋糕', family: 'wedding' },
+  { id: 'wed5', emoji: '🧧',   label: 'Red Packet',   labelZh: '利是',   family: 'wedding' },
+  { id: 'wed6', emoji: '🏮',   label: 'Lantern',      labelZh: '燈籠',   family: 'wedding' },
 ];
 
 const FORTUNES = [
+  // Wedding & cat themed
   "Like a cat with nine lives, may your love be endlessly resilient. 💕",
   "May your home always be full of laughter — and maybe a cat or two. 🐱",
   "The best things in life: good food, great company, and someone who loves you. 🍽️",
@@ -346,13 +356,155 @@ const FORTUNES = [
   "A home filled with love is a home worth purring about. 🏠",
   "Tonight you celebrate love. Tomorrow, the adventure begins. 🌙",
   "Like the cat who always lands on its feet, may you always find your way back to each other. 🐾",
+  // Funny
+  "Beware of gossip in the workplace! Stay out of other people's business.",
+  "Little weight fluctuations announce themselves. Better switch from wine and chocolate to tea and fruit.",
+  "Sometimes you lose, sometimes others win.",
+  "Getting up early is the first step in the wrong direction!",
+  "Smiling is the most charming way to show your teeth to your opponent.",
+  "When everyone thinks of themselves, everyone is thought of.",
+  "The happiness you are looking for is in another biscuit!",
+  "Love is eating the chocolate all by yourself so that your partner doesn't get fat.",
+  "He who sticks his head in the sand is recognised by his backside.",
+  "What you can uncork today, don't put off until tomorrow.",
+  "Home is where you are allowed to be stupid!",
+  "Whenever you start planning your future, fate falls off the chair laughing in the background.",
+  "You feel the power within you. But it could also be hunger…",
+  "When life turns you down, go shopping.",
+  "Your plants are not dead, they just grow crispy.",
+  "There are two paths in life that will open many doors for you: Pull and push.",
+  "Today is not your day. Tomorrow, unfortunately, is not either.",
+  "Better learn to comb your streak of bad luck into a nice hairstyle.",
+  "The dishes can wait. Life can't!",
+  "There are people who are worse off than you. Even if they are very, very few.",
+  // Motivational
+  "It doesn't get easier. You get better.",
+  "You don't know your limits until you've grown beyond them.",
+  "We can't change the wind, but we can set the sails differently.",
+  "Everything that happens is an invitation to grow.",
+  "Be stronger than your strongest excuse!",
+  "Even skyscrapers started out as basements.",
+  "Fate shuffles the cards, but you play!",
+  "The butterfly often forgets that it was once a caterpillar.",
+  "The best time is NOW.",
+  "Those who don't want to, find reasons. Whoever wants to, finds ways.",
+  "If you want to be beautiful, you have to laugh.",
+  "If you want to give up, remember why you started.",
+  "Everybody said: It can't be done. Someone came who didn't know that and just did it.",
+  "Do something today that you can be proud of tomorrow.",
+  "A smile costs less than electricity and gives more light.",
+  "Doubt shatters more dreams than any mistake you make.",
+  "You can change the future with what you do today.",
+  "Do not despair if you are not a professional. An amateur built the ark, professionals built the Titanic.",
+  "If you want to fly, you have to let go of what pulls you down.",
+  "A diamond is a piece of coal that had endurance!",
+  "It's never too late to become what you might have been.",
+  // Wisdom
+  "Turn your face to the sun and the shadows will fall behind you.",
+  "Drill the well before you are thirsty.",
+  "The grass does not grow faster if you pull on it!",
+  "The most valuable thing in life is time. To live is to manage time properly.",
+  "Allow yourself a little craziness, it will work like medicine!",
+  "Don't be afraid to go slow, but be afraid to stop.",
+  "Pay attention to your thoughts, they are the beginning of your deeds.",
+  "Follow the work and don't let it follow you.",
+  "You are responsible not only for what you do, but also for what you don't do.",
+  "If you want what you have never had, then do what you have never done.",
+  "True words are often not pleasant, pleasant words are often not true.",
+  "What you want to ignite in others must burn in you.",
+  "Your only real enemies are your negative thoughts.",
+  "Don't ruin what is good for you!",
+  "He who does not think about the future will not have one.",
+  "There are more important things in life than constantly increasing its speed.",
+  "One joy drives away a hundred sorrows.",
+  "Many roads lead to the top of a mountain, but the view remains the same.",
+  "Distance is nothing. Being close is a matter of the heart.",
+  "Happiness likes to enter a house where there is good humour.",
 ];
 
 const DIFF_CONFIG = {
   easy:   { pairs: 6,  cols: 4 },  // 4×3
   normal: { pairs: 8,  cols: 4 },  // 4×4
   hard:   { pairs: 10, cols: 5 },  // 5×4
+  expert: { pairs: 15, cols: 5 },  // 5×6 — all 15 unique cards drawn from pool of 18
 };
+
+const FORTUNES_ZH = [
+  // 婚禮與黑貓
+  "如貓有九命，願你們的愛情同樣堅韌不拔。💕",
+  "願你們的家永遠充滿歡笑，或許還有一兩隻貓。🐱",
+  "人生最好的事：美食、好友，還有愛你的人。🍽️",
+  "願婚姻像午後貓咪的小睡一樣，溫暖而愜意。☀️",
+  "今晚黑貓帶來好運——願愛情為你們帶來永恆的幸福。🖤",
+  "願你們每一頓共享的餐飯，都比上一次更甜蜜。🥂",
+  "充滿愛的家，值得用心珍惜。🏠",
+  "今晚慶祝愛情，明天開始新的旅程。🌙",
+  "如貓總能四腳著地，願你們永遠找到回到彼此的路。🐾",
+  // 幽默
+  "小心職場流言蜚語！少管閒事，多管自己。",
+  "體重變化自己會說話，最好把酒和朱古力換成茶和水果。",
+  "有時候你輸了，有時候別人贏了。",
+  "早起是走錯方向的第一步！",
+  "微笑是向對手展示牙齒最迷人的方式。",
+  "當每個人都想著自己，人人都被顧及了。",
+  "你追尋的幸福就藏在下一塊餅乾裡！",
+  "愛，就是自己把朱古力吃完，以免另一半發胖。",
+  "把頭埋進沙裡的人，被認出靠的是他的屁股。",
+  "今天能開的瓶，別等到明天。",
+  "家，就是你可以盡情犯蠢的地方！",
+  "每當你開始規劃未來，命運就在背後笑到跌落椅子。",
+  "你感到體內有股力量，但也可能只是餓了……",
+  "當生活讓你跌倒，就去購物吧。",
+  "你的植物沒有死，只是長得很酥脆。",
+  "人生有兩條路能為你開啟很多門：拉和推。",
+  "今天不是你的日子。明天，很遺憾，也不是。",
+  "最好學會把你的厄運梳成一個好看的髮型。",
+  "碗碟可以等，人生不等人！",
+  "世上有人比你更慘，雖然這種人少之又少。",
+  // 勵志
+  "事情不會變容易，是你變得更強了。",
+  "你不知道自己的極限在哪裡，直到你超越它。",
+  "我們無法改變風向，但可以調整風帆。",
+  "每一件發生的事，都是成長的邀請。",
+  "比你最強的藉口更強！",
+  "摩天大樓也是從地基開始建的。",
+  "命運發牌，你來出招！",
+  "蝴蝶常常忘記自己曾是毛毛蟲。",
+  "最好的時機就是現在。",
+  "不想做的人找藉口，想做的人找方法。",
+  "想要美麗，就要常笑。",
+  "想放棄的時候，記住當初為何出發。",
+  "大家都說不可能，有個人不知道，就去做了。",
+  "今天做一件明天讓你驕傲的事。",
+  "微笑比電費便宜，卻更能照亮他人。",
+  "懷疑比任何錯誤都更能粉碎夢想。",
+  "你今天的行動，能改變未來。",
+  "不要因為不是專家而氣餒——業餘者建了方舟，專家建了鐵達尼號。",
+  "想飛翔，就要放下拖住你的東西。",
+  "鑽石不過是一塊有毅力的煤炭！",
+  "成為你本可成為的人，永遠不嫌遲。",
+  // 智慧
+  "面向太陽，陰影自然落在身後。",
+  "未渴先掘井。",
+  "用力拉草，草不會長得更快！",
+  "人生最寶貴的是時間，生活就是好好管理時間。",
+  "允許自己偶爾瘋一下，它會像藥一樣管用！",
+  "不要害怕走得慢，只怕站著不動。",
+  "注意你的想法，它是行動的起點。",
+  "跟著工作走，別讓它追著你跑。",
+  "你不只為你做的事負責，也為你沒做的事負責。",
+  "想要從未有過的，就去做從未做過的。",
+  "真話往往不中聽，中聽的話往往不真實。",
+  "你想點燃別人的，必先在自己心中燃燒。",
+  "你唯一真正的敵人，是你自己的負面想法。",
+  "別毀掉對你好的東西！",
+  "不思考未來的人，不會有未來。",
+  "人生中有比不斷加速更重要的事。",
+  "一喜能消百愁。",
+  "條條大路通山頂，但風景皆相同。",
+  "距離不是問題，貼近是心的事。",
+  "幸福喜歡降臨在有歡笑的家。",
+];
 
 /* ── STATE ── */
 let difficulty  = 'easy';
@@ -410,6 +562,7 @@ function renderGrid() {
   const { cols } = DIFF_CONFIG[difficulty];
   const dotClass = { cat: 'dot-cat', food: 'dot-food', wedding: 'dot-wedding' };
 
+  const lbl = (card) => GW.lang === 'zh' ? (card.labelZh || card.label) : card.label;
   const cardCell = (card, i) => `
     <td><div class="card" data-index="${i}">
       <div class="card-inner">
@@ -417,7 +570,7 @@ function renderGrid() {
         <div class="card-face">
           <div class="card-family-dot ${dotClass[card.family]}"></div>
           <span>${card.emoji}</span>
-          <span class="card-label">${card.label}</span>
+          <span class="card-label">${lbl(card)}</span>
         </div>
       </div>
     </div></td>`;
@@ -501,8 +654,9 @@ function showWin() {
   document.getElementById('win-moves').textContent = moves;
   document.getElementById('win-time').textContent  = fmtTime(elapsed);
   document.getElementById('win-pairs').textContent = deck.length / 2;
+  const pool = GW.lang === 'zh' ? FORTUNES_ZH : FORTUNES;
   document.getElementById('win-fortune-text').textContent =
-    FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
+    pool[Math.floor(Math.random() * pool.length)];
   document.getElementById('win-overlay').classList.add('open');
 }
 
@@ -543,6 +697,16 @@ document.getElementById('playAgainBtn').addEventListener('click', () => {
 document.getElementById('win-overlay').addEventListener('click', function(e) {
   if (e.target === this) this.classList.remove('open');
 });
+
+// Called by gw.js whenever language toggles — update card labels in-place
+function onLangChange(lang) {
+  document.querySelectorAll('.card[data-index]').forEach(el => {
+    const card = deck[+el.dataset.index];
+    if (!card) return;
+    const labelEl = el.querySelector('.card-label');
+    if (labelEl) labelEl.textContent = lang === 'zh' ? (card.labelZh || card.label) : card.label;
+  });
+}
 
 /* ── INIT ── */
 document.addEventListener('DOMContentLoaded', async () => {

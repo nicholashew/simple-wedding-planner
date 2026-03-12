@@ -8,44 +8,54 @@ A static wedding banquet website with an admin planner tool. Designed for deploy
 
 ```text
 simple-wedding-planner/
-├── wedding/                      # ← Deployable static site (root of deployment)
-│   ├── index.html                # Public home page
-│   ├── table.html                # Find My Table (QR code scan)
-│   ├── menu.html                 # Wedding menu
-│   ├── video.html                # Love story video (time-locked)
-│   ├── gallery.html              # Photo gallery
-│   ├── wish.html                 # Send wishes (Google Form embed)
-│   ├── robots.txt                # Disallow all bots
+├── wedding-v2/                       # ← Current deployable static site
+│   ├── index.html                    # Public home page
+│   ├── table.html                    # Find My Table (QR code scan)
+│   ├── menu.html                     # Wedding banquet menu
+│   ├── video.html                    # Love story video (time-locked)
+│   ├── gallery.html                  # Photo gallery with lightbox
+│   ├── wish.html                     # Send wishes (Google Form embed)
+│   ├── robots.txt                    # Disallow all bots
 │   │
 │   ├── assets/
 │   │   ├── css/
-│   │   │   ├── gw.css            # Shared public styles (design tokens, header, layout)
-│   │   │   ├── app.css           # Admin planner styles
-│   │   │   └── shared.css        # Admin nav styles
+│   │   │   ├── gw.css                # Shared public styles (design tokens, layout)
+│   │   │   ├── app.css               # Admin planner styles
+│   │   │   └── shared.css            # Admin nav styles
 │   │   ├── js/
-│   │   │   ├── gw.js             # Shared public JS (i18n, data loader, QR encode/decode)
+│   │   │   ├── gw.js                 # Shared public JS (i18n, config loader, QR utils, toast, scroll-top)
 │   │   │   ├── admin-shared-nav.js
 │   │   │   ├── admin-wedding.js
 │   │   │   └── admin-homestay.js
-│   │   └── data/
-│   │       ├── config.json       # Event config (couple names, date, menu, video, etc.)
-│   │       ├── guests.json       # Guest list with table assignments
-│   │       ├── banner.jpg        # Home page banner image
-│   │       ├── floral-background.jpg
-│   │       └── montage.mp4       # Love story video
+│   │   ├── data/
+│   │   │   ├── config.json           # Event config (couple names, date, menu, video, etc.)
+│   │   │   ├── guests.json           # Guest list with table assignments
+│   │   │   ├── logo.svg              # Wedding logo (nav + drawer)
+│   │   │   ├── banner.jpg            # Home page banner image
+│   │   │   ├── floral-background.jpg # Page background texture
+│   │   │   └── montage.mp4           # Love story video
+│   │   └── img/
+│   │       ├── banquet-menu.png      # Decorative menu image
+│   │       └── icons/                # Dish icons for menu page
+│   │           ├── beef.svg, broccoli.svg, chicken.svg, crab.png
+│   │           ├── dessert.svg, duck.svg, fish.svg, leaf.svg
+│   │           ├── lotus.svg, pork.svg, ribs.svg, rice.svg
+│   │           ├── shrimp.svg, soup.svg, soup-dessert.svg
+│   │           └── tray-with-cover.svg
 │   │
 │   ├── admin/
-│   │   ├── login.html            # Admin login (PIN-based, cookie auth)
-│   │   ├── index.html            # Admin dashboard
-│   │   ├── wedding.html          # Wedding seating planner (canvas-based)
-│   │   ├── homestay.html         # Homestay room assignment planner
-│   │   └── find-table.html       # Admin QR scan + guest search tool
+│   │   ├── login.html                # Admin login (PIN-based, cookie auth)
+│   │   ├── index.html                # Admin dashboard
+│   │   ├── wedding.html              # Wedding seating planner (canvas-based)
+│   │   ├── homestay.html             # Homestay room assignment planner
+│   │   └── find-table.html           # Admin QR scan + guest search tool
 │   │
-│   ├── server.js                 # Express static server (local dev only)
+│   ├── server.js                     # Express static server (local dev only, port 3001)
 │   └── package.json
 │
-├── sample-webapp/                # Reference app (source of admin planner UI)
-├── requirements/                 # Original requirements docs
+├── wedding/                          # Legacy version (kept for reference)
+├── sample-webapp/                    # Reference app (source of admin planner UI)
+├── requirements/                     # Original requirements docs
 └── README.md
 ```
 
@@ -57,10 +67,10 @@ simple-wedding-planner/
 |---|---|---|
 | Home | `/` | Nav cards linking to all sections |
 | Find My Table | `/table.html` | Guests scan invitation QR code to find their seat |
-| Wedding Menu | `/menu.html` | Banquet courses from `config.json` |
+| Wedding Menu | `/menu.html` | Banquet courses with dish icons, sticky course tabs |
 | Love Story Video | `/video.html` | Time-locked video (unlocks at configured date/time) |
-| Photo Gallery | `/gallery.html` | Photo grid with lightbox, loaded from `config.json` |
-| Send Wishes | `/wish.html` | Embedded Google Form |
+| Photo Gallery | `/gallery.html` | Masonry photo grid with lightbox and swipe gesture |
+| Send Wishes | `/wish.html` | Embedded Google Form with loading indicator |
 
 All public pages support **English / Chinese (Traditional)** via the language toggle. Translations are managed in `assets/js/gw.js`.
 
@@ -82,11 +92,11 @@ Protected by a PIN-based login (credentials in `config.json` → `adminUser` / `
 
 ## Configuration
 
-Edit `wedding/assets/data/config.json`:
+Edit `wedding-v2/assets/data/config.json`:
 
 ```json
 {
-  "projectName": "Smith & Jones Wedding",
+  "projectName": "Smith & Jones Wedding 💍",
   "eventDate": "2026-03-10",
   "adminUser": "admin",
   "adminPin": "1234",
@@ -103,12 +113,31 @@ Edit `wedding/assets/data/config.json`:
       "courseEn": "Starter",
       "courseZh": "頭盤",
       "items": [
-        { "nameEn": "Dish Name", "nameZh": "菜名", "emoji": "🍤", "descEn": "...", "descZh": "..." }
+        {
+          "nameEn": "Dish Name",
+          "nameZh": "菜名",
+          "descEn": "Description",
+          "descZh": "描述",
+          "icon": [
+            { "type": "svg", "value": "chicken.svg" },
+            { "type": "png", "value": "crab.png" },
+            { "type": "emoji", "value": "✨" }
+          ]
+        }
       ]
     }
   ]
 }
 ```
+
+### Menu `icon` field
+
+Each dish item has an `icon` array of display entries rendered left-to-right:
+
+| `type` | `value` | Renders as |
+|---|---|---|
+| `"svg"` / `"png"` | filename in `assets/img/icons/` | `<img>` 28×28px |
+| `"emoji"` | any emoji string | inline `<span>` |
 
 Guest data is managed via the admin Wedding Planner and exported to `assets/data/guests.json`.
 
@@ -117,10 +146,10 @@ Guest data is managed via the admin Wedding Planner and exported to `assets/data
 ## Local Development
 
 ```bash
-cd wedding
+cd wedding-v2
 npm install
 npm start
-# → http://localhost:3000
+# → http://localhost:3001
 ```
 
 Requires Node.js v18+. Uses Express + nodemon for hot reload.
@@ -129,9 +158,15 @@ Requires Node.js v18+. Uses Express + nodemon for hot reload.
 
 ## Deployment
 
-Deploy the `wedding/` folder as the site root (no build step needed).
+Run the build script from the repo root to copy all deployable files into `dist/` (strips `node_modules`, `server.js`, and `package*.json`):
 
-**Cloudflare Pages / Vercel:** set the root directory to `wedding/` and leave the build command empty.
+```bash
+sh build.sh
+```
+
+Output: `dist/wedding/` and `dist/wedding-v2/` ready to upload.
+
+**Cloudflare Pages / Vercel:** set the root directory to `dist/wedding-v2/` and leave the build command empty.
 
 The site is fully static — `server.js` and `node_modules` are not required in production.
 
@@ -148,3 +183,4 @@ The site is fully static — `server.js` and `node_modules` are not required in 
 | Video lock? | Client-side time check against `availableDate` + `availableFrom` in config |
 | Admin auth? | PIN stored in `config.json`, checked client-side, cookie set for session |
 | Bot protection? | `robots.txt` with `Disallow: /` + `noindex` meta on every page |
+| Menu icons? | Per-dish `icon` array in `config.json` — supports SVG, PNG, and emoji entries |

@@ -19,7 +19,7 @@
       border-bottom: 1px solid var(--border);
       box-shadow: 0 2px 8px rgba(0,0,0,.16);
     }
-    .nav-logo { display: flex; align-items: center; gap: 10px; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .nav-logo img { height: 38px; width: 38px; flex-shrink: 0; }
     .nav-logo-name {
       font-family: Georgia, serif; font-size: 17px;
@@ -45,11 +45,12 @@
       width: 270px; z-index: 200; background: var(--surface);
       border-left: 1px solid var(--border);
       box-shadow: -4px 0 24px rgba(0,0,0,.12);
-      transition: right .28s cubic-bezier(.4,0,.2,1);
+      opacity: 0;
+      transition: right .28s cubic-bezier(.4,0,.2,1), opacity .22s ease;
       display: flex; flex-direction: column; padding: 20px 0 32px;
     }
     .nav-drawer.open {
-      right: 0;
+      right: 0; opacity: 1;
       background:
         linear-gradient(rgba(255,255,255,0.60), rgba(255,255,255,0.60)),
         url('assets/data/floral-background.jpg');
@@ -140,6 +141,16 @@
 
     /* ── Result screen */
     #result-screen { display: none; }
+    @keyframes result-in {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    #result-screen.animate {
+      animation: result-in .45s cubic-bezier(.22,1,.36,1) forwards;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #result-screen.animate { animation: none; }
+    }
 
     .welcome-banner {
       background: rgba(255,255,255,0.75);
@@ -189,7 +200,14 @@
     .viz-svg-chevron { transition: transform .2s; display: inline-block; line-height: 1; }
     .viz-svg-accordion.open .viz-svg-chevron { transform: rotate(180deg); }
     .viz-svg-wrap { display: none; text-align: center; margin: 0 auto 12px; overflow: visible; }
-    .viz-svg-accordion.open .viz-svg-wrap { display: block; }
+    .viz-svg-accordion.open .viz-svg-wrap {
+      display: block;
+      animation: viz-open .35s cubic-bezier(.22,1,.36,1);
+    }
+    @keyframes viz-open {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
 
     /* ── Global seating plan toggle */
     .viz-all-toggle {
@@ -257,10 +275,10 @@
 
 <!-- ── TOP NAV ── -->
 <nav class="top-nav">
-  <div class="nav-logo">
+  <a class="nav-logo" href="index.html">
     <img src="assets/data/logo.svg" alt="ST&CJ Wedding">
     <span class="nav-logo-name" id="nav-couple-name"></span>
-  </div>
+  </a>
   <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">
     <span></span><span></span><span></span>
   </button>
@@ -550,12 +568,57 @@ function onLangChange() {
   }
 }
 
+// ── Confetti burst (wedding gold palette)
+function launchConfetti() {
+  const colors = ['#c8a84a','#e8d090','#f0b8cc','#ffffff','#b8923a','#fdf5e6','#e8c080'];
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:9000;overflow:hidden;';
+  document.body.appendChild(wrap);
+
+  if (!document.getElementById('_confetti_kf')) {
+    const s = document.createElement('style');
+    s.id = '_confetti_kf';
+    s.textContent = `@keyframes _cf {
+      0%   { transform: translateY(0) translateX(0) rotate(0deg); opacity:1; }
+      100% { transform: translateY(105vh) translateX(var(--dx)) rotate(var(--dr)); opacity:0; }
+    }`;
+    document.head.appendChild(s);
+  }
+
+  for (let i = 0; i < 54; i++) {
+    const el = document.createElement('div');
+    const w  = 5 + Math.random() * 7;
+    const h  = Math.random() > 0.45 ? w : w * 2.4;
+    el.style.cssText = [
+      `position:absolute`,
+      `left:${Math.random() * 100}%`,
+      `top:-12px`,
+      `width:${w}px`,
+      `height:${h}px`,
+      `background:${colors[Math.floor(Math.random() * colors.length)]}`,
+      `border-radius:${Math.random() > 0.5 ? '50%' : '2px'}`,
+      `--dx:${(Math.random() - 0.5) * 140}px`,
+      `--dr:${Math.random() * 720 - 360}deg`,
+      `animation:_cf ${0.9 + Math.random() * 0.7}s ${Math.random() * 0.5}s ease-in forwards`,
+    ].join(';');
+    wrap.appendChild(el);
+  }
+
+  setTimeout(() => wrap.remove(), 2200);
+}
+
 // ── Show result
 function showResult(payload) {
   currentPayload = payload;
   if (!_renderResult(payload)) return;
+  const resultEl = document.getElementById('result-screen');
   document.getElementById('upload-screen').style.display = 'none';
-  document.getElementById('result-screen').style.display = 'block';
+  resultEl.classList.remove('animate');
+  resultEl.style.display = 'block';
+  // Force reflow so removing+adding the class restarts the animation
+  void resultEl.offsetWidth;
+  resultEl.classList.add('animate');
+  launchConfetti();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

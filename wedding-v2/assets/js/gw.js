@@ -255,6 +255,29 @@
     });
     // Apply stored lang on load
     setLang(currentLang);
+
+    // ── Toast notification (auto-injected on all pages)
+    const toastEl = document.createElement('div');
+    toastEl.className = 'gw-toast';
+    document.body.appendChild(toastEl);
+    let _toastTimer = null;
+    window.GW.toast = function(msg, duration = 2500) {
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => toastEl.classList.remove('show'), duration);
+    };
+
+    // ── Scroll-to-top button (auto-injected on all pages)
+    const scrollBtn = document.createElement('button');
+    scrollBtn.className = 'scroll-top-btn';
+    scrollBtn.setAttribute('aria-label', 'Back to top');
+    scrollBtn.innerHTML = '<i class="fa-solid fa-chevron-up"></i>';
+    document.body.appendChild(scrollBtn);
+    scrollBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    window.addEventListener('scroll', () => {
+      scrollBtn.classList.toggle('visible', window.scrollY > 300);
+    }, { passive: true });
   });
 
   // ── Expose as global GW namespace

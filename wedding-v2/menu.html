@@ -20,7 +20,7 @@
       border-bottom: 1px solid var(--border);
       box-shadow: 0 2px 8px rgba(0,0,0,.16);
     }
-    .nav-logo { display: flex; align-items: center; gap: 10px; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .nav-logo img { height: 38px; width: 38px; flex-shrink: 0; }
     .nav-logo-name {
       font-family: Georgia, serif; font-size: 17px;
@@ -47,11 +47,12 @@
       width: 270px; z-index: 200; background: var(--surface);
       border-left: 1px solid var(--border);
       box-shadow: -4px 0 24px rgba(0,0,0,.12);
-      transition: right .28s cubic-bezier(.4,0,.2,1);
+      opacity: 0;
+      transition: right .28s cubic-bezier(.4,0,.2,1), opacity .22s ease;
       display: flex; flex-direction: column; padding: 20px 0 32px;
     }
     .nav-drawer.open {
-      right: 0;
+      right: 0; opacity: 1;
       background:
         linear-gradient(rgba(255,255,255,0.60), rgba(255,255,255,0.60)),
         url('assets/data/floral-background.jpg');
@@ -91,6 +92,10 @@
       padding: 22px 20px; position: relative; overflow: hidden;
       background: rgba(255,255,255,0.75);
       backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+
+      border-top: 0;
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
     }
     .menu-scroll::before {
       content: '❧';
@@ -99,7 +104,7 @@
       pointer-events: none; user-select: none;
     }
     .menu-section-head {
-      font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase;
+      font-size: 13px; letter-spacing: 2.5px; text-transform: uppercase;
       color: var(--gold); font-weight: 700; margin: 18px 0 10px;
       display: flex; align-items: center; gap: 8px;
     }
@@ -137,16 +142,60 @@
       line-height: 1.5; font-style: italic;
     }
     .menu-empty { text-align: center; padding: 32px 20px; color: var(--muted); font-size: 14px; }
+
+    /* ── Sticky course tabs ── */
+    .course-tabs {
+      position: sticky; top: 65px; z-index: 90;
+      display: flex; gap: 8px;
+      overflow-x: auto; scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      padding: 10px;
+      margin: 0 0 0;
+      border: 1.5px solid var(--gold);
+      border-radius: 18px 18px 0 0;
+      border-bottom: 0;
+      background: var(--bg);
+      transition: border-color .3s ease,
+                  background .3s ease,
+                  box-shadow .3s ease,
+                  border-radius .35s cubic-bezier(.4,0,.2,1),
+                  margin-left .35s cubic-bezier(.4,0,.2,1),
+                  margin-right .35s cubic-bezier(.4,0,.2,1),
+                  padding-left .35s cubic-bezier(.4,0,.2,1),
+                  padding-right .35s cubic-bezier(.4,0,.2,1);
+    }
+    .course-tabs.scrolled {
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    }
+    .course-tabs::-webkit-scrollbar { display: none; }
+    .course-tab {
+      flex-shrink: 0; padding: 6px 16px; border-radius: 50px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      color: var(--text2); font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: inherit; white-space: nowrap;
+      transition: background .2s, color .2s, border-color .2s, box-shadow .2s;
+    }
+    .course-tab.active {
+      background: var(--accent); border-color: var(--accent);
+      color: #fff; box-shadow: 0 2px 8px rgba(184,146,58,0.35);
+    }
+
+    /* ── Scroll-in animation ── */
+    .menu-anim {
+      opacity: 0; transform: translateY(14px);
+      transition: opacity .38s ease, transform .38s cubic-bezier(.22,1,.36,1);
+    }
+    .menu-anim.visible { opacity: 1; transform: translateY(0); }
   </style>
 </head>
 <body>
 
 <!-- ── TOP NAV ── -->
 <nav class="top-nav">
-  <div class="nav-logo">
+  <a class="nav-logo" href="index.html">
     <img src="assets/data/logo.svg" alt="ST&CJ Wedding">
     <span class="nav-logo-name" id="nav-couple-name"></span>
-  </div>
+  </a>
   <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">
     <span></span><span></span><span></span>
   </button>
@@ -191,7 +240,7 @@
 
 <script src="assets/js/gw.js"></script>
 <script>
-let currentLangMenu = 'en';
+let _menuAnimObs = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
@@ -216,22 +265,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.onLangChange = (lang) => renderMenu(lang);
 
 function renderMenu(lang) {
+  // Disconnect animation observer before re-render
+  if (_menuAnimObs) { _menuAnimObs.disconnect(); _menuAnimObs = null; }
+
   const config = GW.config;
   if (!config || !config.menu) return;
   const container = document.getElementById('menu-container');
   const isZh = lang === 'zh';
+  const multiCourse = config.menu.length > 1;
 
   let dishNum = 1;
-  let html = '<div class="menu-scroll">';
+  let tabsHtml = multiCourse ? '<div class="course-tabs" id="course-tabs">' : '';
+  let menuHtml = '<div class="menu-scroll">';
 
-  config.menu.forEach(section => {
+  config.menu.forEach((section, idx) => {
     const courseLabel = isZh ? section.courseZh : section.courseEn;
-    html += `<div class="menu-section-head">${courseLabel}</div>`;
+    const sectionId = 'course-' + idx;
+    if (multiCourse) {
+      tabsHtml += `<button class="course-tab${idx === 0 ? ' active' : ''}" data-target="${sectionId}">${courseLabel}</button>`;
+    }
+    menuHtml += `<div class="menu-section-head" id="${sectionId}">${courseLabel}</div>`;
     section.items.forEach(item => {
-      const primary   = isZh ? item.nameZh   : item.nameEn;
-      const secondary = isZh ? item.nameEn   : item.nameZh;
-      const desc      = isZh ? item.descZh   : item.descEn;
-      html += `
+      const primary   = isZh ? item.nameZh : item.nameEn;
+      const secondary = isZh ? item.nameEn : item.nameZh;
+      const desc      = isZh ? item.descZh : item.descEn;
+      menuHtml += `
         <div class="menu-item">
           <div class="menu-item-inner">
             <div class="menu-dish-num">${dishNum++}</div>
@@ -246,8 +304,77 @@ function renderMenu(lang) {
     });
   });
 
-  html += '</div>';
-  container.innerHTML = html;
+  if (multiCourse) tabsHtml += '</div>';
+  menuHtml += '</div>';
+  container.innerHTML = tabsHtml + menuHtml;
+
+  // ── Sticky tabs: click to scroll + active tracking
+  if (multiCourse) {
+    const tabEls  = Array.from(container.querySelectorAll('.course-tab'));
+    const headEls = Array.from(container.querySelectorAll('.menu-section-head'));
+    const tabsBar = document.getElementById('course-tabs');
+
+    // Click: smooth-scroll to section below nav + tabs
+    tabEls.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = document.getElementById(btn.dataset.target);
+        if (!target) return;
+        const offset = 65 + (tabsBar ? tabsBar.offsetHeight : 44);
+        window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - offset, behavior: 'smooth' });
+      });
+    });
+
+    // Active tab tracking — rAF-throttled scroll listener (no IntersectionObserver
+    // here so it never interrupts the page's own smooth-scroll operations)
+    let _rafPending = false;
+    function updateActiveTab() {
+      const offset = 65 + (tabsBar ? tabsBar.offsetHeight : 44) + 16;
+      let activeIdx = 0;
+      headEls.forEach((head, i) => {
+        if (head.getBoundingClientRect().top <= offset) activeIdx = i;
+      });
+      tabEls.forEach((t, i) => t.classList.toggle('active', i === activeIdx));
+      if (tabsBar) {
+        // Only adjust horizontal scroll when tabs overflow (mobile / narrow viewport).
+        // On desktop where all tabs fit, skip entirely to avoid any layout side-effects.
+        if (tabsBar.scrollWidth > tabsBar.clientWidth) {
+          const activeTab = tabEls[activeIdx];
+          const tabRect = activeTab.getBoundingClientRect();
+          const barRect = tabsBar.getBoundingClientRect();
+          tabsBar.scrollLeft += tabRect.left - barRect.left - (barRect.width - tabRect.width) / 2;
+        }
+        tabsBar.classList.toggle('scrolled', window.scrollY > 20);
+      }
+    }
+
+    window.addEventListener('scroll', () => {
+      if (_rafPending) return;
+      _rafPending = true;
+      requestAnimationFrame(() => { updateActiveTab(); _rafPending = false; });
+    }, { passive: true });
+
+    updateActiveTab(); // set correct state on first render
+  }
+
+  // ── Scroll-in animation (skipped if user prefers reduced motion)
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const animEls = Array.from(container.querySelectorAll('.menu-section-head, .menu-item'));
+    animEls.forEach(el => el.classList.add('menu-anim'));
+
+    _menuAnimObs = new IntersectionObserver((entries) => {
+      const visible = entries.filter(e => e.isIntersecting);
+      visible.forEach((entry, i) => {
+        const delay = i * 45;
+        entry.target.style.transitionDelay = delay + 'ms';
+        entry.target.classList.add('visible');
+        // Clear delay after animation so re-renders start clean
+        setTimeout(() => { entry.target.style.transitionDelay = ''; }, delay + 450);
+        _menuAnimObs.unobserve(entry.target);
+      });
+    }, { threshold: 0.05 });
+
+    animEls.forEach(el => _menuAnimObs.observe(el));
+  }
 }
 
 // Hamburger / drawer toggle

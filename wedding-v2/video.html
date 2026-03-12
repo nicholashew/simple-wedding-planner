@@ -20,7 +20,7 @@
       border-bottom: 1px solid var(--border);
       box-shadow: 0 2px 8px rgba(0,0,0,.16);
     }
-    .nav-logo { display: flex; align-items: center; gap: 10px; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .nav-logo img { height: 38px; width: 38px; flex-shrink: 0; }
     .nav-logo-name {
       font-family: Georgia, serif; font-size: 17px;
@@ -47,11 +47,12 @@
       width: 270px; z-index: 200; background: var(--surface);
       border-left: 1px solid var(--border);
       box-shadow: -4px 0 24px rgba(0,0,0,.12);
-      transition: right .28s cubic-bezier(.4,0,.2,1);
+      opacity: 0;
+      transition: right .28s cubic-bezier(.4,0,.2,1), opacity .22s ease;
       display: flex; flex-direction: column; padding: 20px 0 32px;
     }
     .nav-drawer.open {
-      right: 0;
+      right: 0; opacity: 1;
       background:
         linear-gradient(rgba(255,255,255,0.60), rgba(255,255,255,0.60)),
         url('assets/data/floral-background.jpg');
@@ -92,6 +93,22 @@
       box-shadow: 0 4px 24px rgba(0,0,0,.18);
       aspect-ratio: 16/9; margin-bottom: 20px;
     }
+    /* Thumbnail + play button shown before video plays */
+    #video-poster {
+      position: absolute; inset: 0; z-index: 4;
+      background: #111 center/cover no-repeat;
+      display: none; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .video-play-btn {
+      width: 68px; height: 68px; border-radius: 50%; border: none;
+      background: rgba(200,168,74,0.88); color: #fff; font-size: 24px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 28px rgba(0,0,0,.45);
+      cursor: pointer; padding-left: 4px;
+      transition: background .2s, transform .2s;
+    }
+    .video-play-btn:hover { background: var(--accent-dk); transform: scale(1.1); }
     #montage-video {
       width: 100%; height: 100%; display: block; object-fit: cover;
       filter: saturate(0.92) brightness(0.97) contrast(1.02);
@@ -172,10 +189,10 @@
 
 <!-- ── TOP NAV ── -->
 <nav class="top-nav">
-  <div class="nav-logo">
+  <a class="nav-logo" href="index.html">
     <img src="assets/data/logo.svg" alt="ST&CJ Wedding">
     <span class="nav-logo-name" id="nav-couple-name"></span>
-  </div>
+  </a>
   <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">
     <span></span><span></span><span></span>
   </button>
@@ -211,6 +228,9 @@
 
   <div id="montage-wrap" data-wm="">
     <video id="montage-video" controls preload="none" playsinline></video>
+    <div id="video-poster">
+      <button class="video-play-btn" aria-label="Play video"><i class="fa-solid fa-play"></i></button>
+    </div>
     <div id="montage-overlay">
       <div class="lock-icon"><i class="fa-solid fa-lock"></i></div>
       <div class="lock-title" data-i18n="videoUnavailable">Video Unavailable</div>
@@ -296,7 +316,20 @@ function applyLockDesc() {
 
 function unlockVideo(src) {
   document.getElementById('montage-overlay').classList.add('hidden');
-  document.getElementById('montage-video').src = src;
+  const video  = document.getElementById('montage-video');
+  const poster = document.getElementById('video-poster');
+  // Show thumbnail with gold play button; defer loading the video until tap
+  const thumb = (GW.config && GW.config.montage && GW.config.montage.thumbnailUrl)
+    || 'assets/data/banner.jpg';
+  poster.style.backgroundImage = `url('${thumb}')`;
+  poster.style.display = 'flex';
+  poster.addEventListener('click', () => {
+    poster.style.display = 'none';
+    video.src = src;
+    video.play().catch(() => {});
+  }, { once: true });
+  // Also hide if user starts playback via native controls
+  video.addEventListener('play', () => { poster.style.display = 'none'; }, { once: true });
 }
 
 function startCountdown(targetDate) {

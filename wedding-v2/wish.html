@@ -20,7 +20,7 @@
       border-bottom: 1px solid var(--border);
       box-shadow: 0 2px 8px rgba(0,0,0,.16);
     }
-    .nav-logo { display: flex; align-items: center; gap: 10px; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
     .nav-logo img { height: 38px; width: 38px; flex-shrink: 0; }
     .nav-logo-name {
       font-family: Georgia, serif; font-size: 17px;
@@ -47,11 +47,12 @@
       width: 270px; z-index: 200; background: var(--surface);
       border-left: 1px solid var(--border);
       box-shadow: -4px 0 24px rgba(0,0,0,.12);
-      transition: right .28s cubic-bezier(.4,0,.2,1);
+      opacity: 0;
+      transition: right .28s cubic-bezier(.4,0,.2,1), opacity .22s ease;
       display: flex; flex-direction: column; padding: 20px 0 32px;
     }
     .nav-drawer.open {
-      right: 0;
+      right: 0; opacity: 1;
       background:
         linear-gradient(rgba(255,255,255,0.60), rgba(255,255,255,0.60)),
         url('assets/data/floral-background.jpg');
@@ -138,10 +139,10 @@
 
 <!-- ── TOP NAV ── -->
 <nav class="top-nav">
-  <div class="nav-logo">
+  <a class="nav-logo" href="index.html">
     <img src="assets/data/logo.svg" alt="ST&CJ Wedding">
     <span class="nav-logo-name" id="nav-couple-name"></span>
-  </div>
+  </a>
   <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">
     <span></span><span></span><span></span>
   </button>
@@ -233,10 +234,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         iframe.style.position = '';
       }
 
-      iframe.addEventListener('load', revealForm);
-      // Fallback: reveal after 20s if load event never fires
+      let loadCount = 0;
       const fallbackTimer = setTimeout(revealForm, 20000);
-      iframe.addEventListener('load', () => clearTimeout(fallbackTimer));
+      iframe.addEventListener('load', () => {
+        clearTimeout(fallbackTimer);
+        loadCount++;
+        if (loadCount === 1) {
+          revealForm();
+        } else {
+          // Second load = Google Forms navigated to confirmation page
+          document.getElementById('form-wrap').innerHTML = `
+            <div style="padding:60px 24px;text-align:center;">
+              <i class="fa-solid fa-envelope-open-text" style="font-size:48px;color:var(--accent);display:block;margin-bottom:16px;"></i>
+              <h3 style="font-family:Georgia,serif;font-size:22px;font-weight:400;color:var(--accent-dk);margin-bottom:10px;">Thank you!</h3>
+              <p style="font-size:14px;color:var(--text2);line-height:1.7;">Your wishes have been received.<br>We truly appreciate your heartfelt message.</p>
+            </div>`;
+          if (window.GW && GW.toast) GW.toast('Wishes sent! Thank you 🎊', 4000);
+        }
+      });
 
       wrap.appendChild(iframe);
     }

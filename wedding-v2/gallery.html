@@ -102,7 +102,16 @@
       transition: transform .2s, box-shadow .2s;
     }
     .gallery-item:hover { transform: scale(1.02); box-shadow: 0 4px 16px rgba(0,0,0,.12); }
-    .gallery-item img { width: 100%; height: auto; display: block; }
+    .gallery-item img { width: 100%; height: auto; display: block; transition: opacity .35s ease; }
+    .gallery-item img.lazy {
+      opacity: 0;
+      min-height: 120px;
+      background: linear-gradient(90deg, var(--accent-lt) 25%, #fff 50%, var(--accent-lt) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    .gallery-item img.lazy-loaded { opacity: 1; background: none; animation: none; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
     /* Lightbox */
     #lightbox {
@@ -235,6 +244,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         mk(300, 380, '#f5ead8', '#c49850'),
         mk(420, 320, '#f5dde8', '#c8799a'),
         mk(300, 280, '#fdf3d4', '#c8a84a'),
+        mk(300, 420, '#f5dde8', '#c8799a'),
+        mk(420, 300, '#fdf3d4', '#c8a84a'),
+        mk(300, 300, '#dde8f5', '#7099c8'),
+        mk(300, 500, '#e8ddf5', '#9070c8'),
+        mk(420, 260, '#ddf5e4', '#5caa74'),
+        mk(300, 380, '#f5ead8', '#c49850'),
+        mk(420, 320, '#f5dde8', '#c8799a'),
+        mk(300, 280, '#fdf3d4', '#c8a84a'),
+        mk(300, 420, '#f5dde8', '#c8799a'),
+        mk(420, 300, '#fdf3d4', '#c8a84a'),
+        mk(300, 300, '#dde8f5', '#7099c8'),
+        mk(300, 500, '#e8ddf5', '#9070c8'),
+        mk(420, 260, '#ddf5e4', '#5caa74'),
+        mk(300, 380, '#f5ead8', '#c49850'),
+        mk(420, 320, '#f5dde8', '#c8799a'),
+        mk(300, 280, '#fdf3d4', '#c8a84a'),
+        mk(300, 420, '#f5dde8', '#c8799a'),
+        mk(420, 300, '#fdf3d4', '#c8a84a'),
+        mk(300, 300, '#dde8f5', '#7099c8'),
+        mk(300, 500, '#e8ddf5', '#9070c8'),
+        mk(420, 260, '#ddf5e4', '#5caa74'),
+        mk(300, 380, '#f5ead8', '#c49850'),
+        mk(420, 320, '#f5dde8', '#c8799a'),
+        mk(300, 280, '#fdf3d4', '#c8a84a'),
+        mk(300, 420, '#f5dde8', '#c8799a'),
+        mk(420, 300, '#fdf3d4', '#c8a84a'),
+        mk(300, 300, '#dde8f5', '#7099c8'),
+        mk(300, 500, '#e8ddf5', '#9070c8'),
+        mk(420, 260, '#ddf5e4', '#5caa74'),
+        mk(300, 380, '#f5ead8', '#c49850'),
+        mk(420, 320, '#f5dde8', '#c8799a'),
+        mk(300, 280, '#fdf3d4', '#c8a84a'),
       ];
       document.getElementById('gallery-container').insertAdjacentHTML(
         'beforebegin',
@@ -254,11 +295,29 @@ function renderGallery() {
   let html = '<div class="gallery-grid">';
   photos.forEach((src, i) => {
     html += `<div class="gallery-item" onclick="openLightbox(${i})">
-      <img src="${src}" alt="Photo ${i+1}" loading="lazy">
+      <img class="lazy" data-src="${src}" alt="Photo ${i+1}">
     </div>`;
   });
   html += '</div>';
   container.innerHTML = html;
+
+  // IntersectionObserver: load image src only when near the viewport
+  const observer = new IntersectionObserver((entries, obs) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const img = entry.target;
+      img.src = img.dataset.src;
+      img.onload = () => { 
+        img.classList.remove('lazy'); 
+        img.classList.add('lazy-loaded'); 
+        console.log(`img ${img.src} loaded`);
+      };
+      img.onerror = () => { img.classList.remove('lazy'); };
+      obs.unobserve(img);
+    });
+  }, { rootMargin: '300px 0px' }); // pre-load 300px before entering viewport
+
+  container.querySelectorAll('img.lazy').forEach(img => observer.observe(img));
 }
 
 function openLightbox(i) {

@@ -211,6 +211,71 @@
       font-family: Georgia, serif; font-size: 15px;
       font-style: normal; color: var(--accent-dk); font-weight: 400;
     }
+    .mfn-preview {
+      margin-top: 20px;
+      border-top: 1px dashed rgba(200,168,74,.3);
+      padding-top: 18px;
+    }
+    .mfn-preview-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 20px; border-radius: 50px;
+      background: none; border: 1.5px solid rgba(200,168,74,.5);
+      color: var(--accent-dk); font-size: 13px; font-weight: 600;
+      font-family: inherit; cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .mfn-preview-btn:hover { background: var(--accent-lt); border-color: var(--accent); }
+    .mfn-preview-caption {
+      margin-top: 8px;
+      font-size: 11px; color: var(--muted);
+      letter-spacing: 0.5px; font-style: italic;
+    }
+
+    /* ── Menu preview modal ── */
+    .mfn-modal {
+      display: none; position: fixed; inset: 0; z-index: 9800;
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .mfn-modal.open { display: flex; }
+    .mfn-modal-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(10,8,4,.75);
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    }
+    .mfn-modal-box {
+      position: relative; z-index: 1;
+      background: #fdf8ef;
+      border-radius: 18px;
+      padding: 24px 20px 20px;
+      max-width: 520px; width: 100%;
+      box-shadow: 0 12px 48px rgba(0,0,0,.3);
+      text-align: center;
+      animation: mfnFadeUp .22s ease;
+    }
+    @keyframes mfnFadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .mfn-modal-close {
+      position: absolute; top: 12px; right: 14px;
+      background: none; border: none; font-size: 20px;
+      color: var(--muted); cursor: pointer; line-height: 1;
+      padding: 4px 8px; border-radius: 6px; transition: color .15s;
+    }
+    .mfn-modal-close:hover { color: var(--text); }
+    .mfn-modal-img {
+      max-width: 100%; border-radius: 10px;
+      display: block; margin: 0 auto 14px; margin-right: 16px;
+    }
+    .mfn-modal-title {
+      font-family: Georgia, serif; font-size: 18px; font-weight: 400;
+      color: var(--accent-dk); margin-bottom: 16px;
+    }
+    .mfn-modal-caption {
+      font-size: 11px; color: var(--muted);
+      font-style: italic; letter-spacing: 0.5px;
+    }
 
     /* ── Sitemap ── */
     .menu-sitemap {
@@ -393,6 +458,13 @@
     <span class="mfn-icon">❧</span>
     <p data-i18n="menuFooterNote">Dishes are prepared fresh for this occasion. Menu may be subject to seasonal availability.</p>
     <strong data-i18n="menuFooterWish">Wishing you a wonderful feast. 祝用餐愉快！</strong>
+    <div class="mfn-preview">
+      <button class="mfn-preview-btn" id="mfnPreviewBtn">
+        <i class="fa-solid fa-scroll"></i>
+        <span data-i18n="menuPreviewBtn">View banquet menu</span>
+      </button>
+      <p class="mfn-preview-caption" data-i18n="menuPreviewCaption">For illustration only — actual presentation may vary.</p>
+    </div>
   </div>
 
   <div class="menu-sitemap">
@@ -421,6 +493,17 @@
     </div>
   </div>
 </main>
+
+<!-- Banquet menu preview modal -->
+<div class="mfn-modal" id="mfnModal" role="dialog" aria-modal="true" aria-label="Banquet menu preview">
+  <div class="mfn-modal-backdrop" id="mfnBackdrop"></div>
+  <div class="mfn-modal-box">
+    <button class="mfn-modal-close" id="mfnModalClose" aria-label="Close">✕</button>
+    <h3 class="mfn-modal-title" data-i18n="menuPreviewTitle">Banquet Menu</h3>
+    <img class="mfn-modal-img" src="assets/img/banquet-menu-vertical.png" alt="Banquet menu" loading="lazy">
+    <p class="mfn-modal-caption" data-i18n="menuPreviewCaption">For illustration only — actual presentation may vary.</p>
+  </div>
+</div>
 
 <footer class="gw-footer">
   <span id="gw-footer-names"></span>
@@ -583,6 +666,18 @@ hamburgerBtn.addEventListener('click', openDrawer);
 drawerClose.addEventListener('click', closeDrawer);
 navOverlay.addEventListener('click', closeDrawer);
 window.addEventListener('pageshow', closeDrawer);
+
+// Banquet menu preview modal
+const mfnModal      = document.getElementById('mfnModal');
+const mfnPreviewBtn = document.getElementById('mfnPreviewBtn');
+const mfnModalClose = document.getElementById('mfnModalClose');
+const mfnBackdrop   = document.getElementById('mfnBackdrop');
+function openMfnModal()  { mfnModal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeMfnModal() { mfnModal.classList.remove('open'); document.body.style.overflow = ''; }
+mfnPreviewBtn.addEventListener('click', openMfnModal);
+mfnModalClose.addEventListener('click', closeMfnModal);
+mfnBackdrop.addEventListener('click', closeMfnModal);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMfnModal(); });
 </script>
 </body>
 </html>

@@ -456,6 +456,18 @@
       color: var(--text2); white-space: pre-wrap; word-break: break-all;
       margin: 0;
     }
+    .qdi-payload {
+      margin-top: 8px; padding-top: 7px;
+      border-top: 1px dashed var(--border);
+      font-size: 10px; color: var(--muted);
+    }
+    .qdi-payload .qdi-payload-label {
+      font-weight: 600; color: var(--text2); margin-bottom: 2px;
+    }
+    .qr-overflow-error {
+      padding: 16px 12px; text-align: center;
+      color: #c0392b; font-size: 13px; font-weight: 500;
+    }
     .qr-group-note {
       font-size: 11px; color: var(--accent-dk); text-align: center;
       padding: 8px 10px; background: var(--accent-lt); border-radius: 8px;
@@ -834,20 +846,60 @@ let qrMode = 'ids';    // 'ids' | 'group'
 let qrLeadId = null;   // native id of lead guest
 let choicesInstance = null;
 
-// ── Unicode-safe base64 encode/decode for QR payloads
-function b64EncodeJson(obj) {
-  const bytes = new TextEncoder().encode(JSON.stringify(obj));
+// ── QR Payload encoding ──────────────────────────────────────────────────────
+// Known category keys → compact numeric index (both sides must share this map)
+const QR_CAT_MAP = {
+  'bride-family': 0, 'bride-rel': 1, 'bride-friend': 2, 'bride-colleague': 3,
+  'groom-family': 4, 'groom-rel': 5, 'groom-friend': 6, 'groom-colleague': 7,
+  'others': 8
+};
+const QR_CAT_RMAP = Object.fromEntries(Object.entries(QR_CAT_MAP).map(([k,v]) => [v, k]));
+
+function jsonMinify(obj) {
+  return JSON.stringify(obj, (k, v) => (v === null || v === undefined) ? undefined : v);
+}
+function toBase64(obj) {
+  const bytes = new TextEncoder().encode(jsonMinify(obj));
   let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b));
   return btoa(bin);
 }
+function toBase32(obj) {
+  const bytes = new TextEncoder().encode(jsonMinify(obj));
+  const alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  let bits = 0, value = 0, out = '';
+  for (const b of bytes) { value = (value << 8) | b; bits += 8; while (bits >= 5) { out += alpha[(value >>> (bits - 5)) & 31]; bits -= 5; } }
+  if (bits > 0) out += alpha[(value << (5 - bits)) & 31];
+  return out;
+}
 function b64DecodeJson(str) {
-  try {
-    const bin = atob(str);
-    const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
-    return JSON.parse(new TextDecoder().decode(bytes));
-  } catch {}
+  try { const bin = atob(str); const bytes = Uint8Array.from(bin, c => c.charCodeAt(0)); return JSON.parse(new TextDecoder().decode(bytes)); } catch {}
   try { return JSON.parse(atob(str)); } catch {}
   return null;
+}
+
+// Build compact payload object from current QR selection
+function buildQrData() {
+  if (qrLeadId === null) return null;
+  const guests = resolveQrGuests();
+  if (!guests.length) return null;
+  if (qrMode === 'ids') {
+    const others = guests.map(g => g.id).filter(id => String(id) !== String(qrLeadId));
+    const obj = { v: 1, l: qrLeadId };
+    if (others.length) obj.i = others;
+    return obj;
+  }
+  const groups = getSelectedGroups();
+  if (groups.length === 1) {
+    const { cat, subCat } = groups[0];
+    const obj = { v: 2, c: QR_CAT_MAP[cat] ?? cat, l: qrLeadId };
+    if (subCat) obj.s = subCat;
+    return obj;
+  }
+  return {
+    v: 3,
+    g: groups.map(({ cat, subCat }) => subCat ? { c: QR_CAT_MAP[cat] ?? cat, s: subCat } : { c: QR_CAT_MAP[cat] ?? cat }),
+    l: qrLeadId
+  };
 }
 function getSelectedGroups() {
   if (choicesInstance) {
@@ -1623,90 +1675,118 @@ function selectQrLead(idRaw) {
   );
   renderQrCanvas();
 }
+// Store current payload for copy/share/download
+let _qrPayload = null, _qrEncoding = null;
+
 function generateQrPayload() {
-  if (qrLeadId === null) return null;
-  const guests = resolveQrGuests();
-  if (!guests.length) return null;
-  if (qrMode === 'ids') {
-    const ids = guests.map(g => g.id);
-    return b64EncodeJson([qrLeadId, ...ids.filter(id => id !== qrLeadId)]);
-  }
-  // Group mode — Unicode-safe encode (subCat may contain non-ASCII)
-  const groups = getSelectedGroups();
-  if (groups.length === 1) {
-    const { cat, subCat } = groups[0];
-    return b64EncodeJson({ v: 2, cat, subCat: subCat || null, lead: qrLeadId });
-  }
-  return b64EncodeJson({ v: 3, groups, lead: qrLeadId });
+  const data = buildQrData();
+  return data ? toBase64(data) : null;
 }
 function buildQrUrl() {
-  const p = generateQrPayload();
+  const p = _qrPayload || generateQrPayload();
   if (!p) return null;
-  const base = new URL('../table.html', location.href).href;
-  return `${base}?qr=${encodeURIComponent(p)}`;
+  return new URL('../table.html', location.href).href + `?qr=${encodeURIComponent(p)}`;
 }
 function renderQrCanvas() {
-  const wrap      = document.getElementById('qr-canvas-wrap');
-  const urlEl     = document.getElementById('qr-url-text');
-  const decodeEl  = document.getElementById('qr-decode-info');
-  const dlBtn     = document.getElementById('qr-dl-btn');
-  const copyBtn   = document.getElementById('qr-copy-btn');
-  const shareBtn  = document.getElementById('qr-share-btn');
+  const wrap       = document.getElementById('qr-canvas-wrap');
+  const urlEl      = document.getElementById('qr-url-text');
+  const decodeEl   = document.getElementById('qr-decode-info');
+  const dlBtn      = document.getElementById('qr-dl-btn');
+  const copyBtn    = document.getElementById('qr-copy-btn');
+  const shareBtn   = document.getElementById('qr-share-btn');
   const copyImgBtn = document.getElementById('qr-copy-img-btn');
-  const payload   = generateQrPayload();
-  if (!payload) {
+  const divEl      = document.getElementById('qr-canvas-div');
+
+  _qrPayload = null; _qrEncoding = null;
+
+  const data = buildQrData();
+  if (!data) {
     wrap.style.display = urlEl.style.display = decodeEl.style.display = 'none';
     dlBtn.disabled = copyBtn.disabled = shareBtn.disabled = true;
     if (copyImgBtn) copyImgBtn.disabled = true;
     return;
   }
-  const url = new URL('../table.html', location.href).href + `?qr=${encodeURIComponent(payload)}`;
-  wrap.style.display = urlEl.style.display = decodeEl.style.display = 'block';
-  urlEl.textContent = url;
 
-  // Decode and render human-readable payload info
-  const decoded = b64DecodeJson(payload);
-  decodeEl.innerHTML = buildDecodeInfoHtml(decoded);
+  const compactJson = jsonMinify(data);
+  const payload64   = toBase64(data);
+  const payload32   = toBase32(data);
+  const QR_OPTS     = { width: 220, height: 220, colorDark: '#1a2030', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H };
+  let qrErr = false;
 
-  const divEl = document.getElementById('qr-canvas-div');
   divEl.innerHTML = '';
-  new QRCode(divEl, {
-    text: url, width: 220, height: 220,
-    colorDark: '#1a2030', colorLight: '#ffffff',
-    correctLevel: QRCode.CorrectLevel.H
-  });
+  try {
+    new QRCode(divEl, { ...QR_OPTS, text: payload64 });
+    _qrPayload = payload64; _qrEncoding = 'base64';
+  } catch (_) {
+    divEl.innerHTML = '';
+    try {
+      new QRCode(divEl, { ...QR_OPTS, text: payload32 });
+      _qrPayload = payload32; _qrEncoding = 'base32';
+    } catch (_2) { qrErr = true; }
+  }
+
+  wrap.style.display = decodeEl.style.display = 'block';
+
+  if (qrErr) {
+    divEl.innerHTML = '<div class="qr-overflow-error"><i class="fa-solid fa-circle-exclamation"></i> QR overflow — too many guests or groups. Please reduce your selection.</div>';
+    urlEl.style.display = 'none';
+    dlBtn.disabled = copyBtn.disabled = shareBtn.disabled = true;
+    if (copyImgBtn) copyImgBtn.disabled = true;
+    decodeEl.innerHTML = buildDecodeInfoHtml(data, compactJson, null, null);
+    return;
+  }
+
+  const url = new URL('../table.html', location.href).href + `?qr=${encodeURIComponent(_qrPayload)}`;
+  urlEl.style.display = 'block';
+  urlEl.textContent = url;
   dlBtn.disabled = copyBtn.disabled = shareBtn.disabled = false;
   if (copyImgBtn) copyImgBtn.disabled = !navigator.clipboard?.write;
+  decodeEl.innerHTML = buildDecodeInfoHtml(data, compactJson, _qrPayload, _qrEncoding);
 }
-function buildDecodeInfoHtml(decoded) {
-  if (!decoded) return '<div class="qdi-mode">⚠ Could not decode payload</div>';
-  if (Array.isArray(decoded)) {
-    const lead = decoded[0];
-    const leadGuest = allGuests.find(g => String(g.id) === String(lead));
-    const leadName = leadGuest ? `${leadGuest.lastName} ${leadGuest.firstName}` : String(lead);
-    return `<div class="qdi-mode"><i class="fa-solid fa-lock"></i> ID-array (${decoded.length} guest${decoded.length !== 1 ? 's' : ''})</div>`
-      + `<pre>lead: ${esc(leadName)} [id=${esc(String(lead))}]\nids: [${decoded.map(id => esc(String(id))).join(', ')}]</pre>`;
+function catLabelFromCode(c) {
+  const key = typeof c === 'number' ? (QR_CAT_RMAP[c] || String(c)) : c;
+  const catObj = categories.find(cat => cat.key === key);
+  return catObj ? catObj.label.replace(/^\p{Emoji}\s*/u, '') : key;
+}
+function leadNameFromId(id) {
+  if (id == null) return '—';
+  const g = allGuests.find(g => String(g.id) === String(id));
+  return g ? `${g.lastName} ${g.firstName}` : String(id);
+}
+function buildDecodeInfoHtml(data, compactJson, payload, encoding) {
+  if (!data) return '<div class="qdi-mode">⚠ Could not build payload</div>';
+  let modeHtml = '', bodyHtml = '';
+
+  if (data.v === 1) {
+    const others = data.i || [];
+    const total = 1 + others.length;
+    modeHtml = `<div class="qdi-mode"><i class="fa-solid fa-lock"></i> ID-list — v1 (${total} guest${total !== 1 ? 's' : ''})</div>`;
+    bodyHtml = `lead: ${esc(leadNameFromId(data.l))} [id=${esc(String(data.l))}]\nids:  [${[data.l, ...others].map(id => esc(String(id))).join(', ')}]`;
+  } else if (data.v === 2) {
+    modeHtml = `<div class="qdi-mode"><i class="fa-solid fa-users"></i> Group — v2 (single group)</div>`;
+    bodyHtml = `cat:    ${esc(catLabelFromCode(data.c))}\nsubCat: ${data.s != null ? esc(data.s) : 'ALL'}\nlead:   ${esc(leadNameFromId(data.l))}`;
+  } else if (data.v === 3) {
+    const n = data.g.length;
+    modeHtml = `<div class="qdi-mode"><i class="fa-solid fa-users"></i> Group — v3 (${n} group${n !== 1 ? 's' : ''})</div>`;
+    const groupLines = data.g.map(sg => `  ${esc(catLabelFromCode(sg.c))} / ${sg.s != null ? esc(sg.s) : 'ALL'}`).join('\n');
+    bodyHtml = `groups:\n${groupLines}\nlead: ${esc(leadNameFromId(data.l))}`;
+  } else {
+    modeHtml = `<div class="qdi-mode"><i class="fa-solid fa-lock"></i> Unknown format</div>`;
+    bodyHtml = esc(compactJson);
   }
-  if (decoded.v === 2) {
-    const catObj = categories.find(c => c.key === decoded.cat);
-    const catLabel = catObj ? catObj.label : decoded.cat;
-    const leadGuest = decoded.lead != null ? allGuests.find(g => String(g.id) === String(decoded.lead)) : null;
-    const leadName = leadGuest ? `${leadGuest.lastName} ${leadGuest.firstName}` : (decoded.lead != null ? String(decoded.lead) : '—');
-    return `<div class="qdi-mode"><i class="fa-solid fa-users"></i> Group v2 (single group)</div>`
-      + `<pre>cat:    ${esc(catLabel)}\nsubCat: ${decoded.subCat != null ? esc(decoded.subCat) : 'ALL'}\nlead:   ${esc(leadName)}</pre>`;
-  }
-  if (decoded.v === 3) {
-    const groupLines = decoded.groups.map(sg => {
-      const catObj = categories.find(c => c.key === sg.cat);
-      const catLabel = catObj ? catObj.label.replace(/^\p{Emoji}\s*/u, '') : sg.cat;
-      return `  ${esc(catLabel)} / ${sg.subCat != null ? esc(sg.subCat) : 'ALL'}`;
-    }).join('\n');
-    const leadGuest = decoded.lead != null ? allGuests.find(g => String(g.id) === String(decoded.lead)) : null;
-    const leadName = leadGuest ? `${leadGuest.lastName} ${leadGuest.firstName}` : (decoded.lead != null ? String(decoded.lead) : '—');
-    return `<div class="qdi-mode"><i class="fa-solid fa-users"></i> Group v3 (${decoded.groups.length} group${decoded.groups.length !== 1 ? 's' : ''})</div>`
-      + `<pre>groups:\n${groupLines}\nlead: ${esc(leadName)}</pre>`;
-  }
-  return `<div class="qdi-mode"><i class="fa-solid fa-lock"></i> Unknown format</div><pre>${esc(JSON.stringify(decoded, null, 2))}</pre>`;
+
+  const payloadHtml = payload
+    ? `<div class="qdi-payload">
+        <div class="qdi-payload-label">Encoding: ${esc(encoding)} · ${payload.length} chars</div>
+        <div class="qdi-payload-label">Payload:</div><pre>${esc(payload)}</pre>
+        <div class="qdi-payload-label" style="margin-top:4px">Minified JSON:</div><pre>${esc(compactJson)}</pre>
+      </div>`
+    : `<div class="qdi-payload">
+        <div class="qdi-payload-label" style="color:#c0392b">QR generation failed — payload too large</div>
+        <div class="qdi-payload-label" style="margin-top:4px">Minified JSON:</div><pre>${esc(compactJson)}</pre>
+      </div>`;
+
+  return modeHtml + `<pre>${bodyHtml}</pre>` + payloadHtml;
 }
 function downloadQr() {
   const lead = qrLeadId !== null ? allGuests.find(g => String(g.id) === String(qrLeadId)) : null;

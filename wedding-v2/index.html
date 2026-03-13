@@ -352,21 +352,29 @@
       .nav-lang-desktop .lang-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
       .nav-lang-desktop .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent-dk); }
 
-      /* Hero text block: visible, dark text on page background */
-      .hero-text-block {
-        display: block;
-        margin: 65px auto 0; /* clear fixed nav + center */
-        padding: 52px 60px 40px;
-        max-width: 1320px;
-      }
-      .hero-text-block .hero-subtitle { color: var(--accent); font-size: 13px; }
-      .hero-text-block .hero-title { color: var(--text); font-size: clamp(36px, 4vw, 54px); }
-      .hero-text-block .hero-tagline { color: var(--text2); font-size: 16px; line-height: 1.7; }
+      /* Hero: taller, clears the fixed nav */
+      .hero { margin-top: 65px; min-height: 480px; max-height: 600px; }
 
-      /* Hero image: remove top margin (hero-text-block already clears the nav) */
-      .hero { margin-top: 0; min-height: 340px; max-height: min(52vh, 500px); }
-      /* Hide overlay text on the banner image */
-      .hero-overlay { display: none; }
+      /* Overlay: no gradient, text right-center */
+      .hero-overlay {
+        background: none;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 0 80px 0 0;
+        text-align: right;
+      }
+      .hero-title {
+        text-shadow: 0 2px 20px rgba(0,0,0,.65), 0 1px 4px rgba(0,0,0,.35);
+        font-size: clamp(32px, 4vw, 52px);
+      }
+      .hero-subtitle {
+        text-shadow: 0 1px 8px rgba(0,0,0,.55);
+      }
+      .hero-tagline {
+        text-shadow: 0 1px 8px rgba(0,0,0,.55);
+        font-size: 15px;
+      }
+      .hero-cta { justify-content: flex-end; }
 
       /* Hide lang-bar below hero (lang is now in the nav) */
       .lang-bar { display: none; }
@@ -392,8 +400,8 @@
 
     /* ── WIDE DESKTOP (≥1280px) ── */
     @media (min-width: 1280px) {
-      .hero-text-block { padding: 60px 80px 44px; }
-      .hero-text-block .hero-title { font-size: clamp(44px, 4vw, 60px); }
+      .hero { min-height: 540px; max-height: 680px; }
+      .hero-title { font-size: clamp(42px, 4vw, 60px); }
       .cards-grid { grid-template-columns: repeat(3, 1fr); gap: 18px; }
     }
 
@@ -466,20 +474,6 @@
   <a href="wish.html"><i class="fa-solid fa-envelope-open-text"></i> <span data-i18n="sendWishes">Send your wishes</span></a>
 </div>
 
-<!-- ── HERO TEXT BLOCK (desktop only) ── -->
-<div class="hero-text-block">
-  <div class="hero-subtitle" id="hero-date-dt"></div>
-  <h1 class="hero-title" data-i18n="welcomeTitle">Welcome to our wedding celebration</h1>
-  <p class="hero-tagline">
-    <span data-i18n="heroTagline1">Join us as we celebrate love and commitment.</span><br>
-    <span data-i18n="heroTagline2">A day to remember with those we hold dear.</span>
-  </p>
-  <div class="hero-cta">
-    <a class="hero-cta-btn hero-cta-primary" href="table.html" data-i18n="findTable">Find my seat</a>
-    <a class="hero-cta-btn hero-cta-outline" href="wish.html" data-i18n="sendWishes">Send your wishes</a>
-  </div>
-</div>
-
 <!-- ── HERO ── -->
 <div class="hero">
   <img class="hero-img" src="assets/data/banner.jpg" alt="Wedding banner"
@@ -491,6 +485,10 @@
       <span data-i18n="heroTagline1">Join us as we celebrate love and commitment.</span><br>
       <span data-i18n="heroTagline2">A day to remember with those we hold dear.</span>
     </p>
+    <div class="hero-cta">
+      <a class="hero-cta-btn hero-cta-primary" href="table.html" data-i18n="findTable">Find my seat</a>
+      <a class="hero-cta-btn hero-cta-outline" href="wish.html" data-i18n="sendWishes">Send your wishes</a>
+    </div>
   </div>
 </div>
 
@@ -635,10 +633,8 @@
       if (config.eventDate) {
         const d = new Date(config.eventDate);
         const dateStr = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
-        ['hero-date', 'hero-date-dt'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.textContent = dateStr;
-        });
+        const heroDate = document.getElementById('hero-date');
+        if (heroDate) heroDate.textContent = dateStr;
       }
     } catch (e) {
       console.warn('Could not load config:', e);

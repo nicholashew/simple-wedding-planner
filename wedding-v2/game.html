@@ -48,7 +48,8 @@
     /* ── DIFFICULTY TABS ── */
     .diff-tabs {
       display: flex; gap: 8px; justify-content: center;
-      padding: 14px 16px 0;
+      padding: 60px 16px 0;
+      align-items: flex-end;
     }
     .diff-tab {
       flex: 1; max-width: 100px;
@@ -62,6 +63,60 @@
       border-color: var(--accent); background: var(--accent-lt);
       color: var(--accent-dk); font-weight: 600;
     }
+
+    /* ── GAME CAT ── */
+    .hard-tab-wrap {
+      position: relative;
+      flex: 1; max-width: 100px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .hard-tab-wrap .diff-tab { width: 100%; }
+
+    .game-cat-wrap {
+      position: relative;
+      width: 72px;
+      pointer-events: none;
+      z-index: 1;
+      margin-bottom: -22px;
+    }
+    .game-cat-wrap svg { width: 72px; height: auto; display: block; }
+
+    /* Sleep Zs */
+    .game-cat-zs {
+      position: absolute;
+      top: -6px; right: 0;
+      font-size: 11px; font-weight: 700;
+      line-height: 1; color: var(--text2);
+      transition: opacity .3s;
+    }
+    .game-cat-zs span {
+      position: absolute;
+      display: inline-block;
+      opacity: 1; transform: scale(1);
+      animation: gameSleep 4s ease-in-out infinite;
+    }
+    .game-cat-zs span:nth-child(1) { animation-delay: 0s;   top: 0;   right: 10px; }
+    .game-cat-zs span:nth-child(2) { animation-delay: 1s;   top: -8px; right: 4px; font-size: 9px; }
+    .game-cat-zs span:nth-child(3) { animation-delay: 2s;   top: -14px; right: 0; font-size: 7px; }
+
+    @keyframes gameSleep {
+      0%   { opacity: 1; transform: translateY(0) scale(1); }
+      50%  { opacity: 0.5; transform: translate(-2px,-12px) scale(1.1); }
+      100% { opacity: 0; transform: translateY(-22px) scale(1.3); }
+    }
+
+    /* Sleeping state — eyelids visible, eyesdown hidden */
+    .game-cat-wrap #gc-lefteyelid  { visibility: visible; }
+    .game-cat-wrap #gc-righteyelid { visibility: visible; }
+    .game-cat-wrap #gc-eyesdown    { visibility: hidden; }
+    .game-cat-wrap #gc-tail        { visibility: visible; }
+    .game-cat-wrap #gc-longtail    { visibility: hidden; }
+
+    /* Awake state */
+    .game-cat-wrap.awake #gc-lefteyelid  { visibility: hidden; }
+    .game-cat-wrap.awake #gc-righteyelid { visibility: hidden; }
+    .game-cat-wrap.awake #gc-eyesdown    { visibility: visible; }
+    .game-cat-wrap.awake .game-cat-zs    { opacity: 0; }
 
     /* ── STATS BAR ── */
     .game-stats {
@@ -197,7 +252,93 @@
       from { transform: scale(.8); opacity: 0; }
       to   { transform: scale(1);  opacity: 1; }
     }
-    .win-cat { font-size: 60px; line-height: 1; margin-bottom: 10px; }
+    /* win-cat: cat-3-dark CSS cat */
+    .win-cat {
+      display: flex; justify-content: center; align-items: flex-end;
+      margin-bottom: 12px; height: 100px; background:#000;
+      min-height: 120px;
+    }
+    .w3cat {
+      position: relative; height: 85px; width: 96px;
+    }
+    .w3cat-ear {
+      position: absolute; top: -30%; height: 60%; width: 25%;
+      background: #fff;
+    }
+    .w3cat-ear::before, .w3cat-ear::after {
+      content: ""; position: absolute; bottom: 24%;
+      height: 10%; width: 5%; border-radius: 50%; background: #161616;
+    }
+    .w3cat-ear::after { transform-origin: 50% 100%; }
+    .w3cat-ear--left {
+      left: -7%; border-radius: 70% 30% 0% 0%/100% 100% 0% 0%;
+      transform: rotate(-15deg);
+    }
+    .w3cat-ear--left::before, .w3cat-ear--left::after { right: 10%; }
+    .w3cat-ear--left::after { transform: rotate(-45deg); }
+    .w3cat-ear--right {
+      right: -7%; border-radius: 30% 70% 0% 0%/100% 100% 0% 0%;
+      transform: rotate(15deg);
+    }
+    .w3cat-ear--right::before, .w3cat-ear--right::after { left: 10%; }
+    .w3cat-ear--right::after { transform: rotate(45deg); }
+    .w3cat-face {
+      position: absolute; height: 100%; width: 100%;
+      background: #161616; border-radius: 50%;
+    }
+    .w3cat-eye {
+      position: absolute; top: 35%; height: 30%; width: 31%;
+      background: #fff; border-radius: 50% 50% 50% 50%/60% 60% 40% 40%;
+    }
+    .w3cat-eye::after {
+      content: ""; position: absolute; top: 0; left: 0;
+      height: 0; width: 100%;
+      border-radius: 0 0 50% 50%/0 0 40% 40%;
+      background: #161616;
+      animation: w3cat-blink 4s infinite ease-in;
+    }
+    @keyframes w3cat-blink {
+      0%    { height: 0; }
+      90%   { height: 0; }
+      92.5% { height: 100%; }
+      95%   { height: 0; }
+      97.5% { height: 100%; }
+      100%  { height: 0; }
+    }
+    .w3cat-eye::before {
+      content: ""; position: absolute; top: 60%;
+      height: 10%; width: 15%; background: #fff; border-radius: 50%;
+    }
+    .w3cat-eye--left { left: 0; }
+    .w3cat-eye--left::before { right: -5%; }
+    .w3cat-eye--right { right: 0; }
+    .w3cat-eye--right::before { left: -5%; }
+    .w3cat-eye-pupil {
+      position: absolute; top: 25%; height: 50%; width: 20%;
+      background: #161616; border-radius: 50%;
+      animation: w3cat-look-around 4s infinite;
+    }
+    @keyframes w3cat-look-around {
+      0%   { transform: translate(0); }
+      5%   { transform: translate(50%, -25%); }
+      10%  { transform: translate(50%, -25%); }
+      15%  { transform: translate(-100%, -25%); }
+      20%  { transform: translate(-100%, -25%); }
+      25%  { transform: translate(0, 0); }
+      100% { transform: translate(0, 0); }
+    }
+    .w3cat-eye--left .w3cat-eye-pupil { right: 30%; }
+    .w3cat-eye--right .w3cat-eye-pupil { left: 30%; }
+    .w3cat-eye-pupil::after {
+      content: ""; position: absolute; top: 30%; right: -5%;
+      height: 20%; width: 35%; border-radius: 50%; background: #fff;
+    }
+    .w3cat-muzzle {
+      position: absolute; top: 60%; left: 50%;
+      height: 6%; width: 10%; background: #fff;
+      transform: translateX(-50%);
+      border-radius: 50% 50% 50% 50%/30% 30% 70% 70%;
+    }
     .win-title {
       font-family: Georgia, serif; font-size: 22px;
       color: var(--accent-dk); margin: 0 0 4px;
@@ -269,7 +410,64 @@
 <div class="diff-tabs">
   <button class="diff-tab active" data-diff="easy"   data-i18n="gameDiffEasy">Easy</button>
   <button class="diff-tab"        data-diff="normal" data-i18n="gameDiffNormal">Normal</button>
-  <button class="diff-tab"        data-diff="hard"   data-i18n="gameDiffHard">Hard</button>
+  <div class="hard-tab-wrap">
+    <div class="game-cat-wrap" id="gameCat">
+      <div class="game-cat-zs"><span>Z</span><span>z</span><span>z</span></div>
+      <svg viewBox="0 0 45.952225 35.678726" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(-121.80376,-101.90461)">
+          <path fill="#000" d="m 144.95859,104.74193 c 6.01466,-2.1201 14.02915,-0.85215 17.62787,2.77812 3.59872,3.63027 2.91927,7.6226 -0.0661,11.80703 -2.98542,4.18443 -9.54667,3.58363 -15.1474,3.43959 -5.60073,-0.14404 -10.30411,-0.0586 -11.67474,-3.9026 7.85671,-2.22341 3.24576,-12.00205 9.26042,-14.12214 z"/>
+          <path fill="#000" d="m 156.30732,121.30486 c 0,0 -3.82398,2.52741 -4.14054,3.7997 -0.31656,1.2723 0.31438,2.18109 0.95701,2.55128 0.64264,0.3702 1.59106,-0.085 2.13559,-0.75306 0.54452,-0.6681 1.5629,-2.25488 2.47945,-3.20579 0.91654,-0.95091 2.96407,-2.74361 2.96407,-2.74361 l 0.73711,-3.60348 z"/>
+          <path fill="#000" d="m 136.93356,123.08347 c 0,0 -3.20149,3.2804 -3.24123,4.59088 -0.0397,1.31049 0.60411,1.83341 1.3106,2.05901 0.7065,0.22559 1.60304,-0.55255 1.99363,-1.32084 0.39056,-0.76832 1.14875,-2.30337 2.04139,-3.29463 0.89264,-0.99126 3.37363,-3.37561 3.37363,-3.37561 l -1.30007,-3.61169 z"/>
+          <path fill="#000" d="m 130.12859,121.60522 c -2.15849,1.92962 -3.38576,3.23532 -3.61836,4.5256 -0.23257,1.2903 0.0956,1.80324 0.76105,2.13059 0.66549,0.32733 1.66701,-0.31006 2.16665,-1.01233 0.49961,-0.70231 1.04598,-1.14963 2.83575,-3.05671 1.78977,-1.90708 5.91823,-3.27102 5.91823,-3.27102 l -0.75313,-3.99546 c 0,0 -5.15171,2.7497 -7.31019,4.67933 z"/>
+          <path fill="#000" d="m 147.59927,113.85404 c 0.68896,4.40837 -4.04042,7.93759 -10.51533,8.9455 -6.47491,1.00791 -12.24344,-0.88717 -12.9324,-5.29555 -0.68895,-4.40838 3.44199,-9.94186 9.9169,-10.94977 6.47491,-1.0079 12.84186,2.89144 13.53083,7.29982 z"/>
+          <path fill="#000" d="m 126.36446,111.82609 c 0,0 -2.37067,-6.28072 -0.86724,-7.10855 1.50342,-0.82783 5.87139,3.72617 5.87139,3.72617 z"/>
+          <path fill="#000" d="m 143.50182,108.85407 c 0,0 -0.0544,-6.71302 -1.75519,-6.94283 -1.70081,-0.22982 -4.13211,5.59314 -4.13211,5.59314 z"/>
+          <g>
+            <path fill="none" stroke="#000" stroke-width="0.529167" stroke-linecap="round" d="m 125.27102,116.06007 -2.97783,-1.05373"/>
+            <path fill="none" stroke="#000" stroke-width="0.529167" stroke-linecap="round" d="m 124.91643,116.80991 -2.84808,0.0754"/>
+            <path fill="none" stroke="#000" stroke-width="0.529167" stroke-linecap="round" d="m 124.97798,118.00308 -2.53111,0.5156"/>
+          </g>
+          <g transform="rotate(-23.188815,49.755584,71.047761)">
+            <path fill="none" stroke="#000" stroke-width="0.529167" stroke-linecap="round" d="m 121.77448,146.87682 3.00963,-0.95912"/>
+            <path fill="none" stroke="#000" stroke-width="0.529167" stroke-linecap="round" d="m 122.10521,147.63749 2.84427,0.16537"/>
+            <path fill="none" stroke="#000" stroke-width="0.529167" stroke-linecap="round" d="m 122.00599,148.82812 2.51354,0.59531"/>
+          </g>
+          <!-- Eyes open -->
+          <ellipse fill="#fff" cx="142.61723" cy="108.6707" rx="3.0261719" ry="3.0757811" transform="rotate(1.8105864)"/>
+          <ellipse fill="#000" cx="112.57543" cy="138.29808" rx="1.0380507" ry="1.3097118" transform="matrix(0.98048242,-0.19660678,0.20800608,0.97812753,0,0)"/>
+          <ellipse fill="#f9f9f9" cx="112.70263" cy="137.817"   rx="0.32146212" ry="0.40558979" transform="matrix(0.98048242,-0.19660678,0.20800608,0.97812753,0,0)"/>
+          <ellipse fill="#fff" cx="135.40735" cy="110.12592" rx="3.0261719" ry="3.0757811" transform="rotate(1.8105864)"/>
+          <ellipse fill="#000" cx="105.22613" cy="138.07497" rx="1.0380507" ry="1.3097118" transform="matrix(0.98048242,-0.19660678,0.20800608,0.97812753,0,0)"/>
+          <ellipse fill="#f9f9f9" cx="105.35332" cy="137.59389" rx="0.32146212" ry="0.40558979" transform="matrix(0.98048242,-0.19660678,0.20800608,0.97812753,0,0)"/>
+          <!-- Tail (short = resting) -->
+          <path id="gc-tail" fill="#000" d="m 163.77708,109.27292 c 4.36563,2.71198 4.26447,17.63497 3.70417,21.03437 -0.5603,3.3994 -1.86906,4.06275 -4.53099,4.49791 -5.87463,0.96037 -8.39724,-5.87134 -5.7547,-5.72161 2.64254,0.14973 3.15958,3.46446 5.95314,2.05052 2.79356,-1.41394 -1.42214,-13.46068 -1.42214,-13.46068 z"/>
+          <path fill="#000" d="m 159.74981,121.34445 c 0,0 -2.98896,3.47517 -2.94624,4.78555 0.0427,1.31039 0.89775,2.01247 1.61702,2.1932 0.71928,0.18075 1.50745,-0.51603 1.84897,-1.30735 0.34149,-0.79135 0.88811,-2.59584 1.51032,-3.76081 0.62219,-1.16497 2.10268,-3.44845 2.10268,-3.44845 l -0.27441,-3.66785 z"/>
+          <!-- Left eyelid -->
+          <g id="gc-lefteyelid">
+            <ellipse fill="#000" cx="131.94429" cy="114.29948" rx="3.1571214" ry="3.2155864"/>
+            <path fill="#000" stroke="#fff" stroke-width="0.529167" stroke-linecap="round" d="m 129.32504,114.80228 c 2.54908,-1.14592 4.60706,-0.65481 4.60706,-0.65481"/>
+          </g>
+          <!-- Right eyelid -->
+          <g id="gc-righteyelid">
+            <ellipse fill="#000" cx="139.07704" cy="113.0834" rx="3.1571214" ry="3.2155864"/>
+            <path fill="#000" stroke="#fff" stroke-width="0.529167" stroke-linecap="round" d="m 136.48089,113.70683 c 2.48528,-1.2784 4.56624,-0.89621 4.56624,-0.89621"/>
+          </g>
+          <!-- Eyes down (awake, looking down) -->
+          <g id="gc-eyesdown">
+            <ellipse fill="#fff" cx="139.12122" cy="113.61373" rx="1.8686198" ry="2.0422525"/>
+            <ellipse fill="#000" cx="112.24622" cy="139.77037" rx="1.0380507" ry="1.3097118" transform="matrix(0.98048242,-0.19660678,0.20800608,0.97812753,0,0)"/>
+            <ellipse fill="#f9f9f9" cx="112.37342" cy="139.28929" rx="0.32146212" ry="0.40558979" transform="matrix(0.98048242,-0.19660678,0.20800608,0.97812753,0,0)"/>
+            <ellipse fill="#fff" cx="131.994" cy="114.92011" rx="1.8686198" ry="2.0422525"/>
+            <ellipse fill="#000" cx="105.00267" cy="139.64998" rx="1.0380507" ry="1.3097118" transform="matrix(0.98048242,-0.19660678,0.20800608,0.97812753,0,0)"/>
+            <ellipse fill="#f9f9f9" cx="105.12987" cy="139.1689" rx="0.32146212" ry="0.40558979" transform="matrix(0.98048242,-0.19660678,0.20800608,0.97812753,0,0)"/>
+          </g>
+          <!-- Long tail (awake) -->
+          <path id="gc-longtail" fill="#000" d="m 164.24062,110.09354 -2.10788,6.5381 c 0,0 0.84017,12.88397 0.35269,20.95169 h 4.78291 c 0.83489,-8.63528 0.13334,-24.78453 -3.02772,-27.48979 z"/>
+        </g>
+      </svg>
+    </div>
+    <button class="diff-tab" data-diff="hard" data-i18n="gameDiffHard">Hard</button>
+  </div>
   <button class="diff-tab"        data-diff="expert" data-i18n="gameDiffExpert">Expert</button>
 </div>
 
@@ -293,7 +491,21 @@
 <!-- ── WIN OVERLAY ── -->
 <div id="win-overlay">
   <div class="win-card">
-    <div class="win-cat">😴🐈‍⬛</div>
+    <div class="win-cat">
+      <div class="w3cat">
+        <div class="w3cat-ear w3cat-ear--left"></div>
+        <div class="w3cat-ear w3cat-ear--right"></div>
+        <div class="w3cat-face">
+          <div class="w3cat-eye w3cat-eye--left">
+            <div class="w3cat-eye-pupil"></div>
+          </div>
+          <div class="w3cat-eye w3cat-eye--right">
+            <div class="w3cat-eye-pupil"></div>
+          </div>
+          <div class="w3cat-muzzle"></div>
+        </div>
+      </div>
+    </div>
     <div class="win-title" data-i18n="gameWellFed">Well Fed!</div>
     <div class="win-subtitle" data-i18n="gameWinSub">The midnight cat is satisfied 🐾</div>
     <div class="win-stats">
@@ -626,6 +838,7 @@ function checkMatch() {
       flipped = [];
       canFlip = true;
       updateStats();
+      catWakeUp();
 
       if (matched.size === deck.length) {
         clearInterval(timerInterval);
@@ -676,12 +889,22 @@ function updateTimer() {
   document.getElementById('stat-time').textContent = fmtTime(Date.now() - startTime);
 }
 
+/* ── CAT ── */
+function catWakeUp() {
+  const cat = document.getElementById('gameCat');
+  if (!cat) return;
+  cat.classList.add('awake');
+  clearTimeout(cat._sleepTimer);
+  cat._sleepTimer = setTimeout(() => cat.classList.remove('awake'), 2200);
+}
+
 /* ── CONTROLS ── */
 document.querySelectorAll('.diff-tab').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.diff-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     difficulty = btn.dataset.diff;
+    catWakeUp();
     startGame();
   });
 });

@@ -342,13 +342,22 @@
     /* ── GAME LOADING OVERLAY ── */
     #game-loading {
       position: fixed; inset: 0; z-index: 9900;
-      background: rgba(253,248,239,.88);
-      backdrop-filter: blur(3px);
       display: flex; align-items: center; justify-content: center;
       opacity: 0; pointer-events: none;
       transition: opacity .18s;
     }
-    #game-loading.show { opacity: 1; pointer-events: all; }
+    #game-loading.show {
+      opacity: 1; pointer-events: all;
+    }
+    #game-loading.show.init {
+      background: rgba(253,248,239,.88);
+      backdrop-filter: blur(3px);
+      animation: loading-bg-pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes loading-bg-pulse {
+      0%, 100% { background: rgba(253,248,239,.88); backdrop-filter: blur(3px); }
+      50%       { background: rgba(253,248,239,.97); backdrop-filter: blur(6px); }
+    }
     .game-loading-inner { display: flex; align-items: center; gap: 14px; }
     /* pixel cat walking */
     #pxcat {
@@ -801,11 +810,14 @@ function buildDeck(pairs) {
   return shuffle(doubled);
 }
 
-function showLoading() {
-  document.getElementById('game-loading').classList.add('show');
+function showLoading(init = false) {
+  const el = document.getElementById('game-loading');
+  el.classList.toggle('init', init);
+  el.classList.add('show');
 }
 function hideLoading() {
-  document.getElementById('game-loading').classList.remove('show');
+  const el = document.getElementById('game-loading');
+  el.classList.remove('show', 'init');
 }
 
 function startGame() {
@@ -821,7 +833,7 @@ function startGame() {
   updateStats();
   renderGrid();
   document.getElementById('win-overlay').classList.remove('open');
-  setTimeout(hideLoading, 380);
+  setTimeout(hideLoading, 1000);
 }
 
 function renderGrid() {
@@ -990,6 +1002,7 @@ function onLangChange(lang) {
 
 /* ── INIT ── */
 document.addEventListener('DOMContentLoaded', async () => {
+  showLoading(true);
   try {
     const { config } = await GW.loadData();
     const name = config.projectName || 'Our Wedding';

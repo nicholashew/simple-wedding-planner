@@ -111,6 +111,7 @@ if (!document.cookie.includes('gw_admin=1')) {
         <a class="nav-link" href="${resolveHref('homestay')}"><i class="fa-solid fa-house"></i> Homestay</a>
         <a class="nav-link" href="${resolveHref('wedding')}"><i class="fa-solid fa-ring"></i> Wedding</a>
         <a class="nav-link" href="${resolveHref('find-table')}"><i class="fa-solid fa-magnifying-glass"></i> Find Table</a>
+        <a class="nav-link" href="${resolveHref('scan-qr')}"><i class="fa-solid fa-qrcode"></i> Scan QR</a>
         <a class="nav-link" href="/" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> Guest Site</a>
       </div>
       <div class="nav-save-status">

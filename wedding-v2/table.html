@@ -232,6 +232,10 @@
       background: var(--bg); border-radius: 10px; border: 1px solid var(--border);
       padding: 12px 14px; display: flex; align-items: center; gap: 12px;
     }
+    .viz-guest-card.lead {
+      border-color: var(--accent-dk);
+      box-shadow: 0 2px 6px var(--accent-dk);
+    }
     .viz-seat-circle {
       width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
@@ -802,7 +806,7 @@ function _renderResult(payload) {
       const meta    = [cat ? cat.label : '', g.subCat].filter(Boolean).join(' · ');
       const seatNum = g.seat != null ? g.seat : '?';
       return `
-        <div class="viz-guest-card">
+        <div class="viz-guest-card ${isLead ? 'lead' : ''}">
           <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;gap:2px;">
             <div class="viz-seat-circle" style="background:${tableColor}">${isLead ? '<i class="fa-solid fa-crown"></i>' : seatNum}</div>
             <span style="font-size:9px;color:var(--muted);font-weight:600;letter-spacing:.02em;">${GW.t('seatRefLabel')}${seatNum}</span>

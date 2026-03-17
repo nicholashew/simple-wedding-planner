@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scan QR — Admin</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #f4f6f9; --surface: #ffffff; --surface2: #eef0f4;
+      --border: #dde2ea; --border2: #c8d0dc;
+      --accent: #b07820; --accent-dk: #7a5010; --accent-lt: rgba(176,120,32,0.1);
+      --text: #1a2030; --text2: #4a5570; --muted: #8090a8;
+      --green: #1a8a40; --danger: #c03030;
+      --radius: 12px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Syne', 'Inter', -apple-system, sans-serif;
+      background: var(--surface); color: var(--text); min-height: 100dvh;
+    }
+
+    /* App nav — dark theme */
+    .app-nav {
+      display: flex; align-items: center;
+      background: #161b25; border-bottom: 2px solid #2a3448;
+      padding: 0 20px; height: 44px;
+      position: sticky; top: 0; z-index: 1000; gap: 0;
+      font-family: 'Syne', sans-serif; flex-shrink: 0;
+      box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    }
+    .app-nav .nav-brand {
+      font-size: 13px; font-weight: 800; color: var(--accent);
+      letter-spacing: -0.3px; margin-right: 28px; white-space: nowrap; text-decoration: none;
+    }
+    .app-nav .nav-links { display: flex; gap: 4px; flex: 1; }
+    .app-nav .nav-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 8px;
+      font-size: 12px; font-weight: 600; color: #6b7a99;
+      text-decoration: none; transition: background .15s, color .15s;
+    }
+    .app-nav .nav-link:hover { background: #1e2535; color: #e8eaf0; }
+    .app-nav .nav-link.active { background: #1e2535; color: var(--accent); border-bottom: 2px solid var(--accent); border-radius: 8px 8px 0 0; }
+    .nav-logout {
+      margin-left: auto; background: none; border: 1px solid #3a4560; border-radius: 6px;
+      color: #6b7a99; font-size: 11px; font-family: inherit;
+      padding: 4px 10px; cursor: pointer; transition: all .15s;
+    }
+    .nav-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* Data freshness badge */
+    .data-freshness {
+      font-size: 10px; color: var(--muted); padding: 3px 9px;
+      background: #1e2535; border-radius: 50px;
+      border: 1px solid #2a3448; white-space: nowrap;
+      display: none; margin-right: 8px;
+    }
+
+    /* Layout */
+    .main { padding: 20px 20px 60px; }
+    @media (min-width: 900px) {
+      .main { padding: 24px 32px 60px; }
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%; padding: 13px; border-radius: 50px; border: none;
+      font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer;
+      transition: all .15s; display: flex; align-items: center;
+      justify-content: center; gap: 8px; margin-bottom: 10px;
+    }
+    .btn-primary { background: var(--accent); color: #ffffff; }
+    .btn-primary:hover { opacity: .88; }
+    .btn-outline {
+      background: none; border: 1.5px solid var(--border); color: var(--text2);
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Scan layout */
+    .scan-wrap { max-width: 480px; margin: 0 auto; }
+    .scan-method-card {
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 16px; padding: 28px 24px; text-align: center;
+    }
+    .scan-method-icon { font-size: 40px; display: block; margin-bottom: 12px; }
+    .scan-method-title { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+    .scan-method-desc {
+      font-size: 12.5px; color: var(--muted); margin-bottom: 18px;
+      line-height: 1.55; max-width: 320px; margin-left: auto; margin-right: auto;
+    }
+    .scan-or-divider {
+      display: flex; align-items: center; gap: 12px;
+      margin: 14px 0; color: var(--muted); font-size: 12px; font-weight: 600;
+    }
+    .scan-or-divider::before, .scan-or-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* Camera video */
+    #camera-video {
+      width: 100%; border-radius: var(--radius); background: #000;
+      display: block; margin-bottom: 10px;
+    }
+
+    /* Scan result table card */
+    .scan-table-card {
+      background: rgba(255,255,255,0.75);
+      color: var(--accent); border-radius: 16px; padding: 20px 22px 18px;
+      margin: 14px 0 10px; box-shadow: 0 4px 20px rgba(176,120,32,.30);
+    }
+    .scan-table-card-welcome {
+      font-size: 12px; font-weight: 600; opacity: .85; letter-spacing: .04em;
+      text-transform: uppercase; margin-bottom: 4px;
+    }
+    .scan-table-card-name {
+      font-size: 20px; font-weight: 800; font-family: Georgia, serif;
+      margin-bottom: 10px; line-height: 1.2;
+    }
+    .scan-table-card-table {
+      font-size: 32px; font-weight: 900; letter-spacing: -.5px;
+      font-family: Georgia, serif; line-height: 1;
+    }
+    .scan-table-card-detail {
+      font-size: 13px; opacity: .85; margin-top: 6px; font-weight: 600;
+    }
+    .scan-table-card-multi {
+      font-size: 11px; opacity: .75; margin-top: 4px;
+    }
+
+    /* Result card */
+    .result-card {
+      background: var(--surface); border: 2px solid var(--border);
+      border-radius: 14px; padding: 20px; margin-bottom: 14px;
+      border-top-width: 4px;
+    }
+    .result-table-name {
+      font-size: 22px; font-weight: 800;
+      font-family: Georgia, serif; margin-bottom: 14px;
+    }
+    .result-guest-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .result-guest-table th {
+      text-align: left; padding: 6px 10px; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .8px; color: var(--muted);
+      border-bottom: 1.5px solid var(--border2);
+    }
+    .result-guest-table td {
+      padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle;
+    }
+    .result-guest-table tr:last-child td { border-bottom: none; }
+    .result-seat-cell {
+      font-size: 13px; font-weight: 700; font-family: monospace;
+      width: 48px; text-align: center;
+    }
+    .result-name-cell { font-weight: 600; }
+    .result-nick { font-weight: 400; color: var(--text2); font-size: 12px; }
+
+    .empty-state { padding: 32px 20px; text-align: center; color: var(--muted); font-size: 14px; }
+
+    /* Scan again button */
+    .scan-again-wrap { text-align: center; margin-top: 14px; }
+    .scan-again-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 24px; border-radius: 50px;
+      background: none; border: 1.5px solid var(--border2);
+      font-size: 13px; font-weight: 700; color: var(--text2);
+      font-family: inherit; cursor: pointer; transition: all .15s;
+    }
+    .scan-again-btn:hover { border-color: var(--accent); color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<nav class="app-nav">
+  <a class="nav-brand" href="index.html"><i class="fa-solid fa-lock"></i><i class="fa-solid fa-ring"></i> Admin</a>
+  <div class="nav-links">
+    <a class="nav-link" href="homestay.html"><i class="fa-solid fa-house"></i> Homestay</a>
+    <a class="nav-link" href="wedding.html"><i class="fa-solid fa-ring"></i> Wedding</a>
+    <a class="nav-link" href="find-table.html"><i class="fa-solid fa-magnifying-glass"></i> Find Table</a>
+    <a class="nav-link active" href="scan-qr.html"><i class="fa-solid fa-qrcode"></i> Scan QR</a>
+    <a class="nav-link" href="../index.html" target="_blank"><i class="fa-solid fa-arrow-up-right-from-square"></i> Guest Site</a>
+  </div>
+  <span id="data-freshness" class="data-freshness"></span>
+  <button class="nav-logout" onclick="(function(){document.cookie='gw_admin=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';window.location.replace('login.html');})()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+</nav>
+
+<div class="main">
+  <h2 style="font-size:20px;font-weight:800;margin-bottom:6px;">Scan QR</h2>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Scan a guest QR code to look up their table assignment</p>
+
+  <div class="scan-wrap">
+    <!-- Camera card -->
+    <div class="scan-method-card" id="cam-card">
+      <span class="scan-method-icon"><i class="fa-solid fa-camera"></i></span>
+      <div class="scan-method-title">Scan with Camera</div>
+      <div class="scan-method-desc">Point the camera at a guest QR code for instant table lookup</div>
+      <button class="btn btn-primary" id="cam-start-btn" onclick="startCamera()">
+        <i class="fa-solid fa-camera"></i> Start Camera
+      </button>
+      <video id="camera-video" playsinline autoplay style="display:none;"></video>
+      <button class="btn btn-outline" id="cam-stop-btn" style="display:none;" onclick="stopCamera()">
+        <i class="fa-solid fa-stop"></i> Stop Camera
+      </button>
+    </div>
+
+    <div class="scan-or-divider"><span>or</span></div>
+
+    <!-- Upload card -->
+    <div class="scan-method-card">
+      <span class="scan-method-icon"><i class="fa-solid fa-image"></i></span>
+      <div class="scan-method-title">Upload QR Image</div>
+      <div class="scan-method-desc">Choose a saved QR code image from your device or screenshot</div>
+      <button class="btn btn-outline" onclick="document.getElementById('qr-file').click()">
+        <i class="fa-solid fa-folder-open"></i> Choose Image
+      </button>
+      <input type="file" id="qr-file" accept="image/*" style="display:none;">
+    </div>
+  </div>
+
+  <div id="scan-result"></div>
+</div>
+
+<!-- jsQR -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+// Auth guard
+if (!document.cookie.includes('gw_admin=1')) {
+  window.location.replace('login.html');
+}
+
+// ═══════════════════════════════
+// State
+// ═══════════════════════════════
+let allGuests = [], categories = [];
+let cameraStream = null, scanAF = null;
+
+// ── QR Payload encoding ──────────────────────────────────────────────────────
+const QR_CAT_MAP = {
+  'bride-family': 0, 'bride-rel': 1, 'bride-friend': 2, 'bride-colleague': 3,
+  'groom-family': 4, 'groom-rel': 5, 'groom-friend': 6, 'groom-colleague': 7,
+  'others': 8
+};
+const QR_CAT_RMAP = Object.fromEntries(Object.entries(QR_CAT_MAP).map(([k,v]) => [v, k]));
+
+function b64DecodeJson(str) {
+  try { const bin = atob(str); const bytes = Uint8Array.from(bin, c => c.charCodeAt(0)); return JSON.parse(new TextDecoder().decode(bytes)); } catch {}
+  try { return JSON.parse(atob(str)); } catch {}
+  return null;
+}
+
+function decodeQrPayload(encoded) {
+  const decoded = b64DecodeJson(encoded);
+  if (!decoded) return null;
+  // v1: {v:1, l:lead, i:[others]}
+  if (decoded.v === 1) {
+    const lead = decoded.l;
+    const others = decoded.i || [];
+    return { type: 'ids', ids: [lead, ...others], leadId: lead };
+  }
+  // Legacy: bare id array
+  if (Array.isArray(decoded) && decoded.length)
+    return { type: 'ids', ids: decoded };
+  // New v2: {v:2, c:numCode, s:subCat, l:lead}
+  if (decoded.v === 2 && decoded.c !== undefined)
+    return { type: 'group', groups: [{ cat: QR_CAT_RMAP[decoded.c] ?? String(decoded.c), subCat: decoded.s || null }], leadId: decoded.l ?? null };
+  // Legacy v2: {v:2, cat:string, subCat:..., lead:...}
+  if (decoded.v === 2 && decoded.cat)
+    return { type: 'group', groups: [{ cat: decoded.cat, subCat: decoded.subCat || null }], leadId: decoded.lead || null };
+  // New v3: {v:3, g:[{c:0,s:...},...], l:lead}
+  if (decoded.v === 3 && Array.isArray(decoded.g) && decoded.g.length)
+    return { type: 'group', groups: decoded.g.map(sg => ({ cat: QR_CAT_RMAP[sg.c] ?? String(sg.c), subCat: sg.s || null })), leadId: decoded.l ?? null };
+  // Legacy v3: {v:3, groups:[...], lead:...}
+  if (decoded.v === 3 && Array.isArray(decoded.groups) && decoded.groups.length)
+    return { type: 'group', groups: decoded.groups, leadId: decoded.lead || null };
+  return null;
+}
+
+// ── Table colors ──────────────────────────────────────────────────────────────
+const TABLE_PALETTE = [
+  '#c0392b','#8e44ad','#2471a3','#1a8a4a','#d4850a',
+  '#16a085','#a04000','#2e4057','#b7950b','#6c3483',
+  '#1a5276','#7b241c','#1d8348','#6e2f8d','#935116',
+];
+const KNOWN_CATS = [
+  { key: 'bride-family',    label: '🌸 Bride Family' },
+  { key: 'bride-rel',       label: '🌺 Bride Relative' },
+  { key: 'bride-friend',    label: '🪷 Bride Friend' },
+  { key: 'bride-colleague', label: '🌹 Bride Colleague' },
+  { key: 'groom-family',    label: '💠 Groom Family' },
+  { key: 'groom-rel',       label: '🔷 Groom Relative' },
+  { key: 'groom-friend',    label: '🫐 Groom Friend' },
+  { key: 'groom-colleague', label: '🔵 Groom Colleague' },
+  { key: 'others',          label: '✨ Others' },
+];
+let tableColorMap = {};
+function initTableColors() {
+  const seqs = [];
+  const seen = {};
+  allGuests.forEach(g => {
+    const key = g.tableName || g.tableSeq;
+    if (key && !seen[key]) { seen[key] = true; seqs.push({ key, seq: g.tableSeq || 0 }); }
+  });
+  seqs.sort((a, b) => a.seq - b.seq);
+  seqs.forEach((s, i) => { tableColorMap[s.key] = TABLE_PALETTE[i % TABLE_PALETTE.length]; });
+}
+function getTableColor(tableName) {
+  return tableName ? (tableColorMap[tableName] || TABLE_PALETTE[0]) : 'var(--muted)';
+}
+
+// ── Escape HTML ───────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════
+// Load data
+// ═══════════════════════════════
+(async () => {
+  try {
+    const [cfgRes, gstRes] = await Promise.all([
+      fetch('../assets/data/config.json'),
+      fetch('../assets/data/guests.json'),
+    ]);
+    const config  = await cfgRes.json();
+    const gstData = await gstRes.json();
+    allGuests  = Array.isArray(gstData) ? gstData : (gstData.guests || []);
+    const loadedCats = (Array.isArray(gstData) ? [] : gstData.categories) || config._categories || [];
+    const knownKeys  = new Set(KNOWN_CATS.map(c => c.key));
+    const merged = [...KNOWN_CATS, ...loadedCats.filter(c => !knownKeys.has(c.key))];
+    categories = merged.filter(c => allGuests.some(g => g.cat === c.key));
+    initTableColors();
+    // Data freshness badge
+    const badge = document.getElementById('data-freshness');
+    if (badge) {
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      badge.textContent = `${allGuests.length} guests · ${time}`;
+      badge.style.display = '';
+    }
+  } catch (e) {
+    console.error('Failed to load guest data:', e);
+  }
+})();
+
+// ═══════════════════════════════
+// Build result HTML
+// ═══════════════════════════════
+function buildResultHtml(highlightGuests, sortMode = 'seat') {
+  const tableMap = {};
+  highlightGuests.forEach(g => {
+    const k = g.tableName || '—';
+    if (!tableMap[k]) tableMap[k] = { name: k, seq: g.tableSeq || 0, guests: [] };
+    tableMap[k].guests.push(g);
+  });
+
+  const catOrder = {};
+  KNOWN_CATS.forEach((c, i) => { catOrder[c.key] = i; });
+
+  let html = '';
+  Object.values(tableMap).sort((a, b) => a.seq - b.seq).forEach(table => {
+    const tableColor = getTableColor(table.name === '—' ? null : table.name);
+    const sortedGuests = sortMode === 'relation'
+      ? table.guests.slice().sort((a, b) => {
+          const co = (catOrder[a.cat] ?? 99) - (catOrder[b.cat] ?? 99);
+          if (co !== 0) return co;
+          const ln = (a.lastName || '').localeCompare(b.lastName || '', undefined, { sensitivity: 'base' });
+          return ln !== 0 ? ln : (a.firstName || '').localeCompare(b.firstName || '', undefined, { sensitivity: 'base' });
+        })
+      : table.guests.slice().sort((a, b) => (a.seat ?? 999) - (b.seat ?? 999));
+    html += `<div class="result-card" style="border-color:${tableColor};border-top-color:${tableColor}">
+      <div class="result-table-name" style="color:${tableColor}">Table: ${esc(table.name)}</div>
+      <table class="result-guest-table">
+        <thead>
+          <tr>
+            <th style="width:48px;text-align:center;">Seat</th>
+            <th>Name</th>
+            <th>Relationship</th>
+            <th>Sub Category</th>
+            <th style="width:52px;text-align:center;">ID</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sortedGuests.map(g => {
+            const cat = categories.find(c => c.key === g.cat);
+            const catLabel = cat ? cat.label : (g.cat || '—');
+            const seatNum = g.seat != null ? g.seat : '—';
+            const nickHtml = g.nickName ? ` <span class="result-nick">(${esc(g.nickName)})</span>` : '';
+            return `<tr>
+              <td class="result-seat-cell" style="color:${tableColor}">${seatNum}</td>
+              <td class="result-name-cell">${esc(g.lastName)} ${esc(g.firstName)}${nickHtml}</td>
+              <td style="color:var(--text2)">${esc(catLabel)}</td>
+              <td style="color:var(--text2)">${esc(g.subCat || '')}</td>
+              <td style="text-align:center;font-family:monospace;font-size:11px;color:var(--muted)">${g.id}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  });
+  return html || '<div class="empty-state">No table assigned.</div>';
+}
+
+function buildScanTableCard(matched, lead) {
+  const tableNames = [...new Set(matched.map(g => g.tableName).filter(Boolean))];
+  const isMultiTable = tableNames.length > 1;
+  const primaryTable = tableNames[0] || null;
+  const leadName = lead ? `${lead.lastName} ${lead.firstName}` : '—';
+  const leadSeat  = lead && lead.seatLabel ? lead.seatLabel : (lead && lead.seatNo != null ? `Seat ${lead.seatNo}` : null);
+  const tableDisplay = isMultiTable ? tableNames.join(' + ') : (primaryTable || 'Unassigned');
+
+  return `<div class="scan-table-card">
+    <div class="scan-table-card-welcome">Welcome</div>
+    <div class="scan-table-card-name">${esc(leadName)}</div>
+    <div class="scan-table-card-table">🪑 ${esc(tableDisplay)}</div>
+    ${leadSeat ? `<div class="scan-table-card-detail">Lead seat: ${esc(leadSeat)}</div>` : ''}
+    <div class="scan-table-card-detail">${matched.length} guest${matched.length !== 1 ? 's' : ''} in this party</div>
+    ${isMultiTable ? `<div class="scan-table-card-multi">Across ${tableNames.length} tables</div>` : ''}
+  </div>`;
+}
+
+// ═══════════════════════════════
+// Camera / QR Scan
+// ═══════════════════════════════
+function startCamera() {
+  document.getElementById('cam-start-btn').style.display = 'none';
+  document.getElementById('cam-stop-btn').style.display  = 'flex';
+  const video = document.getElementById('camera-video');
+  video.style.display = 'block';
+
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(stream => {
+      cameraStream = stream;
+      video.srcObject = stream; video.play();
+      scanLoop(video);
+    })
+    .catch(() => showScanResult('<div class="empty-state">Camera access denied.</div>'));
+}
+function stopCamera() {
+  if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
+  cancelAnimationFrame(scanAF);
+  const video = document.getElementById('camera-video');
+  video.style.display = 'none'; video.srcObject = null;
+  document.getElementById('cam-start-btn').style.display = 'flex';
+  document.getElementById('cam-stop-btn').style.display  = 'none';
+}
+function scanLoop(video) {
+  if (!cameraStream) return;
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    const c = document.createElement('canvas');
+    c.width = video.videoWidth; c.height = video.videoHeight;
+    c.getContext('2d').drawImage(video, 0, 0);
+    const img = c.getContext('2d').getImageData(0, 0, c.width, c.height);
+    const code = jsQR(img.data, img.width, img.height);
+    if (code) { stopCamera(); handleQR(code.data); return; }
+  }
+  scanAF = requestAnimationFrame(() => scanLoop(video));
+}
+document.getElementById('qr-file').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = img.width; c.height = img.height;
+      c.getContext('2d').drawImage(img, 0, 0);
+      const id = c.getContext('2d').getImageData(0, 0, c.width, c.height);
+      const code = jsQR(id.data, id.width, id.height);
+      if (code) handleQR(code.data);
+      else showScanResult('<div class="empty-state">Could not read QR code.</div>');
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+});
+function handleQR(raw) {
+  let payload = null;
+  // Try URL format: /table.html?qr=...
+  try {
+    const u = new URL(raw, location.href);
+    const p = u.searchParams.get('qr');
+    if (p) payload = decodeQrPayload(p);
+  } catch {}
+  // Try raw base64 payload
+  if (!payload) payload = decodeQrPayload(raw);
+  // Legacy: raw JSON array
+  if (!payload) {
+    try { const ids = JSON.parse(raw); if (Array.isArray(ids) && ids.length) payload = { type: 'ids', ids }; } catch {}
+  }
+  if (!payload) { showScanResult('<div class="empty-state">Unrecognised QR format.</div>'); return; }
+
+  let matched;
+  if (payload.type === 'ids') {
+    matched = allGuests.filter(g => payload.ids.some(id => String(id) === String(g.id)));
+  } else {
+    matched = allGuests.filter(g =>
+      payload.groups.some(sg =>
+        g.cat === sg.cat && (sg.subCat === null || (g.subCat || '') === sg.subCat)
+      )
+    );
+  }
+  if (!matched.length) { showScanResult('<div class="empty-state">No guests found for this QR code.</div>'); return; }
+  const lead = payload.leadId != null ? allGuests.find(g => String(g.id) === String(payload.leadId)) : matched[0];
+  showScanResult(buildScanTableCard(matched, lead) + buildResultHtml(matched));
+}
+function showScanResult(html) {
+  const resultEl = document.getElementById('scan-result');
+  resultEl.innerHTML = html +
+    `<div class="scan-again-wrap">
+      <button class="scan-again-btn" onclick="resetScan()">
+        <i class="fa-solid fa-rotate-left"></i> Scan Again
+      </button>
+    </div>`;
+}
+function resetScan() {
+  stopCamera();
+  document.getElementById('scan-result').innerHTML = '';
+}
+</script>
+</body>
+</html>

@@ -8,7 +8,7 @@ A static wedding banquet website with an admin planner tool. Designed for deploy
 
 ```text
 simple-wedding-planner/
-├── wedding-v2/                       # ← Current deployable static site
+├── wedding-v3/                       # ← Current deployable static site
 │   ├── index.html                    # Public home page
 │   ├── table.html                    # Find My Table (QR code scan)
 │   ├── menu.html                     # Wedding banquet menu
@@ -16,6 +16,8 @@ simple-wedding-planner/
 │   ├── gallery.html                  # Photo gallery with lightbox
 │   ├── wish.html                     # Send wishes (Google Form embed)
 │   ├── robots.txt                    # Disallow all bots
+│   ├── manifest.json                 # PWA manifest
+│   ├── sw.js                         # Service worker (PWA offline support)
 │   │
 │   ├── assets/
 │   │   ├── css/
@@ -26,7 +28,9 @@ simple-wedding-planner/
 │   │   │   ├── gw.js                 # Shared public JS (i18n, config loader, QR utils, toast, scroll-top)
 │   │   │   ├── admin-shared-nav.js
 │   │   │   ├── admin-wedding.js
-│   │   │   └── admin-homestay.js
+│   │   │   ├── admin-homestay.js
+│   │   │   ├── admin-find-table.js
+│   │   │   └── libs/jsqr.min.js      # jsQR (bundled, no CDN dependency)
 │   │   ├── data/
 │   │   │   ├── config.json           # Event config (couple names, date, menu, video, etc.)
 │   │   │   ├── guests.json           # Guest list with table assignments
@@ -48,11 +52,13 @@ simple-wedding-planner/
 │   │   ├── index.html                # Admin dashboard
 │   │   ├── wedding.html              # Wedding seating planner (canvas-based)
 │   │   ├── homestay.html             # Homestay room assignment planner
-│   │   └── find-table.html           # Admin QR scan + guest search tool
+│   │   ├── find-table.html           # Admin guest search + QR code generation
+│   │   └── scan-qr.html              # Admin QR code scanner
 │   │
-│   ├── server.js                     # Express static server (local dev only, port 3001)
+│   ├── server.js                     # Express static server (local dev only, port 3002)
 │   └── package.json
 │
+├── wedding-v2/                       # Previous version (kept for reference)
 ├── wedding/                          # Legacy version (kept for reference)
 ├── sample-webapp/                    # Reference app (source of admin planner UI)
 ├── requirements/                     # Original requirements docs
@@ -86,13 +92,14 @@ Protected by a PIN-based login (credentials in `config.json` → `adminUser` / `
 | Dashboard | `/admin/` | Links to all admin tools |
 | Wedding Planner | `/admin/wedding.html` | Canvas table layout, seat assignment, QR generation |
 | Homestay Planner | `/admin/homestay.html` | Drag & drop room assignment |
-| Find Table (Admin) | `/admin/find-table.html` | QR scan + guest name search |
+| Find Table (Admin) | `/admin/find-table.html` | Guest name search + QR code generation |
+| Scan QR (Admin) | `/admin/scan-qr.html` | QR code scanner |
 
 ---
 
 ## Configuration
 
-Edit `wedding-v2/assets/data/config.json`:
+Edit `wedding-v3/assets/data/config.json`:
 
 ```json
 {
@@ -146,10 +153,10 @@ Guest data is managed via the admin Wedding Planner and exported to `assets/data
 ## Local Development
 
 ```bash
-cd wedding-v2
+cd wedding-v3
 npm install
 npm start
-# → http://localhost:3001
+# → http://localhost:3002
 ```
 
 Requires Node.js v18+. Uses Express + nodemon for hot reload.
@@ -164,9 +171,9 @@ Run the build script from the repo root to copy all deployable files into `dist/
 sh build.sh
 ```
 
-Output: `dist/wedding/` and `dist/wedding-v2/` ready to upload.
+Output: `dist/wedding-v3/` (and older versions) ready to upload.
 
-**Cloudflare Pages / Vercel:** set the root directory to `dist/wedding-v2/` and leave the build command empty.
+**Cloudflare Pages / Vercel:** set the root directory to `dist/wedding-v3/` and leave the build command empty.
 
 The site is fully static — `server.js` and `node_modules` are not required in production.
 

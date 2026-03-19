@@ -17,8 +17,7 @@
     .menu-scroll {
       border-radius: 18px;
       padding: 22px 20px; position: relative; overflow: hidden;
-      background: rgba(255,255,255,0.75);
-      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      background: rgba(255,255,255,0.92);
       z-index: 1;
     }
     .menu-scroll::before {
@@ -449,14 +448,18 @@ function renderMenu(lang) {
       });
     });
 
+    // Cache section offsets once after render — offsetTop doesn't force reflow on read
+    let headOffsets = headEls.map(h => h.offsetTop);
+
     // Active tab tracking — rAF-throttled scroll listener (no IntersectionObserver
     // here so it never interrupts the page's own smooth-scroll operations)
     let _rafPending = false;
     function updateActiveTab() {
       const offset = getTabsOffset(16);
+      const scrollY = window.scrollY;
       let activeIdx = 0;
-      headEls.forEach((head, i) => {
-        if (head.getBoundingClientRect().top <= offset) activeIdx = i;
+      headOffsets.forEach((top, i) => {
+        if (top - offset <= scrollY) activeIdx = i;
       });
       tabEls.forEach((t, i) => t.classList.toggle('active', i === activeIdx));
       headEls.forEach((h, i) => h.classList.toggle('active', i === activeIdx));
@@ -490,7 +493,7 @@ function renderMenu(lang) {
     _menuAnimObs = new IntersectionObserver((entries) => {
       const visible = entries.filter(e => e.isIntersecting);
       visible.forEach((entry, i) => {
-        const delay = i * 45;
+        const delay = Math.min(i * 45, 200);
         entry.target.style.transitionDelay = delay + 'ms';
         entry.target.classList.add('visible');
         // Clear delay after animation so re-renders start clean

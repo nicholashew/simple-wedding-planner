@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #0d0f14; --surface: #161b25; --border: #2a3448;
+      --accent: #f0c060; --text: #e8eaf0; --text2: #a0aac0;
+      --muted: #6b7a99; --danger: #f06060;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Syne', 'Inter', sans-serif;
+      background: var(--bg); color: var(--text);
+      min-height: 100dvh; display: flex;
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .login-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 36px 32px;
+      width: 100%; max-width: 360px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.35);
+    }
+    .login-brand {
+      text-align: center; margin-bottom: 28px;
+    }
+    .login-brand .icon { font-size: 36px; display: block; margin-bottom: 8px; }
+    .login-brand h1 {
+      font-size: 18px; font-weight: 800;
+      color: var(--accent); letter-spacing: -0.3px;
+    }
+    .login-brand p { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    label {
+      display: block; font-size: 11px; font-weight: 700;
+      color: var(--muted); letter-spacing: 1px; text-transform: uppercase;
+      margin-bottom: 6px; margin-top: 16px;
+    }
+    input {
+      width: 100%; padding: 12px 14px;
+      background: var(--bg); border: 1.5px solid var(--border);
+      border-radius: 10px; font-size: 15px; color: var(--text);
+      font-family: inherit; outline: none; transition: border-color .15s;
+    }
+    input:focus { border-color: var(--accent); }
+
+    .error-msg {
+      font-size: 12px; color: var(--danger);
+      margin-top: 8px; min-height: 18px; text-align: center;
+    }
+    .login-btn {
+      width: 100%; margin-top: 24px; padding: 14px;
+      background: var(--accent); color: #0d0f14;
+      border: none; border-radius: 50px;
+      font-size: 15px; font-weight: 800;
+      font-family: inherit; cursor: pointer;
+      transition: opacity .15s; letter-spacing: 0.3px;
+    }
+    .login-btn:hover { opacity: 0.88; }
+    .back-link {
+      display: block; text-align: center;
+      margin-top: 18px; font-size: 12px; color: var(--muted);
+      text-decoration: none;
+    }
+    .back-link:hover { color: var(--text2); }
+  </style>
+</head>
+<body>
+
+<div class="login-card">
+  <div class="login-brand">
+    <i class="fa-solid fa-lock icon"></i>
+    <h1>Admin Login</h1>
+    <p>Wedding Planner Dashboard</p>
+  </div>
+
+  <form id="login-form" onsubmit="doLogin(event)">
+    <label for="username">Username</label>
+    <input type="text" id="username" name="username"
+      autocomplete="username" autofocus placeholder="admin">
+
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password"
+      autocomplete="current-password" placeholder="••••••••">
+
+    <div class="error-msg" id="error-msg"></div>
+
+    <button type="submit" class="login-btn">Sign In</button>
+  </form>
+
+  <a class="back-link" href="../index.html"><i class="fa-solid fa-chevron-left" style="font-size:10px"></i> Back to guest site</a>
+</div>
+
+<script>
+// Credentials are read from config.json at login time.
+// For static sites the config is public — this is admin-PIN level
+// protection only, not a secure auth system.
+async function doLogin(e) {
+  e.preventDefault();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const errorEl  = document.getElementById('error-msg');
+  errorEl.textContent = '';
+
+  try {
+    const res = await fetch('../assets/data/config.json');
+    const config = await res.json();
+    const validUser = config.adminUser || 'admin';
+    const validPin  = config.adminPin  || 'password';
+
+    if (username === validUser && password === validPin) {
+      // Set session cookie (expires end of browser session)
+      document.cookie = 'gw_admin=1; path=/; SameSite=Strict';
+      window.location.href = 'index.html';
+    } else {
+      errorEl.textContent = 'Incorrect username or password.';
+    }
+  } catch {
+    errorEl.textContent = 'Could not load config. Is the server running?';
+  }
+}
+
+// Redirect if already logged in
+if (document.cookie.includes('gw_admin=1')) {
+  window.location.href = 'index.html';
+}
+</script>
+</body>
+</html>

@@ -117,11 +117,18 @@
       navVideo:         'Video',
       sendWishes:       'Share your wishes',
       sendWishesSub:    'Leave a heartfelt message for us to treasure long after this day',
+      wishPreamble:     "We'd love to hear your blessings — it only takes a minute. Your words mean the world to us.",
+      loadingForm:      'Loading form…',
+      formErrorTitle:   'Form unavailable',
+      formErrorBody:    "We couldn't load the wishes form. Please try again later.",
+      formSuccessTitle: 'Thank you!',
+      formSuccessBody:  'Your wishes have been received. We truly appreciate your heartfelt message.',
+      wishesSentToast:  'Wishes sent! Thank you 🎊',
       cardLinkWishes:   'Send',
       cardCatMessage:   'Message',
       backHome:         'Back',
       // Video page
-      videoUnavailable: 'Video Unavailable',
+      videoUnavailable: 'Coming Soon',
       videoLockDefault: 'The love story video will be available during the banquet.',
       availableIn:      'Available in',
       days:             'Days',
@@ -129,7 +136,7 @@
       mins:             'Mins',
       secs:             'Secs',
       videoInfoText:    'Our love story montage — a journey through the moments that led us here.',
-      captureWarn:      'Please enjoy the video without recording',
+      videoNoRecord:    'Please enjoy the video without screen recording. Thank you for respecting our memories.',
       // Table page
       uploadTitle:      'Choose from Gallery',
       uploadSub:        'Select a photo of your invitation QR code',
@@ -246,11 +253,18 @@
       navVideo:         '影片',
       sendWishes:       '分享祝福',
       sendWishesSub:    '留下您最真挚的祝福，让我们在这美好日子后细细珍藏',
+      wishPreamble:     '诚挚期待您的祝福，只需一分钟。您的话语对我们意义深远。',
+      loadingForm:      '正在加载表单…',
+      formErrorTitle:   '表单暂时无法使用',
+      formErrorBody:    '无法加载祝福表单，请稍后再试。',
+      formSuccessTitle: '感谢您！',
+      formSuccessBody:  '您的祝福已收到，我们衷心感谢您的真情留言。',
+      wishesSentToast:  '祝福已送出！感谢您 🎊',
       cardLinkWishes:   '送出',
       cardCatMessage:   '留言',
       backHome:         '返回',
       // Video page
-      videoUnavailable: '影片暂未开放',
+      videoUnavailable: '即将开放',
       videoLockDefault: '爱情故事短片将于婚宴期间开放',
       availableIn:      '倒数时间',
       days:             '天',
@@ -258,7 +272,7 @@
       mins:             '分',
       secs:             '秒',
       videoInfoText:    '我们的爱情故事短片 — 记录我们一路走来的美好时光',
-      captureWarn:      '请勿录影，感谢配合',
+      videoNoRecord:    '请勿录影或截屏，感谢您尊重我们的珍贵回忆。',
       // Table page
       uploadTitle:      '从相册选取',
       uploadSub:        '选取邀请函二维码的相片',
@@ -364,8 +378,57 @@
     }
   }
 
+  // ── Shared nav drawer (used by all public pages)
+  function initDrawer() {
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const navDrawer    = document.getElementById('navDrawer');
+    const navOverlay   = document.getElementById('navOverlay');
+    const drawerClose  = document.getElementById('drawerClose');
+    if (!hamburgerBtn || !navDrawer) return;
+    function openDrawer()  {
+      navDrawer.classList.add('open');
+      navOverlay && navOverlay.classList.add('open');
+      hamburgerBtn.classList.add('open');
+    }
+    function closeDrawer() {
+      navDrawer.classList.remove('open');
+      navOverlay && navOverlay.classList.remove('open');
+      hamburgerBtn.classList.remove('open');
+    }
+    hamburgerBtn.addEventListener('click', openDrawer);
+    drawerClose  && drawerClose.addEventListener('click', closeDrawer);
+    navOverlay   && navOverlay.addEventListener('click', closeDrawer);
+    window.addEventListener('pageshow', closeDrawer);
+  }
+
+  // ── Common nav/footer population
+  function initCommonNav(cfg) {
+    const name = (cfg && cfg.projectName) || '';
+    ['nav-couple-name', 'drawer-couple-name'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = name;
+    });
+    const footerEl = document.getElementById('gw-footer-names');
+    if (footerEl) {
+      const year = (cfg && cfg.eventDate)
+        ? new Date(cfg.eventDate).getFullYear()
+        : new Date().getFullYear();
+      footerEl.textContent = `© ${year} ${name}`;
+    }
+  }
+
   // ── Wire lang buttons on DOM ready
   document.addEventListener('DOMContentLoaded', () => {
+    // ── Service Worker registration (shared for all pages)
+    const isDev = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    if ('serviceWorker' in navigator && !isDev) {
+      navigator.serviceWorker.register('./sw.js');
+    } else if (isDev && 'serviceWorker' in navigator) {
+      // Unregister any previously cached SW so dev always gets fresh files
+      navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+    }
+
+    initDrawer();
     document.querySelectorAll('.lang-btn').forEach(btn => {
       btn.addEventListener('click', () => setLang(btn.dataset.lang));
     });
@@ -408,5 +471,7 @@
     getCatColor: (catKey) => getCatColor(catKey, config && config._categories),
     encodeGuestIds,
     decodeGuestIds,
+    initDrawer,
+    initCommonNav,
   };
 })();

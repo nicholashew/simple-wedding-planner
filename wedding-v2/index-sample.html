@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AAA & BBB Wedding</title>
+
+  <!-- Tailwind v4 -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- Custom Theme (Tailwind v4 style) -->
+  <style>
+    :root {
+      --gold: #C6A65B;
+      --gold-soft: #E9D9A8;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    .font-serif {
+      font-family: 'Playfair Display', serif;
+    }
+
+    .shadow-soft {
+      box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    }
+
+    .bg-gold { background-color: var(--gold); }
+    .text-gold { color: var(--gold); }
+    .border-gold { border-color: var(--gold); }
+  </style>
+
+  <style>
+    body::before {
+      content: "";
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100%;
+      background-image: url('assets/data/floral-background.jpg');
+      background-size: cover; background-repeat: repeat;
+      opacity: 0.45; z-index: -1;
+    }
+  </style>
+</head>
+<body class="bg-[#f6f2ec] text-gray-800">
+
+  <!-- NAV -->
+  <div class="flex items-center justify-between px-5 py-3 bg-white/70 backdrop-blur border-b border-gray-100 sticky top-0 z-50">
+    <i class="fa-solid fa-bars text-lg text-gray-600"></i>
+    <div class="text-center leading-tight">
+      <div class="text-[10px] tracking-[0.2em] text-gray-400">AAA & BBB</div>
+      <div class="text-sm font-semibold">Wedding 💍</div>
+    </div>
+    <div class="text-xs px-3 py-1 rounded-full border border-gold text-gold">EN</div>
+  </div>
+
+  <!-- HERO -->
+  <div class="relative h-60 overflow-hidden">
+    <img src="https://images.unsplash.com/photo-1529636798458-92182e662485" class="absolute inset-0 w-full h-full object-cover scale-105" />
+    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+    <div class="absolute bottom-6 w-full text-center text-white px-4">
+      <h1 class="text-2xl font-serif tracking-wide">AAA & BBB Wedding 💍</h1>
+      <p class="text-sm opacity-90 mt-1">1 JAN 2026</p>
+    </div>
+  </div>
+
+  <!-- WELCOME -->
+  <div class="text-center px-6 py-6">
+    <h2 class="text-2xl font-serif font-semibold mb-2">Welcome to Our Wedding</h2>
+    <p class="text-gray-500 text-sm">We're so glad you're here ❤️</p>
+  </div>
+
+  <!-- QR CARD -->
+  <div class="mx-4">
+    <div class="relative rounded-3xl p-[1px]" style="background: linear-gradient(135deg, var(--gold-soft), white, var(--gold-soft));">
+      <div class="bg-white rounded-3xl p-6 shadow-soft">
+        <div class="flex items-center gap-2 mb-2">
+          <i class="fa-solid fa-ticket text-gold"></i>
+          <h3 class="font-semibold text-lg">Find Your Seat</h3>
+        </div>
+        <p class="text-sm text-gray-500 mb-5">Scan your invitation QR code</p>
+
+        <button onclick="scanQR()" class="w-full bg-gold text-white py-3 rounded-full font-medium shadow-soft flex items-center justify-center gap-2 active:scale-95 transition">
+          <i class="fa-solid fa-camera"></i>
+          Scan QR Code
+        </button>
+
+        <p class="text-xs text-gray-400 mt-4 text-center leading-relaxed">
+          Use your invitation card<br/>Ask reception if you need help
+        </p>
+        <p class="text-xs text-red-400 mt-2 text-center hidden" id="qrError">
+          No QR code found. Please try a clearer photo.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROGRAM (TIMELINE) -->
+  <div class="mx-4 mt-10">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-xs tracking-[0.2em] text-gray-400">TODAY</h3>
+      <span class="text-xs text-gold">Program</span>
+    </div>
+
+    <div class="bg-white rounded-2xl p-5 shadow-soft">
+      <div class="relative pl-6 space-y-6">
+        <!-- vertical line -->
+        <div class="absolute left-2 top-0 bottom-0 w-px bg-gray-200"></div>
+
+        <!-- ITEM -->
+        <div class="relative">
+          <div class="absolute -left-[6px] top-1 w-3 h-3 bg-gold rounded-full"></div>
+          <p class="text-xs text-gray-400">1:00 PM</p>
+          <p class="font-medium">Couple Entrance</p>
+          <p class="text-sm text-gray-500">The couple makes their entrance to begin the celebration.</p>
+        </div>
+
+        <div class="relative">
+          <div class="absolute -left-[6px] top-1 w-3 h-3 bg-gold rounded-full"></div>
+          <p class="text-xs text-gray-400">1:30 PM</p>
+          <p class="font-medium">Lunch Starts</p>
+          <p class="text-sm text-gray-500">Guests are served a selection of dishes prepared for the occasion.</p>
+        </div>
+
+        <div class="relative">
+          <div class="absolute -left-[6px] top-1 w-3 h-3 bg-gold rounded-full"></div>
+          <p class="text-xs text-gray-400">2:30 PM</p>
+          <p class="font-medium">Yam Seng 🍻</p>
+          <p class="text-sm text-gray-500">Toasts and well-wishes are shared together.</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPERIENCE -->
+  <div class="mx-4 mt-10">
+    <h3 class="text-xs tracking-[0.2em] text-gray-400 mb-3">EXPERIENCE</h3>
+    <div class="bg-white rounded-2xl shadow-soft divide-y">
+      <a href="#" class="flex justify-between items-center p-4 hover:bg-gray-50 transition">
+        <span class="flex items-center gap-3">
+          <i class="fa-solid fa-utensils text-gold"></i>
+          See banquet menu
+        </span>
+        <i class="fa-solid fa-chevron-right text-gray-300"></i>
+      </a>
+      <a href="#" class="flex justify-between items-center p-4 hover:bg-gray-50 transition">
+        <span class="flex items-center gap-3">
+          <i class="fa-solid fa-film text-gold"></i>
+          Our love story
+        </span>
+        <i class="fa-solid fa-chevron-right text-gray-300"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- MEMORIES -->
+  <div class="mx-4 mt-6">
+    <h3 class="text-xs tracking-[0.2em] text-gray-400 mb-3">MEMORIES</h3>
+    <div class="bg-white rounded-2xl shadow-soft divide-y">
+      <a href="#" class="flex justify-between items-center p-4 hover:bg-gray-50 transition">
+        <span class="flex items-center gap-3">
+          <i class="fa-solid fa-image text-gold"></i>
+          Photo Gallery
+        </span>
+        <i class="fa-solid fa-chevron-right text-gray-300"></i>
+      </a>
+      <a href="#" class="flex justify-between items-center p-4 hover:bg-gray-50 transition">
+        <span class="flex items-center gap-3">
+          <i class="fa-solid fa-envelope text-gold"></i>
+          Share your wishes
+        </span>
+        <i class="fa-solid fa-chevron-right text-gray-300"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- FUN -->
+  <div class="mx-4 mt-6">
+    <h3 class="text-xs tracking-[0.2em] text-gray-400 mb-3">FUN</h3>
+    <div class="bg-white rounded-2xl shadow-soft">
+      <a href="#" class="flex justify-between items-center p-4 hover:bg-gray-50 transition">
+        <span class="flex items-center gap-3">
+          <i class="fa-solid fa-gamepad text-gold"></i>
+          Midnight Feast
+        </span>
+        <i class="fa-solid fa-chevron-right text-gray-300"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="text-center text-xs text-gray-400 py-12">
+    <p class="mb-1">Thank you for celebrating with us ❤️</p>
+    <p class="text-[10px]">© 2026 AAA & BBB Wedding 💍</p>
+  </div>
+
+  <script>
+    function scanQR() {
+      alert("Simulated QR Scan → Redirect to seat page");
+    //   window.location.href = "seat.html";
+    }
+  </script>
+
+</body>
+</html>

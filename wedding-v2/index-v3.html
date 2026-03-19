@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Our Wedding</title>
+  <script src="assets/js/theme.js"></script>
+  <link rel="stylesheet" href="assets/css/gw.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --serif: 'Noto Serif SC', Georgia, 'Times New Roman', serif;
+      --sans:  'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,.16);
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: 1320px; margin: 0 auto;
+      padding: 14px 20px; position: relative;
+    }
+    .nav-logo-wrap {
+      position: absolute; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 14px;
+      pointer-events: none;
+    }
+    .nav-logo-wrap > * { pointer-events: auto; }
+    .nav-logo { display: flex; align-items: center; gap: 14px; }
+    .nav-logo img { height: 50px; width: 50px; flex-shrink: 0; }
+    .nav-logo-name {
+      font-family: var(--serif); font-size: 17px;
+      color: var(--accent-dk); font-style: italic;
+      letter-spacing: 0.3px; line-height: 1.2;
+      display: none;
+    }
+    .nav-lang-mobile { display: flex; flex-shrink: 0; }
+    .nav-lang-mobile .lang-btn {
+      background: var(--accent); border: none;
+      border-radius: 50px; padding: 8px 18px; font-size: 14px;
+      font-weight: 700; cursor: pointer; font-family: var(--sans);
+      color: #fff; transition: background .15s;
+      box-shadow: 0 2px 8px rgba(140,28,19,0.30);
+    }
+    .nav-lang-mobile .lang-btn:hover { background: var(--accent-dk); }
+    .nav-lang-mobile .lang-btn.active { display: none; }
+    .hamburger-btn {
+      background: none; border: none; cursor: pointer;
+      width: 40px; height: 40px; flex-shrink: 0;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 5px; padding: 4px;
+      border-radius: 8px; transition: background .15s;
+    }
+    .hamburger-btn:hover { background: var(--accent-lt); }
+    .hamburger-btn span {
+      display: block; width: 22px; height: 2px;
+      background: var(--accent); border-radius: 2px; transition: all .25s ease;
+    }
+    .hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger-btn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    .nav-links-desktop { display: none; }
+    .nav-lang-desktop  { display: none; }
+
+    /* ── DRAWER (slides from left) ── */
+    .nav-drawer {
+      position: fixed; top: 0; left: -290px; bottom: 0;
+      width: 270px; z-index: 200;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      box-shadow: 4px 0 24px rgba(0,0,0,.12);
+      opacity: 0;
+      transition: left .28s cubic-bezier(.4,0,.2,1), opacity .22s ease;
+      display: flex; flex-direction: column;
+      padding: 20px 0 32px;
+    }
+    .nav-drawer.open {
+      opacity: 1; left: 0;
+      background:
+        linear-gradient(rgba(255,255,255,0.60), rgba(255,255,255,0.60)),
+        url('assets/data/floral-background.jpg');
+      background-size: auto, contain; background-repeat: repeat, repeat;
+    }
+    .nav-drawer-close {
+      position: absolute; top: 14px; left: 20px;
+      background: var(--accent); border: none; cursor: pointer;
+      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+      font-size: 22px; color: #fff; padding: 4px; line-height: 1;
+      border-radius: 8px; transition: background .15s;
+    }
+    .nav-drawer-close:active { 
+      background: var(--accent-lt); 
+    }
+    .nav-drawer-header { padding: 5px 24px 16px 72px; border-bottom: 1px solid var(--border); }
+    .nav-drawer-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+    .nav-drawer-brand img { height: 32px; width: 32px; flex-shrink: 0; }
+    .nav-drawer-title {
+      font-family: var(--serif); font-size: 16px; font-style: italic; color: var(--accent-dk);
+    }
+    .nav-drawer a {
+      display: flex; align-items: center; gap: 14px;
+      padding: 15px 24px; text-decoration: none;
+      color: var(--text); font-size: 15px; font-weight: 500; font-family: var(--sans);
+      border-bottom: 1px solid var(--border); transition: background .12s, color .12s;
+    }
+    .nav-drawer a:hover { background: var(--accent-lt); color: var(--accent-dk); }
+    .nav-drawer a i { width: 20px; text-align: center; color: var(--accent); font-size: 16px; }
+    .nav-overlay {
+      display: none; position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,.3);
+    }
+    .nav-overlay.open { display: block; }
+
+    /* ── HERO — banner with bottom overlay ── */
+    @keyframes hero-zoom {
+      from { transform: scale(1.07); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+    .hero {
+      position: relative; margin-top: 65px;
+      height: 56vw; max-height: 380px;
+      overflow: hidden; background: #d4c5a9;
+    }
+    .hero-img {
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center top; display: block;
+      animation: hero-zoom 2.2s cubic-bezier(.25,.46,.45,.94) forwards;
+    }
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, transparent 65%, rgba(0,0,0,.58) 100%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-end;
+      padding: 20px 22px; text-align: center;
+    }
+    .hero-couple-name {
+      font-family: var(--serif); font-size: clamp(20px, 5.5vw, 32px);
+      font-weight: 600; color: #fff; line-height: 1.15;
+      text-shadow: 0 2px 16px rgba(0,0,0,.55);
+    }
+    .hero-event-date {
+      font-family: var(--sans); font-size: 12px;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: rgba(255,255,255,.82); margin-top: 4px;
+      text-shadow: 0 1px 8px rgba(0,0,0,.5);
+    }
+
+    /* ── PAGE CONTENT ── */
+    .page-content {
+      position: relative;
+      max-width: 540px; margin: 0 auto;
+    }
+    .page-content::before {
+      content: "";
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100%;
+      background-image: url('assets/data/floral-background.jpg');
+      background-size: cover; background-repeat: repeat;
+      opacity: 0.45; z-index: -1;
+    }
+
+    /* ── WELCOME ── */
+    .welcome-section { padding: 22px 20px 18px; }
+    .welcome-title {
+      font-family: var(--serif); font-size: 21px; font-weight: 600;
+      color: var(--text); line-height: 1.3; margin-bottom: 5px;
+      text-align: center;
+    }
+    .welcome-sub {
+      font-family: var(--sans); font-size: 14px; color: var(--text2); line-height: 1.5;
+      text-align: center;
+    }
+
+    /* ── QR SECTION (primary) ── */
+    .qr-section {
+      margin: 0 16px 4px;
+      background: rgba(255,255,255,0.84);
+      border: 1.5px solid rgba(140,28,19,0.22);
+      border-radius: 20px; padding: 22px 20px;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 4px 18px rgba(0,0,0,.08);
+    }
+    .qr-section-eyebrow {
+      font-family: var(--sans); font-size: 11px; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 3px;
+    }
+    .qr-section-title {
+      font-family: var(--serif); font-size: 20px; font-weight: 600;
+      color: var(--accent-dk); margin-bottom: 4px;
+    }
+    .qr-section-sub {
+      font-family: var(--sans); font-size: 13px; color: var(--text2);
+      margin-bottom: 18px; line-height: 1.4;
+    }
+    .qr-scan-label {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 15px 20px; border-radius: 50px;
+      background: var(--accent); color: #fff;
+      font-family: var(--sans); font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: background .15s;
+      box-shadow: 0 4px 16px rgba(140,28,19,0.36);
+      margin-bottom: 14px;
+    }
+    .qr-scan-label:hover { background: var(--accent-dk); }
+    .qr-scan-label i { font-size: 17px; }
+    .qr-hints {
+      font-family: var(--sans); font-size: 12px; color: var(--muted);
+      line-height: 1.7; font-style: italic; text-align: center;
+    }
+    .qr-result {
+      margin-top: 14px; padding: 12px 14px; border-radius: 12px;
+      font-family: var(--sans); font-size: 13px; display: none;
+    }
+    .qr-result.success {
+      background: rgba(26,138,64,0.1); border: 1px solid rgba(26,138,64,0.3); color: #1a5c28;
+    }
+    .qr-result.error {
+      background: rgba(192,48,48,0.08); border: 1px solid rgba(192,48,48,0.25); color: #c03030;
+    }
+
+    /* ── DIVIDER ── */
+    .page-divider {
+      margin: 20px 20px; height: 1px;
+      background: linear-gradient(to right, transparent, var(--border), transparent);
+    }
+
+    /* ── QR section eyebrow: hidden ── */
+    .qr-section-eyebrow { display: none; }
+
+    /* ── PROGRAM ── */
+    .program-section { padding: 0 20px; }
+    .program-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .program-header-today {
+      font-family: var(--sans); font-size: 11px; font-weight: 700;
+      letter-spacing: 1.8px; text-transform: uppercase; color: var(--muted);
+    }
+    .program-header-label {
+      font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--accent);
+    }
+    .program-card {
+      background: rgba(255,255,255,0.84);
+      border: 1.5px solid rgba(140,28,19,0.18);
+      border-radius: 16px; overflow: hidden;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+    }
+    .program-item {
+      display: flex; align-items: stretch; gap: 14px;
+      padding-left: 20px;
+      padding-right: 20px;
+    }
+
+    .program-item:first-child {
+      padding-top: 20px
+    }
+    .program-item:last-child { padding-bottom: 16px; }
+    .program-left {
+      display: flex; flex-direction: column; align-items: center; flex-shrink: 0;
+      padding-top: 3px;
+    }
+    .program-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent); flex-shrink: 0;
+    }
+    .program-connector {
+      flex: 1; width: 2px; min-height: 16px;
+      background: rgba(140,28,19,0.25);
+    }
+    .program-item:last-child .program-connector { display: none; }
+    .program-item-body { flex: 1; padding-bottom: 14px; }
+    .program-time {
+      font-family: var(--sans); font-size: 12px; font-weight: 600;
+      color: var(--muted); margin-bottom: 2px; letter-spacing: 0.3px;
+    }
+    .program-event {
+      font-family: var(--sans); font-size: 15px; font-weight: 700;
+      color: var(--text); margin-bottom: 3px;
+    }
+    .program-desc {
+      font-family: var(--sans); font-size: 13px; color: var(--text2); line-height: 1.4;
+    }
+
+    /* ── LINKS GROUPS ── */
+    .links-section { padding: 0 16px; display: flex; flex-direction: column; gap: 18px; }
+    .links-group-title {
+      font-family: var(--sans); font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.2px;
+      color: var(--muted); margin-bottom: 6px;
+    }
+    .links-group-items {
+      background: rgba(255,255,255,0.74);
+      border: 1.5px solid rgba(140,28,19,0.18);
+      border-radius: 14px; overflow: hidden;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 2px 8px rgba(0,0,0,.05);
+    }
+    .links-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 16px; text-decoration: none;
+      border-bottom: 1px solid var(--border);
+      transition: background .12s;
+    }
+    .links-item:last-child { border-bottom: none; }
+    .links-item:hover { background: rgba(255,255,255,0.92); }
+    .links-item:active { background: var(--accent-lt); }
+    .links-emoji {
+      flex-shrink: 0; width: 30px; height: 30px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--accent-lt); border-radius: 8px;
+      color: var(--accent); font-size: 14px;
+    }
+    .links-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .links-label {
+      font-family: var(--serif); font-size: 15px; font-weight: 600;
+      color: var(--text);
+    }
+    .links-desc {
+      font-family: var(--sans); font-size: 10px; color: var(--muted); line-height: 1.4;
+    }
+    .links-arrow { font-size: 11px; color: var(--accent); flex-shrink: 0; transition: transform .15s, color .15s; }
+    .links-item:hover .links-arrow { transform: translateX(3px); color: var(--accent); }
+
+    /* ── SCROLL ANIMATIONS ── */
+    .scroll-fade {
+      opacity: 0; transform: translateY(28px);
+      transition: opacity 0.55s ease, transform 0.55s ease;
+    }
+    .scroll-fade.visible { opacity: 1; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) {
+      .scroll-fade { opacity: 1; transform: none; transition: none; }
+    }
+
+    /* ── PAGE THANKS ── */
+    .page-thanks {
+      text-align: center; padding: 28px 24px 36px;
+    }
+    .page-thanks-title {
+      font-family: var(--serif); font-size: clamp(22px, 5.5vw, 30px);
+      font-weight: 700; color: var(--text); line-height: 1.25; margin-bottom: 10px;
+    }
+    .page-thanks-sub {
+      font-family: var(--sans); font-size: 14px; color: var(--muted);
+      line-height: 1.6; max-width: 300px; margin: 0 auto;
+    }
+
+    /* ── FOOTER ── */
+    .gw-footer {
+      text-align: center; padding: 16px 16px 80px;
+      font-family: var(--sans); font-size: 12px; color: var(--muted);
+      letter-spacing: 0.5px; border-top: 1px solid var(--border);
+    }
+
+    /* ── BOTTOM NAV (mobile only) ── */
+    .bottom-nav {
+      display: flex;
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 120;
+      /* background: #1c1c1e;
+      border-top: 1px solid rgba(255,255,255,0.08); */
+      box-shadow: 0 -4px 20px rgba(0,0,0,.35);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+
+      background: var(--accent);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+
+    }
+    .bottom-nav-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 9px 4px 8px; gap: 4px; text-decoration: none;
+      color: rgba(255,255,255,0.45);
+      font-family: var(--sans); transition: color .15s;
+    }
+    .bottom-nav-item i { font-size: 19px; }
+    .bottom-nav-item span { font-size: 10px; font-weight: 600; letter-spacing: 0.2px; }
+    .bottom-nav-item.active { color: #fff; }
+    .bottom-nav-item:active { color: rgba(255,255,255,0.7); }
+
+    /* ── DESKTOP (≥1024px) ── */
+    @media (min-width: 1024px) {
+      .hamburger-btn { display: none; }
+      .nav-inner { padding: 0 40px; height: 65px; position: static; }
+      .nav-logo-wrap { position: static; transform: none; flex-shrink: 0; }
+      .nav-lang-mobile { display: none; }
+      .nav-links-desktop {
+        display: flex; align-items: center; gap: 2px; flex: 1; padding: 0 0 0 24px;
+      }
+      .nav-links-desktop a {
+        color: var(--text2); text-decoration: none;
+        padding: 7px 10px; border-radius: 8px;
+        font-size: 13px; font-weight: 500; font-family: var(--sans);
+        transition: background .18s, color .18s; white-space: nowrap;
+      }
+      .nav-links-desktop a:hover { background: var(--accent-lt); color: var(--accent-dk); }
+      .nav-lang-desktop {
+        display: flex; gap: 4px; align-items: center; flex-shrink: 0;
+      }
+      .nav-lang-desktop .lang-btn {
+        background: none; border: 1.5px solid var(--border);
+        border-radius: 50px; padding: 5px 13px; font-size: 12px;
+        font-weight: 700; cursor: pointer; font-family: var(--sans);
+        color: var(--muted); transition: all .15s;
+      }
+      .nav-lang-desktop .lang-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .nav-lang-desktop .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent-dk); }
+
+      .bottom-nav { display: none; }
+      .gw-footer { padding-bottom: 32px; }
+      .hero { max-height: 520px; height: 40vw; }
+      .page-content { max-width: 680px; padding-bottom: 20px; }
+      .welcome-section { padding: 30px 28px 22px; }
+      .welcome-title { font-size: 26px; }
+      .qr-section { margin: 0 28px 4px; padding: 28px; }
+      .program-section { padding: 0 28px; }
+      .program-item { padding: 18px 22px; }
+      .links-section { padding: 0 28px; }
+      .page-divider { margin: 22px 28px; }
+      .page-thanks { padding: 22px 28px 44px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero-img { animation: none; }
+      .nav-drawer { transition: none; opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── TOP NAV ── -->
+<nav class="top-nav">
+  <div class="nav-inner">
+    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-logo-wrap">
+      <div class="nav-logo">
+        <img src="assets/data/logo.svg" alt="Wedding">
+        <span class="nav-logo-name" id="nav-couple-name"></span>
+      </div>
+    </div>
+    <div class="nav-lang-mobile">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+    <div class="nav-links-desktop">
+      <a href="table.html" data-i18n="findTable">Find my seat</a>
+      <a href="menu.html" data-i18n="weddingMenu">Menu</a>
+      <a href="video.html" data-i18n="loveStory">Love Story</a>
+      <a href="gallery.html" data-i18n="photoGallery">Gallery</a>
+      <a href="wish.html" data-i18n="sendWishes">Wishes</a>
+    </div>
+    <div class="nav-lang-desktop">
+      <button class="lang-btn" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ── NAV OVERLAY ── -->
+<div class="nav-overlay" id="navOverlay"></div>
+
+<!-- ── NAV DRAWER ── -->
+<div class="nav-drawer" id="navDrawer">
+  <button class="nav-drawer-close" id="drawerClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+  <div class="nav-drawer-header">
+    <div class="nav-drawer-brand">
+      <img src="assets/data/logo.svg" alt="Wedding">
+      <div class="nav-drawer-title" id="drawer-couple-name">Our Wedding</div>
+    </div>
+  </div>
+  <a href="table.html"><i class="fa-solid fa-chair"></i> <span data-i18n="findTable">Find my seat</span></a>
+  <a href="menu.html"><i class="fa-solid fa-utensils"></i> <span data-i18n="weddingMenu">Menu</span></a>
+  <a href="video.html"><i class="fa-solid fa-circle-play"></i> <span data-i18n="loveStory">Love Story</span></a>
+  <a href="gallery.html"><i class="fa-solid fa-images"></i> <span data-i18n="photoGallery">Gallery</span></a>
+  <a href="wish.html"><i class="fa-solid fa-envelope-open-text"></i> <span data-i18n="sendWishes">Wishes</span></a>
+</div>
+
+<!-- ── HERO — banner with name + date at bottom ── -->
+<div class="hero">
+  <img class="hero-img" src="assets/data/banner-600x400.png" alt="Wedding banner"
+    onerror="this.parentElement.style.background='#d4c5a9'">
+  <div class="hero-overlay">
+    <div class="hero-couple-name" id="hero-couple-name"></div>
+    <div class="hero-event-date" id="hero-date"></div>
+  </div>
+</div>
+
+<!-- ── PAGE CONTENT ── -->
+<div class="page-content">
+
+  <!-- Welcome -->
+  <div class="welcome-section">
+    <div class="welcome-title" data-i18n="welcomeTitle">Welcome to Our Wedding</div>
+    <div class="welcome-sub" data-i18n="welcomeSub">We're so glad you're here ❤️</div>
+  </div>
+
+  <!-- Find Your Seat — QR scan -->
+  <div class="qr-section">
+    <div class="qr-section-eyebrow" data-i18n="qrEyebrow">Your Seat</div>
+    <div class="qr-section-title"><i class="fa-solid fa-ticket"></i> <span data-i18n="qrTitle">Find Your Seat</span></div>
+    <div class="qr-section-sub" data-i18n="qrSub">Scan your invitation QR code</div>
+    <label class="qr-scan-label" for="qr-file-input">
+      <i class="fa-solid fa-camera"></i>
+      <span data-i18n="qrScanBtn">Scan QR Code</span>
+    </label>
+    <input type="file" id="qr-file-input" accept="image/*" style="display:none">
+    <div class="qr-hints">
+      <i class="fa fa-info-circle" aria-hidden="true"></i>
+      <span data-i18n="qrHint1">Use your invitation card, or</span><br>
+      <span data-i18n="qrHint2">ask reception if you need help</span>
+    </div>
+    <div class="qr-result" id="qr-result"></div>
+  </div>
+
+  <div class="page-divider"></div>
+
+  <!-- Today's Program -->
+  <div class="program-section" id="program-section">
+    <div class="program-header">
+      <span class="program-header-today" data-i18n="programHeaderToday">Today's program and timing</span>
+      <!-- <span class="program-header-label" data-i18n="programTitle">Program</span> -->
+    </div>
+    <div class="program-card">
+      <div class="program-item">
+        <div class="program-left">
+          <div class="program-dot"></div>
+          <div class="program-connector"></div>
+        </div>
+        <div class="program-item-body">
+          <div class="program-time">1:00 PM</div>
+          <div class="program-event" data-i18n="prog1">Couple Entrance</div>
+          <div class="program-desc" data-i18n="prog1Desc">The couple makes their entrance to begin the celebration.</div>
+        </div>
+      </div>
+      <div class="program-item">
+        <div class="program-left">
+          <div class="program-dot"></div>
+          <div class="program-connector"></div>
+        </div>
+        <div class="program-item-body">
+          <div class="program-time">1:30 PM</div>
+          <div class="program-event" data-i18n="prog2">Lunch Starts</div>
+          <div class="program-desc" data-i18n="prog2Desc">Guests are served a selection of dishes prepared for the occasion.</div>
+        </div>
+      </div>
+      <div class="program-item">
+        <div class="program-left">
+          <div class="program-dot"></div>
+          <div class="program-connector"></div>
+        </div>
+        <div class="program-item-body">
+          <div class="program-time">2:30 PM</div>
+          <div class="program-event" data-i18n="prog3">Yam Seng 🍻</div>
+          <div class="program-desc" data-i18n="prog3Desc">Toasts and well-wishes are shared together.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-divider"></div>
+
+  <!-- Secondary links -->
+  <div class="links-section">
+
+    <div class="links-group scroll-fade">
+      <div class="links-group-title" data-i18n="linksGroupExperience">Experience</div>
+      <div class="links-group-items">
+        <a class="links-item" href="menu.html">
+          <span class="links-emoji"><i class="fa-solid fa-utensils"></i></span>
+          <div class="links-text">
+            <span class="links-label" data-i18n="weddingMenu">Menu</span>
+            <span class="links-desc" data-i18n="weddingMenuSub">Browse the banquet menu and discover the dishes prepared for this special day</span>
+          </div>
+          <i class="fa-solid fa-chevron-right links-arrow"></i>
+        </a>
+        <a class="links-item" href="video.html">
+          <span class="links-emoji"><i class="fa-solid fa-circle-play"></i></span>
+          <div class="links-text">
+            <span class="links-label" data-i18n="loveStory">Love Story</span>
+            <span class="links-desc" data-i18n="loveStorySub">Watch a montage of our journey together and the memories we cherish most</span>
+          </div>
+          <i class="fa-solid fa-chevron-right links-arrow"></i>
+        </a>
+      </div>
+    </div>
+
+    <div class="links-group scroll-fade">
+      <div class="links-group-title" data-i18n="linksGroupMemories">Memories</div>
+      <div class="links-group-items">
+        <a class="links-item" href="gallery.html">
+          <span class="links-emoji"><i class="fa-solid fa-images"></i></span>
+          <div class="links-text">
+            <span class="links-label" data-i18n="photoGallery">Gallery</span>
+            <span class="links-desc" data-i18n="cardDescGallery">Every frame tells a story of where we've been and the love we've built.</span>
+          </div>
+          <i class="fa-solid fa-chevron-right links-arrow"></i>
+        </a>
+        <a class="links-item" href="wish.html">
+          <span class="links-emoji"><i class="fa-solid fa-envelope-open-text"></i></span>
+          <div class="links-text">
+            <span class="links-label" data-i18n="sendWishes">Wishes</span>
+            <span class="links-desc" data-i18n="sendWishesSub">Leave a heartfelt message for us to treasure long after this day</span>
+          </div>
+          <i class="fa-solid fa-chevron-right links-arrow"></i>
+        </a>
+      </div>
+    </div>
+
+    <div class="links-group scroll-fade">
+      <div class="links-group-title" data-i18n="linksGroupFun">Fun 🎉</div>
+      <div class="links-group-items">
+        <a class="links-item" href="game.html">
+          <span class="links-emoji"><i class="fa-solid fa-gamepad"></i></span>
+          <div class="links-text">
+            <span class="links-label" data-i18n="cardTitleGame">Midnight Feast</span>
+            <span class="links-desc" data-i18n="cardDescGame">Help a hungry black cat match the banquet dishes before the feast begins!</span>
+          </div>
+          <i class="fa-solid fa-chevron-right links-arrow"></i>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="page-divider"></div>
+
+  <div class="page-thanks scroll-fade">
+    <div class="page-thanks-title" id="page-thanks">Thank you for celebrating with us ❤️</div>
+    <div class="page-thanks-sub" id="page-thanks-sub">We're grateful to celebrate this moment with you. Enjoy every second.</div>
+  </div>
+
+</div><!-- /.page-content -->
+
+<footer class="gw-footer">
+  <span id="gw-footer-names"></span>
+</footer>
+
+<!-- ── BOTTOM NAV (mobile) ── -->
+<nav class="bottom-nav">
+  <a class="bottom-nav-item active" href="index-v3.html">
+    <i class="fa-solid fa-house"></i>
+    <span data-i18n="navHome">Home</span>
+  </a>
+  <a class="bottom-nav-item" href="table.html">
+    <i class="fa-solid fa-ticket"></i>
+    <span data-i18n="bnSeat">Find Seat</span>
+  </a>
+  <a class="bottom-nav-item" href="#program-section">
+    <i class="fa-solid fa-calendar-days"></i>
+    <span data-i18n="bnProgram">Program</span>
+  </a>
+  <a class="bottom-nav-item" href="menu.html">
+    <i class="fa-solid fa-utensils"></i>
+    <span data-i18n="bnMenu">Menu</span>
+  </a>
+  <a class="bottom-nav-item" href="wish.html">
+    <i class="fa-solid fa-envelope-open-text"></i>
+    <span data-i18n="bnWishes">Wishes</span>
+  </a>
+</nav>
+
+<!-- jsQR for QR decoding -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="assets/js/gw.js"></script>
+<script>
+  // ── Nav drawer
+  const hamburgerBtn = document.getElementById('hamburgerBtn');
+  const navDrawer    = document.getElementById('navDrawer');
+  const navOverlay   = document.getElementById('navOverlay');
+  const drawerClose  = document.getElementById('drawerClose');
+  function openDrawer()  {
+    navDrawer.classList.add('open');
+    navOverlay.classList.add('open');
+    hamburgerBtn.classList.add('open');
+  }
+  function closeDrawer() {
+    navDrawer.classList.remove('open');
+    navOverlay.classList.remove('open');
+    hamburgerBtn.classList.remove('open');
+  }
+  hamburgerBtn.addEventListener('click', openDrawer);
+  drawerClose.addEventListener('click', closeDrawer);
+  navOverlay.addEventListener('click', closeDrawer);
+  window.addEventListener('pageshow', closeDrawer);
+
+  // ── QR scan (camera or photo upload)
+  const qrInput  = document.getElementById('qr-file-input');
+  const qrResult = document.getElementById('qr-result');
+
+  qrInput.addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (ev) {
+      const img = new Image();
+      img.onload = function () {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width; canvas.height = img.height;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        const imageData = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, canvas.width, canvas.height);
+        if (code) {
+          qrResult.className = 'qr-result success';
+          qrResult.style.display = 'block';
+          qrResult.textContent = '✓ QR found — redirecting…';
+          setTimeout(() => {
+            window.location.href = 'table.html?qr=' + encodeURIComponent(code.data);
+          }, 600);
+        } else {
+          qrResult.className = 'qr-result error';
+          qrResult.style.display = 'block';
+          qrResult.textContent = 'No QR code found. Please try a clearer photo.';
+        }
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+    qrInput.value = ''; // allow retry with same file
+  });
+
+  // ── Thanks message i18n
+  const thanksTexts = {
+    en: { title: 'Thank you for celebrating with us ❤️', sub: 'We\'re grateful to celebrate this moment with you. Enjoy every second.' },
+    zh: { title: '感謝您與我們共慶佳期 ❤️',             sub: '能與您共享這美好時刻，我們深感榮幸。祝您盡情享受今天的每一刻。' }
+  };
+  function updateThanksMsg() {
+    const lang = document.querySelector('.lang-btn.active')?.dataset.lang || 'en';
+    const t = thanksTexts[lang] ?? thanksTexts.en;
+    const el = document.getElementById('page-thanks');
+    if (el) el.textContent = t.title;
+    const sub = document.getElementById('page-thanks-sub');
+    if (sub) sub.textContent = t.sub;
+  }
+  document.querySelectorAll('.lang-btn').forEach(btn =>
+    new MutationObserver(updateThanksMsg).observe(btn, { attributes: true, attributeFilter: ['class'] })
+  );
+
+  // ── Config + i18n
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const { config } = await GW.loadData();
+      GW.applyConfig();
+      const name = config.projectName || '';
+      document.getElementById('nav-couple-name').textContent  = name;
+      document.getElementById('drawer-couple-name').textContent = name;
+      document.getElementById('hero-couple-name').textContent = name;
+      const footerEl = document.getElementById('gw-footer-names');
+      if (footerEl) {
+        const year = config.eventDate
+          ? new Date(config.eventDate).getFullYear()
+          : new Date().getFullYear();
+        footerEl.textContent = `© ${year} ${name}`;
+      }
+      if (config.eventDate) {
+        const d = new Date(config.eventDate);
+        const heroDate = document.getElementById('hero-date');
+        if (heroDate) heroDate.textContent =
+          d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
+      }
+    } catch (e) {
+      console.warn('Could not load config:', e);
+    }
+    updateThanksMsg();
+
+    // ── Scroll animations
+    const scrollObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          scrollObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    // Stagger link groups
+    document.querySelectorAll('.links-group.scroll-fade').forEach((el, i) => {
+      el.style.transitionDelay = (i * 0.1) + 's';
+      scrollObserver.observe(el);
+    });
+    // Page thanks
+    const thanksEl = document.querySelector('.page-thanks.scroll-fade');
+    if (thanksEl) scrollObserver.observe(thanksEl);
+  });
+</script>
+
+</body>
+</html>

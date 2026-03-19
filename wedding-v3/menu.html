@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wedding Menu</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="assets/js/theme.js"></script>
+  <link rel="stylesheet" href="assets/css/gw.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Banquet scroll style ── */
+    .menu-scroll {
+      border-radius: 18px;
+      padding: 22px 20px; position: relative; overflow: hidden;
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      z-index: 1;
+    }
+    .menu-scroll::before {
+      content: '❧';
+      position: absolute; top: 10px; right: 14px;
+      font-size: 18px; color: rgba(200,168,74,.35);
+      pointer-events: none; user-select: none;
+    }
+    .menu-section-head {
+      font-size: 13px; letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--gold); font-weight: 700; margin: 18px 0 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .menu-section-head::before,
+    .menu-section-head::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(to right, transparent, rgba(200,168,74,.5));
+    }
+    .menu-section-head::after {
+      background: linear-gradient(to left, transparent, rgba(200,168,74,.5));
+    }
+    .menu-section-head:first-child { margin-top: 0; }
+    .menu-section-head.active {
+      box-shadow: inset 3px 0 0 var(--gold);
+      transition: background .3s, color .3s, box-shadow .3s;
+    }
+    .menu-section-head.active::before { background: linear-gradient(to right, transparent, rgba(138,106,32,.4)); }
+    .menu-section-head.active::after  { background: linear-gradient(to left,  transparent, rgba(138,106,32,.4)); }
+    .menu-item {
+      padding: 11px 6px;
+      border-bottom: 1px dashed rgba(200,168,74,.28); transition: background .15s;
+    }
+    .menu-item:last-child { border-bottom: none; }
+    .menu-item:hover { background: rgba(200,168,74,.06); border-radius: 8px; }
+    .menu-item-inner { display: flex; align-items: center; gap: 12px; }
+    .menu-dish-num {
+      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+      background: var(--gold); color: #fff; border: none;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 700; font-family: Georgia, serif;
+    }
+    .menu-item-emoji { flex-shrink: 0; width: 64px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+    .menu-item-icon { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
+    .menu-item-text { flex: 1; min-width: 0; }
+    .menu-item-name {
+      font-family: Georgia, serif; font-size: 16px; font-weight: 400;
+      color: var(--text); line-height: 1.3;
+    }
+    .menu-item-name-alt { font-size: 15px; color: var(--muted); margin-top: 1px; line-height: 1.4; }
+    .menu-item-desc {
+      font-size: 13px; color: var(--muted); margin-top: 3px;
+      line-height: 1.5; font-style: italic;
+    }
+    .menu-empty { text-align: center; padding: 32px 20px; color: var(--muted); font-size: 14px; }
+
+    /* ── Sticky course tabs ── */
+    #menu-container {
+      border: 1.5px solid var(--gold);
+      border-radius: 18px 18px;
+      background: var(--bg);
+    }
+
+    /* Wrapper provides the right-edge fade affordance on mobile */
+    .course-tabs-wrap {
+      position: sticky; top: 65px; z-index: 90;
+    }
+    .course-tabs-wrap::after {
+      content: '';
+      position: absolute; top: 0; right: 0; bottom: 0;
+      width: 40px; pointer-events: none;
+      background: linear-gradient(to left, var(--bg), transparent);
+      border-radius: 0 18px 18px 0;
+    }
+
+    .course-tabs {
+      position: relative;
+      display: flex; gap: 8px;
+      overflow-x: auto; scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      padding: 10px;
+      margin: 0;
+      transition: border-color .3s ease,
+                  background .3s ease,
+                  box-shadow .3s ease,
+                  border-radius .35s cubic-bezier(.4,0,.2,1),
+                  margin-left .35s cubic-bezier(.4,0,.2,1),
+                  margin-right .35s cubic-bezier(.4,0,.2,1),
+                  padding-left .35s cubic-bezier(.4,0,.2,1),
+                  padding-right .35s cubic-bezier(.4,0,.2,1);
+    }
+    .course-tabs.scrolled {
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-radius: 18px;
+    }
+    .course-tabs::-webkit-scrollbar { display: none; }
+    .course-tab {
+      flex-shrink: 0; padding: 6px 16px; border-radius: 50px;
+      border: 1.5px solid var(--border); background: var(--surface);
+      color: var(--text2); font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: inherit; white-space: nowrap;
+      transition: background .2s, color .2s, border-color .2s, box-shadow .2s;
+    }
+    .course-tab.active {
+      background: var(--accent); border-color: var(--accent);
+      color: #fff; box-shadow: 0 2px 8px rgba(184,146,58,0.35);
+    }
+    .course-tab-count {
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-left: 5px; padding: 1px 6px; border-radius: 99px;
+      font-size: 10px; font-weight: 700; line-height: 1.6;
+      background: rgba(0,0,0,0.10); color: inherit;
+      vertical-align: middle;
+    }
+    .course-tab.active .course-tab-count {
+      background: rgba(255,255,255,0.25);
+    }
+
+    /* ── Menu footer note ── */
+    .menu-footer-note {
+      margin-top: 24px;
+      padding: 28px 24px 32px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.55);
+      border: 1px dashed rgba(200,168,74,.40);
+      text-align: center;
+    }
+    .menu-footer-note .mfn-icon {
+      font-size: 22px; display: block; margin-bottom: 8px; opacity: .7;
+    }
+    .menu-footer-note p {
+      font-size: 13px; color: var(--muted); line-height: 1.6; font-style: italic;
+    }
+    .menu-footer-note strong {
+      display: block; margin-top: 10px;
+      font-family: Georgia, serif; font-size: 15px;
+      font-style: normal; color: var(--accent-dk); font-weight: 400;
+    }
+    .mfn-preview {
+      margin-top: 20px;
+      border-top: 1px dashed rgba(200,168,74,.3);
+      padding-top: 18px;
+    }
+    .mfn-preview-btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 20px; border-radius: 50px;
+      background: none; border: 1.5px solid rgba(200,168,74,.5);
+      color: var(--accent-dk); font-size: 13px; font-weight: 600;
+      font-family: inherit; cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .mfn-preview-btn:hover { background: var(--accent-lt); border-color: var(--accent); }
+    .mfn-preview-caption {
+      margin-top: 8px;
+      font-size: 11px; color: var(--muted);
+      letter-spacing: 0.5px; font-style: italic;
+    }
+
+    /* ── Menu preview modal ── */
+    .mfn-modal {
+      display: none; position: fixed; inset: 0; z-index: 9800;
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .mfn-modal.open { display: flex; }
+    .mfn-modal-backdrop {
+      position: absolute; inset: 0;
+      background: rgba(10,8,4,.75);
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    }
+    .mfn-modal-box {
+      position: relative; z-index: 1;
+      background: #fdf8ef;
+      border-radius: 18px;
+      padding: 24px 20px 20px;
+      max-width: 520px; width: 100%;
+      box-shadow: 0 12px 48px rgba(0,0,0,.3);
+      text-align: center;
+      animation: mfnFadeUp .22s ease;
+    }
+    @keyframes mfnFadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .mfn-modal-close {
+      position: absolute; top: 12px; right: 14px;
+      background: none; border: none; font-size: 20px;
+      color: var(--muted); cursor: pointer; line-height: 1;
+      padding: 4px 8px; border-radius: 6px; transition: color .15s;
+    }
+    .mfn-modal-close:hover { color: var(--text); }
+    .mfn-modal-img {
+      max-width: 100%; border-radius: 10px;
+      display: block; margin: 0 auto 14px; margin-right: 16px;
+    }
+    .mfn-modal-title {
+      font-family: Georgia, serif; font-size: 18px; font-weight: 400;
+      color: var(--accent-dk); margin-bottom: 16px;
+    }
+    .mfn-modal-caption {
+      font-size: 11px; color: var(--muted);
+      font-style: italic; letter-spacing: 0.5px;
+    }
+
+    @media (min-width: 1024px) {
+      .menu-scroll { padding-bottom: 300px; }
+    }
+
+    /* ── Scroll-in animation ── */
+    .menu-anim {
+      opacity: 0; transform: translateY(14px);
+      transition: opacity .38s ease, transform .38s cubic-bezier(.22,1,.36,1);
+    }
+    .menu-anim.visible { opacity: 1; transform: translateY(0); }
+
+    @media (min-width: 1024px) {
+      /* ── Menu: sidebar layout ── */
+      #menu-container {
+        display: flex;
+        align-items: flex-start;
+      }
+      /* On desktop the sidebar is always fully visible — no fade needed */
+      .course-tabs-wrap {
+        flex-shrink: 0; width: 170px;
+        top: 65px; /* keep sticky context */
+        height: fit-content;
+      }
+      .course-tabs-wrap::after { display: none; }
+      .course-tabs {
+        flex-direction: column;
+        overflow-x: visible; overflow-y: visible;
+        gap: 4px; padding: 20px 12px;
+        border-right: 1px solid var(--border);
+        border-radius: 16px 0 0 16px;
+        transition: none;
+      }
+      .course-tab {
+        width: 100%; text-align: center;
+        border-radius: 10px; padding: 9px 14px; font-size: 13px;
+      }
+      .menu-scroll {
+        flex: 1; min-width: 0;
+        border-radius: 0 16px 16px 0;
+      }
+      /* ── 3-column dish layout (num | icon | text) ── */
+      .menu-item-inner {
+        display: grid;
+        grid-template-columns: minmax(48px, 20%) minmax(72px, 20%) 60%;
+        align-items: center;
+        gap: 0;
+      }
+      .menu-dish-num   { justify-self: center; }
+      .menu-item-emoji { width: auto; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── TOP NAV ── -->
+<nav class="top-nav">
+  <div class="nav-inner">
+    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-logo-wrap">
+      <div class="nav-logo">
+        <img src="assets/data/logo.svg" alt="">
+        <span class="nav-logo-name" id="nav-couple-name"></span>
+      </div>
+    </div>
+    <div class="nav-lang-mobile">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+    <div class="nav-links-desktop">
+      <a href="table.html" data-i18n="findTable">Find my seat</a>
+      <a href="menu.html" data-i18n="weddingMenu">Menu</a>
+      <a href="video.html" data-i18n="loveStory">Love Story</a>
+      <a href="gallery.html" data-i18n="photoGallery">Gallery</a>
+      <a href="wish.html" data-i18n="sendWishes">Wishes</a>
+    </div>
+    <div class="nav-lang-desktop">
+      <button class="lang-btn" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ── NAV OVERLAY ── -->
+<div class="nav-overlay" id="navOverlay"></div>
+
+<!-- ── NAV DRAWER ── -->
+<div class="nav-drawer" id="navDrawer">
+  <button class="nav-drawer-close" id="drawerClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+  <div class="nav-drawer-header">
+    <div class="nav-drawer-brand">
+      <img src="assets/data/logo.svg" alt="">
+      <div class="nav-drawer-title" id="drawer-couple-name">Our Wedding</div>
+    </div>
+  </div>
+  <a href="table.html"><i class="fa-solid fa-chair"></i> <span data-i18n="findTable">Find my seat</span></a>
+  <a href="menu.html"><i class="fa-solid fa-utensils"></i> <span data-i18n="weddingMenu">Menu</span></a>
+  <a href="video.html"><i class="fa-solid fa-circle-play"></i> <span data-i18n="loveStory">Love Story</span></a>
+  <a href="gallery.html"><i class="fa-solid fa-images"></i> <span data-i18n="photoGallery">Gallery</span></a>
+  <a href="wish.html"><i class="fa-solid fa-envelope-open-text"></i> <span data-i18n="sendWishes">Wishes</span></a>
+</div>
+
+<main class="gw-main">
+  <h2 class="page-title"><i class="fa-solid fa-utensils"></i> <span data-i18n="weddingMenu">Wedding Menu</span></h2>
+  <p class="page-subtitle" id="menu-subtitle" data-i18n="weddingMenuSub">Tonight's banquet courses</p>
+
+  <div id="menu-container">
+    <div class="menu-empty">Loading menu...</div>
+  </div>
+
+  <div class="menu-footer-note">
+    <span class="mfn-icon">❧</span>
+    <p data-i18n="menuFooterNote">Dishes are prepared fresh for this occasion. Menu may be subject to seasonal availability.</p>
+    <strong data-i18n="menuFooterWish">Wishing you a wonderful feast. 祝用餐愉快！</strong>
+    <div class="mfn-preview">
+      <button class="mfn-preview-btn" id="mfnPreviewBtn">
+        <i class="fa-solid fa-scroll"></i>
+        <span data-i18n="menuPreviewBtn">View banquet menu</span>
+      </button>
+      <p class="mfn-preview-caption" data-i18n="menuPreviewCaption">For illustration only — actual presentation may vary.</p>
+    </div>
+  </div>
+
+</main>
+
+<!-- Banquet menu preview modal -->
+<div class="mfn-modal" id="mfnModal" role="dialog" aria-modal="true" aria-label="Banquet menu preview">
+  <div class="mfn-modal-backdrop" id="mfnBackdrop"></div>
+  <div class="mfn-modal-box">
+    <button class="mfn-modal-close" id="mfnModalClose" aria-label="Close">✕</button>
+    <h3 class="mfn-modal-title" data-i18n="menuPreviewTitle">Banquet Menu</h3>
+    <img class="mfn-modal-img" src="assets/img/banquet-menu-vertical.png" alt="Banquet menu" loading="lazy">
+    <p class="mfn-modal-caption" data-i18n="menuPreviewCaption">For illustration only — actual presentation may vary.</p>
+  </div>
+</div>
+
+<footer class="gw-footer">
+  <span id="gw-footer-names"></span>
+</footer>
+
+<script src="assets/js/gw.js"></script>
+<script>
+let _menuAnimObs = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const { config } = await GW.loadData();
+    GW.applyConfig();
+    GW.initCommonNav(config);
+    renderMenu(GW.lang);
+  } catch (e) {
+    document.getElementById('menu-container').innerHTML =
+      '<div class="menu-empty">Menu not available.</div>';
+  }
+});
+
+// Re-render on language change
+window.onLangChange = (lang) => renderMenu(lang);
+
+function renderMenu(lang) {
+  // Disconnect animation observer before re-render
+  if (_menuAnimObs) { _menuAnimObs.disconnect(); _menuAnimObs = null; }
+
+  const config = GW.config;
+  if (!config || !config.menu) return;
+  const container = document.getElementById('menu-container');
+  const isZh = lang === 'zh';
+  const multiCourse = config.menu.length > 1;
+
+  let dishNum = 1;
+  let tabsHtml = multiCourse ? '<div class="course-tabs-wrap"><div class="course-tabs" id="course-tabs">' : '';
+  let menuHtml = '<div class="menu-scroll">';
+
+  config.menu.forEach((section, idx) => {
+    const courseLabel = isZh ? section.courseZh : section.courseEn;
+    const sectionId = 'course-' + idx;
+    if (multiCourse) {
+      const count = section.items ? section.items.length : 0;
+      tabsHtml += `<button class="course-tab${idx === 0 ? ' active' : ''}" data-target="${sectionId}">${courseLabel}<span class="course-tab-count">${count}</span></button>`;
+    }
+    menuHtml += `<div class="menu-section-head" id="${sectionId}">${courseLabel}</div>`;
+    section.items.forEach(item => {
+      const primary   = isZh ? item.nameZh : item.nameEn;
+      const secondary = isZh ? item.nameEn : item.nameZh;
+      const desc      = isZh ? item.descZh : item.descEn;
+      menuHtml += `
+        <div class="menu-item">
+          <div class="menu-item-inner">
+            <div class="menu-dish-num">${dishNum++}</div>
+            <div class="menu-item-emoji">${(item.icon || []).map(ic => ic.type === 'emoji' ? `<span>${ic.value}</span>` : `<img class="menu-item-icon" src="assets/img/icons/${ic.value}" alt="">`).join('')}</div>
+            <div class="menu-item-text">
+              <div class="menu-item-name">${primary}</div>
+              <div class="menu-item-name-alt">${secondary}</div>
+              ${desc ? `<div class="menu-item-desc">${desc}</div>` : ''}
+            </div>
+          </div>
+        </div>`;
+    });
+  });
+
+  if (multiCourse) tabsHtml += '</div></div>'; // close .course-tabs + .course-tabs-wrap
+  menuHtml += '</div>';
+  container.innerHTML = tabsHtml + menuHtml;
+
+  // ── Sticky tabs: click to scroll + active tracking
+  if (multiCourse) {
+    const tabEls  = Array.from(container.querySelectorAll('.course-tab'));
+    const headEls = Array.from(container.querySelectorAll('.menu-section-head'));
+    const tabsBar = document.getElementById('course-tabs');
+
+    // On desktop (≥1024px) tabs are a sidebar — don't use their height as scroll offset
+    function getTabsOffset(extra = 0) {
+      const isSidebar = window.innerWidth >= 1024;
+      const tabsH = (!isSidebar && tabsBar) ? tabsBar.offsetHeight : 0;
+      return 65 + tabsH + extra;
+    }
+
+    // Click: smooth-scroll to section below nav + tabs
+    tabEls.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = document.getElementById(btn.dataset.target);
+        if (!target) return;
+        window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - getTabsOffset(), behavior: 'smooth' });
+      });
+    });
+
+    // Active tab tracking — rAF-throttled scroll listener (no IntersectionObserver
+    // here so it never interrupts the page's own smooth-scroll operations)
+    let _rafPending = false;
+    function updateActiveTab() {
+      const offset = getTabsOffset(16);
+      let activeIdx = 0;
+      headEls.forEach((head, i) => {
+        if (head.getBoundingClientRect().top <= offset) activeIdx = i;
+      });
+      tabEls.forEach((t, i) => t.classList.toggle('active', i === activeIdx));
+      headEls.forEach((h, i) => h.classList.toggle('active', i === activeIdx));
+      if (tabsBar) {
+        // Only adjust horizontal scroll when tabs overflow (mobile / narrow viewport).
+        // On desktop where all tabs fit, skip entirely to avoid any layout side-effects.
+        if (tabsBar.scrollWidth > tabsBar.clientWidth) {
+          const activeTab = tabEls[activeIdx];
+          const tabRect = activeTab.getBoundingClientRect();
+          const barRect = tabsBar.getBoundingClientRect();
+          tabsBar.scrollLeft += tabRect.left - barRect.left - (barRect.width - tabRect.width) / 2;
+        }
+        tabsBar.classList.toggle('scrolled', window.scrollY > 20);
+      }
+    }
+
+    window.addEventListener('scroll', () => {
+      if (_rafPending) return;
+      _rafPending = true;
+      requestAnimationFrame(() => { updateActiveTab(); _rafPending = false; });
+    }, { passive: true });
+
+    updateActiveTab(); // set correct state on first render
+  }
+
+  // ── Scroll-in animation (skipped if user prefers reduced motion)
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const animEls = Array.from(container.querySelectorAll('.menu-section-head, .menu-item'));
+    animEls.forEach(el => el.classList.add('menu-anim'));
+
+    _menuAnimObs = new IntersectionObserver((entries) => {
+      const visible = entries.filter(e => e.isIntersecting);
+      visible.forEach((entry, i) => {
+        const delay = i * 45;
+        entry.target.style.transitionDelay = delay + 'ms';
+        entry.target.classList.add('visible');
+        // Clear delay after animation so re-renders start clean
+        setTimeout(() => { entry.target.style.transitionDelay = ''; }, delay + 450);
+        _menuAnimObs.unobserve(entry.target);
+      });
+    }, { threshold: 0.05 });
+
+    animEls.forEach(el => _menuAnimObs.observe(el));
+  }
+}
+
+// Banquet menu preview modal
+const mfnModal      = document.getElementById('mfnModal');
+const mfnPreviewBtn = document.getElementById('mfnPreviewBtn');
+const mfnModalClose = document.getElementById('mfnModalClose');
+const mfnBackdrop   = document.getElementById('mfnBackdrop');
+function openMfnModal()  { mfnModal.classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeMfnModal() { mfnModal.classList.remove('open'); document.body.style.overflow = ''; }
+mfnPreviewBtn.addEventListener('click', openMfnModal);
+mfnModalClose.addEventListener('click', closeMfnModal);
+mfnBackdrop.addEventListener('click', closeMfnModal);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMfnModal(); });
+</script>
+
+<!-- ── BOTTOM NAV (mobile) ── -->
+<nav class="bottom-nav">
+  <a class="bottom-nav-item" href="index.html"><i class="fa-solid fa-house"></i><span data-i18n="navHome">Home</span></a>
+  <a class="bottom-nav-item" href="table.html"><i class="fa-solid fa-ticket"></i><span data-i18n="bnSeat">Find Seat</span></a>
+  <a class="bottom-nav-item" href="index.html#program-section"><i class="fa-solid fa-calendar-days"></i><span data-i18n="bnProgram">Program</span></a>
+  <a class="bottom-nav-item active" href="menu.html"><i class="fa-solid fa-utensils"></i><span data-i18n="bnMenu">Menu</span></a>
+  <a class="bottom-nav-item" href="wish.html"><i class="fa-solid fa-envelope-open-text"></i><span data-i18n="bnWishes">Wishes</span></a>
+</nav>
+</body>
+</html>

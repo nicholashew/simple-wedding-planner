@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Our Wedding — v2 preview</title>
+  <link rel="stylesheet" href="assets/css/gw.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    /* ── TOP NAV ── */
+    .top-nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: block; padding: 0;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,.16);
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: 1320px; margin: 0 auto;
+      padding: 14px 20px;
+      position: relative;
+    }
+    /* Mobile: logo + lang toggle centered absolutely */
+    .nav-logo-wrap {
+      position: absolute; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 10px;
+      pointer-events: none;
+    }
+    .nav-logo-wrap > * { pointer-events: auto; }
+    .nav-logo {
+      display: flex; align-items: center; gap: 14px;
+    }
+    .nav-logo img {
+      height: 32px; width: 32px; flex-shrink: 0;
+    }
+    .nav-logo-name {
+      font-family: Georgia, 'Times New Roman', serif; font-size: 17px;
+      color: var(--accent-dk); font-style: italic;
+      letter-spacing: 0.3px; line-height: 1.2;
+    }
+    /* Single lang toggle — hide active lang, show only the other as a filled pill */
+    .nav-lang-mobile {
+      display: flex; flex-shrink: 0;
+    }
+    .nav-lang-mobile .lang-btn {
+      background: var(--accent); border: none;
+      border-radius: 50px; padding: 8px 18px; font-size: 14px;
+      font-weight: 700; cursor: pointer; font-family: inherit;
+      color: #fff; transition: background .15s;
+      box-shadow: 0 2px 8px rgba(184,146,58,0.35);
+    }
+    .nav-lang-mobile .lang-btn:hover { background: var(--accent-dk); }
+    .nav-lang-mobile .lang-btn.active { display: none; }
+    .hamburger-btn {
+      background: none; border: none; cursor: pointer;
+      width: 40px; height: 40px;
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 5px; padding: 4px;
+      border-radius: 8px; transition: background .15s;
+    }
+    .hamburger-btn:hover { background: var(--accent-lt); }
+    .hamburger-btn span {
+      display: block; width: 22px; height: 2px;
+      background: var(--text); border-radius: 2px;
+      transition: all .25s ease;
+    }
+    .hamburger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger-btn.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .hamburger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ── DRAWER (slides from left) ── */
+    .nav-drawer {
+      position: fixed; top: 0; left: -290px; bottom: 0;
+      width: 270px; z-index: 200;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      box-shadow: 4px 0 24px rgba(0,0,0,.12);
+      opacity: 0;
+      transition: left .28s cubic-bezier(.4,0,.2,1), opacity .22s ease;
+      display: flex; flex-direction: column;
+      padding: 20px 0 32px;
+    }
+    .nav-drawer.open { opacity: 1; }
+    .nav-drawer.open {
+      left: 0;
+      background:
+        linear-gradient(rgba(255,255,255,0.60), rgba(255,255,255,0.60)),
+        url('assets/data/floral-background.jpg');
+      background-size: auto, contain;
+      background-repeat: repeat, repeat;
+    }
+    /* drawerClose aligned to same position as hamburgerBtn (top:14px left:20px) */
+    .nav-drawer-close {
+      position: absolute; top: 14px; left: 20px;
+      background: none; border: none; cursor: pointer;
+      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+      font-size: 22px; color: var(--muted); padding: 4px; line-height: 1; border-radius: 8px;
+      transition: background .15s;
+    }
+    .nav-drawer-close:hover { background: var(--accent-lt); color: var(--text); }
+    .nav-drawer-header {
+      padding: 5px 24px 16px 72px;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-drawer-brand {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 12px;
+    }
+    .nav-drawer-brand img { height: 36px; width: 36px; flex-shrink: 0; }
+    .nav-drawer-title {
+      font-family: Georgia, serif; font-size: 17px; font-style: italic;
+      color: var(--accent-dk);
+    }
+    .nav-drawer a {
+      display: flex; align-items: center; gap: 14px;
+      padding: 15px 24px; text-decoration: none;
+      color: var(--text); font-size: 15px; font-weight: 500;
+      border-bottom: 1px solid var(--border);
+      transition: background .12s, color .12s;
+    }
+    .nav-drawer a:hover { background: var(--accent-lt); color: var(--accent-dk); }
+    .nav-drawer a i { width: 20px; text-align: center; color: var(--accent); font-size: 16px; }
+    .nav-overlay {
+      display: none; position: fixed; inset: 0; z-index: 150;
+      background: rgba(0,0,0,.3);
+    }
+    .nav-overlay.open { display: block; }
+
+    /* ── HERO ──
+       Mobile: flex-column — image on top, text block stacks below (fully reveals banner).
+       Desktop (≥1024px): back to absolute overlay with text-shadows, no gradient bg.
+    */
+    .hero {
+      margin-top: 65px;
+      display: flex; flex-direction: column;
+      overflow: hidden; 
+      /* background: var(--border); */
+    }
+    @keyframes hero-zoom {
+      from { transform: scale(1.07); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+    .hero-img {
+      width: 100%; height: 56vw; max-height: 360px;
+      object-fit: cover; object-position: center top;
+      display: block; flex-shrink: 0;
+      animation: hero-zoom 2.2s cubic-bezier(.25,.46,.45,.94) forwards;
+    }
+    /* Mobile overlay: static, sits below the image */
+    .hero-overlay {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-start;
+      padding: 10px;
+      text-align: center;
+      background: none;
+    }
+    .hero-subtitle {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 12px; letter-spacing: 2.5px; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 6px; font-weight: 600;
+    }
+    .hero-title {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: clamp(22px, 6vw, 36px);
+      font-weight: 600; color: var(--text); line-height: 1.25;
+      margin-bottom: 6px;
+    }
+    .hero-tagline {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 13px; color: var(--text2); line-height: 1.5;
+    }
+
+    /* ── PAGE CONTENT WRAPPER (floral bg) ── */
+    .page-content {
+      position: relative;
+    }
+    .page-content::before {
+      content: "";
+      position: fixed;
+      top: var(--banner-h, 0px);
+      left: 0;
+      width: 100vw;
+      height: 100%;
+      background-image: url('assets/data/floral-background.jpg');
+      background-size: cover;
+      background-repeat: repeat;
+      opacity: 0.5;
+      z-index: -1;
+    }
+
+    /* ── LANG BAR ── */
+    .lang-bar { display: none; }
+    .lang-bar-inner {
+      display: flex; align-items: center;
+      background: #fdf5e6;
+      border-radius: 50px;
+      padding: 4px;
+      gap: 2px;
+    }
+    .lang-bar .lang-btn {
+      border: none; border-radius: 50px;
+      padding: 8px 22px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      color: var(--text2);
+      background: transparent;
+      transition: background .25s ease, color .25s ease,
+                  box-shadow .25s ease, transform .2s ease;
+      line-height: 1;
+    }
+    .lang-bar .lang-btn:active { transform: scale(0.95); }
+    .lang-bar .lang-btn.active {
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: 0 2px 8px rgba(0,0,0,.16);
+    }
+
+    /* ── HOME GREETING ── */
+    .home-greeting { display: none; }
+    .home-greeting h4 {
+      font-family: Georgia, serif; font-size: 20px; font-weight: 400;
+      color: var(--text); font-style: italic; margin-bottom: 6px;
+      line-height: 1.4;
+    }
+    .home-greeting p {
+      font-size: 13px; color: var(--muted); line-height: 1.5;
+    }
+
+    /* ── PAGE THANKS ── */
+    .page-thanks {
+      text-align: center; padding: 24px 20px 40px;
+      font-family: Georgia, 'Times New Roman', serif; font-style: italic;
+      font-size: 15px; color: var(--muted); line-height: 1.6;
+      border-top: 1px solid var(--border);
+      max-width: 500px; margin: 0 auto;
+    }
+
+    /* ── FOOTER ── */
+    .gw-footer {
+      text-align: center; padding: 20px 16px 32px;
+      font-size: 12px; color: var(--muted); letter-spacing: 0.5px;
+    }
+
+    /* ── CARDS SECTION ── */
+    .cards-section {
+      max-width: 500px; margin: 0 auto;
+      padding: 16px 16px 60px;
+    }
+
+    .cards-grid { display: flex; flex-direction: column; gap: 10px; }
+
+    /* ── BASE HOME-CARD SHARED ── */
+    .home-card {
+      background: rgba(255,255,255,0.72);
+      border: 1.5px solid rgba(200,168,74,0.30);
+      border-radius: 16px;
+      text-decoration: none; display: block;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      transition: transform .2s cubic-bezier(.34,1.56,.64,1),
+                  box-shadow .2s ease, border-color .2s ease, background .2s ease;
+      cursor: pointer;
+    }
+    .home-card:hover {
+      border-color: var(--gold);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 28px rgba(0,0,0,.12);
+      background: rgba(255,255,255,0.88);
+    }
+    .home-card:active { transform: translateY(0) scale(0.98); }
+
+    /* shared icon */
+    .card-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: var(--accent-lt); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; color: var(--accent);
+    }
+
+    /* ── CARD LAYOUT ── */
+    .card-a { padding: 14px 16px; }
+    .ca-row { display: flex; align-items: center; gap: 12px; }
+    .ca-info { flex: 1; min-width: 0; }
+    .ca-title {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 15px; font-weight: 600; color: var(--text);
+      line-height: 1.2;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .ca-desc {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 12px; color: var(--muted); line-height: 1.4;
+      margin-top: 8px; padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+    .card-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 16px; border-radius: 50px; flex-shrink: 0;
+      background: var(--accent); color: #fff;
+      font-size: 13px; font-weight: 600;
+      box-shadow: 0 2px 8px rgba(184,146,58,0.40);
+      transition: background .15s, box-shadow .15s;
+    }
+    .home-card:hover .card-link { background: var(--accent-dk); box-shadow: 0 3px 12px rgba(184,146,58,0.55); }
+    .card-link i { font-size: 10px; }
+
+    /* ── HERO CTA BUTTONS ── */
+    .hero-cta { display: flex; margin-top: 20px; width: 100%; padding: 0 4px; }
+    .hero-cta-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 15px 28px; border-radius: 50px;
+      font-size: 15px; font-weight: 700; text-decoration: none;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      transition: all .18s; cursor: pointer;
+    }
+    .hero-cta-primary {
+      background: var(--accent); color: #fff; width: 100%;
+      box-shadow: 0 4px 18px rgba(184,146,58,0.45);
+    }
+    .hero-cta-primary:hover { background: var(--accent-dk); }
+
+    /* ── DESKTOP NAV LINKS + LANG (hidden on mobile/tablet) ── */
+    .nav-links-desktop { display: none; }
+    .nav-lang-desktop  { display: none; }
+
+    @media (min-width: 640px) {
+      .cards-section { max-width: 580px; padding: 16px 24px 80px; }
+    }
+
+    /* ── DESKTOP (≥1024px) ── */
+    @media (min-width: 1024px) {
+      /* Nav: show inline links + lang, hide hamburger */
+      .hamburger-btn { display: none; }
+      .nav-inner { padding: 0 40px; height: 65px; position: static; }
+      /* Reset logo wrap to normal flow on desktop */
+      .nav-logo-wrap { position: static; transform: none; flex-shrink: 0; }
+      .nav-lang-mobile { display: none; }
+      .nav-links-desktop {
+        display: flex; align-items: center; gap: 2px;
+        flex: 1; justify-content: flex-start; padding: 0 0 0 24px;
+      }
+      .nav-links-desktop a {
+        color: var(--text2); text-decoration: none;
+        padding: 7px 10px; border-radius: 8px;
+        font-size: 13px; font-weight: 500;
+        transition: background .18s, color .18s, transform .18s, box-shadow .18s; white-space: nowrap;
+      }
+      .nav-links-desktop a:hover {
+        background: var(--accent-lt); color: var(--accent-dk);
+        transform: translateY(-2px);
+        box-shadow: 0 3px 8px rgba(0,0,0,.08);
+      }
+      .nav-links-desktop a.active {
+        color: var(--accent-dk); font-weight: 600;
+        background: var(--accent-lt);
+        box-shadow: inset 0 -2px 0 var(--accent);
+      }
+      .nav-lang-desktop {
+        display: flex; gap: 4px; align-items: center; flex-shrink: 0;
+      }
+      .nav-lang-desktop .lang-btn {
+        background: none; border: 1.5px solid var(--border);
+        border-radius: 50px; padding: 5px 13px; font-size: 12px;
+        font-weight: 700; cursor: pointer; font-family: inherit;
+        color: var(--muted); transition: all .15s;
+      }
+      .nav-lang-desktop .lang-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .nav-lang-desktop .lang-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent-dk); }
+
+      /* ── Hero desktop: absolute overlay, no gradient, text-shadow only ── */
+      .hero {
+        display: block; position: relative;
+        min-height: 480px; max-height: 600px;
+      }
+      .hero-img {
+        position: absolute; inset: 0;
+        width: 100%; height: 100%; max-height: none;
+        object-fit: cover; object-position: center top;
+      }
+      .hero-overlay {
+        position: absolute; inset: 0;
+        background: none;                /* ← no gradient */
+        align-items: flex-end;
+        justify-content: center;
+        padding: 0 80px 48px 0;
+        text-align: right;
+      }
+      .hero-subtitle {
+        color: rgba(255,255,255,.80);
+        text-shadow: 0 1px 10px rgba(0,0,0,.65);
+      }
+      .hero-title {
+        color: #fff;
+        font-size: clamp(32px, 4vw, 52px);
+        text-shadow: 0 2px 24px rgba(0,0,0,.72), 0 1px 5px rgba(0,0,0,.45);
+      }
+      .hero-tagline {
+        color: rgba(255,255,255,.88);
+        font-size: 15px;
+        text-shadow: 0 1px 10px rgba(0,0,0,.62);
+      }
+      .hero-cta {
+        justify-content: flex-end; margin-top: 24px; width: auto; padding: 0;
+      }
+      .hero-cta-primary {
+        width: auto;
+        filter: drop-shadow(0 2px 10px rgba(0,0,0,.35));
+      }
+
+      /* Hide lang-bar below hero (lang is now in the nav) */
+      .lang-bar { display: none; }
+
+      /* Page content */
+      .page-content { max-width: 1320px; margin-left: auto; margin-right: auto; }
+      .home-greeting { max-width: none; padding: 28px 60px 0; margin-top: 12px; }
+      .home-greeting h4 { font-size: 23px; }
+      .cards-section { max-width: none; padding: 24px 60px 80px; }
+      .cards-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .page-thanks { max-width: none; padding: 32px 60px 24px; }
+    }
+
+    @media (min-width: 1280px) {
+      .hero { min-height: 540px; max-height: 680px; }
+      .hero-title { font-size: clamp(42px, 4vw, 60px); }
+      .cards-grid { grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    }
+
+    /* ── Card entrance stagger ── */
+    @keyframes card-in {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .home-card {
+      opacity: 0;
+      animation: card-in .4s cubic-bezier(.22,1,.36,1) forwards;
+    }
+    .home-card:nth-child(1)  { animation-delay: .04s; }
+    .home-card:nth-child(2)  { animation-delay: .10s; }
+    .home-card:nth-child(3)  { animation-delay: .16s; }
+    .home-card:nth-child(4)  { animation-delay: .22s; }
+    .home-card:nth-child(5)  { animation-delay: .28s; }
+    .home-card:nth-child(6)  { animation-delay: .34s; }
+    .home-card:nth-child(7)  { animation-delay: .40s; }
+    .home-card:nth-child(8)  { animation-delay: .46s; }
+    .home-card:nth-child(9)  { animation-delay: .52s; }
+    .home-card:nth-child(10) { animation-delay: .58s; }
+    .home-card:nth-child(11) { animation-delay: .64s; }
+    .home-card:nth-child(12) { animation-delay: .70s; }
+    .home-card:nth-child(13) { animation-delay: .76s; }
+    .home-card:nth-child(14) { animation-delay: .82s; }
+    .home-card:nth-child(15) { animation-delay: .88s; }
+    .home-card:nth-child(16) { animation-delay: .94s; }
+    .home-card:nth-child(17) { animation-delay: 1.00s; }
+    .home-card:nth-child(18) { animation-delay: 1.06s; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .home-card { animation: none; opacity: 1; }
+      .hero-img   { animation: none; }
+      .nav-drawer { transition: left .28s cubic-bezier(.4,0,.2,1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── TOP NAV ── -->
+<nav class="top-nav">
+  <div class="nav-inner">
+    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-logo-wrap">
+      <div class="nav-logo">
+        <img src="assets/data/logo.svg" alt="ST&CJ Wedding">
+        <span class="nav-logo-name" id="nav-couple-name"></span>
+      </div>
+    </div>
+    <div class="nav-lang-mobile">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+    <div class="nav-links-desktop">
+      <a href="table.html" data-i18n="findTable">Find my seat</a>
+      <a href="menu.html" data-i18n="weddingMenu">See banquet menu</a>
+      <a href="video.html" data-i18n="loveStory">Our love story</a>
+      <a href="gallery.html" data-i18n="photoGallery">Photo Gallery</a>
+      <a href="wish.html" data-i18n="sendWishes">Send your wishes</a>
+    </div>
+    <div class="nav-lang-desktop">
+      <button class="lang-btn" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ── NAV OVERLAY ── -->
+<div class="nav-overlay" id="navOverlay"></div>
+
+<!-- ── NAV DRAWER ── -->
+<div class="nav-drawer" id="navDrawer">
+  <button class="nav-drawer-close" id="drawerClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+  <div class="nav-drawer-header">
+    <div class="nav-drawer-brand">
+      <img src="assets/data/logo.svg" alt="ST&CJ Wedding">
+      <div class="nav-drawer-title" id="drawer-couple-name">Our Wedding</div>
+    </div>
+  </div>
+  <a href="table.html"><i class="fa-solid fa-chair"></i> <span data-i18n="findTable">Find my seat</span></a>
+  <a href="menu.html"><i class="fa-solid fa-utensils"></i> <span data-i18n="weddingMenu">See banquet menu</span></a>
+  <a href="video.html"><i class="fa-solid fa-circle-play"></i> <span data-i18n="loveStory">Our love story</span></a>
+  <a href="gallery.html"><i class="fa-solid fa-images"></i> <span data-i18n="photoGallery">Photo Gallery</span></a>
+  <a href="wish.html"><i class="fa-solid fa-envelope-open-text"></i> <span data-i18n="sendWishes">Send your wishes</span></a>
+</div>
+
+<!-- ── HERO ──
+     Mobile: image shows fully, overlay text stacks below it.
+     Desktop: overlay sits on top of image with text-shadows (no gradient bg).
+-->
+<div class="hero">
+  <img class="hero-img" src="assets/data/banner.jpg" alt="Wedding banner"
+    onerror="this.parentElement.style.background='#d4c5a9'">
+  <div class="hero-overlay">
+    <div class="hero-subtitle" id="hero-date"></div>
+    <h1 class="hero-title" data-i18n="welcomeTitle">Welcome to our wedding celebration</h1>
+    <p class="hero-tagline">
+      <span data-i18n="heroTagline1">Join us as we celebrate love and commitment.</span><br>
+      <span data-i18n="heroTagline2">A day to remember with those we hold dear.</span>
+    </p>
+    <div class="hero-cta">
+      <a class="hero-cta-btn hero-cta-primary" href="table.html" data-i18n="findTable">Find my seat</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── PAGE CONTENT ── -->
+<div class="page-content">
+
+<!-- ── LANG BAR ── -->
+<div class="lang-bar">
+  <div class="lang-bar-inner">
+    <button class="lang-btn active" data-lang="en">English</button>
+    <button class="lang-btn" data-lang="zh">中文</button>
+  </div>
+</div>
+
+<div class="home-greeting">
+  <h4 data-i18n="greetingTitle">We are glad you are here</h4>
+  <p data-i18n="greetingText">Everything you need for the day is just below.</p>
+</div>
+
+<!-- ── CARDS ── -->
+<section class="cards-section">
+  <div class="cards-grid">
+
+    <a class="home-card card-a" href="table.html">
+      <div class="ca-row">
+        <div class="card-icon"><i class="fa-solid fa-chair"></i></div>
+        <div class="ca-info">
+          <div class="ca-title" data-i18n="findTable">Find my seat</div>
+        </div>
+        <div class="card-link"><span data-i18n="cardLinkSeat">Open</span> <i class="fa-solid fa-chevron-right"></i></div>
+      </div>
+      <div class="ca-desc" data-i18n="findTableSub">Locate your table assignment and seating arrangement with ease</div>
+    </a>
+
+    <a class="home-card card-a" href="menu.html">
+      <div class="ca-row">
+        <div class="card-icon"><i class="fa-solid fa-utensils"></i></div>
+        <div class="ca-info">
+          <div class="ca-title" data-i18n="weddingMenu">See banquet menu</div>
+        </div>
+        <div class="card-link"><span data-i18n="cardLinkMenu">View</span> <i class="fa-solid fa-chevron-right"></i></div>
+      </div>
+      <div class="ca-desc" data-i18n="weddingMenuSub">Browse the banquet menu and discover the dishes prepared for this special day</div>
+    </a>
+
+    <a class="home-card card-a" href="video.html">
+      <div class="ca-row">
+        <div class="card-icon"><i class="fa-solid fa-circle-play"></i></div>
+        <div class="ca-info">
+          <div class="ca-title" data-i18n="loveStory">Our love story</div>
+        </div>
+        <div class="card-link"><span data-i18n="cardLinkStory">Watch</span> <i class="fa-solid fa-chevron-right"></i></div>
+      </div>
+      <div class="ca-desc" data-i18n="loveStorySub">Watch a montage of our journey together and the memories we cherish most</div>
+    </a>
+
+    <a class="home-card card-a" href="gallery.html">
+      <div class="ca-row">
+        <div class="card-icon"><i class="fa-solid fa-images"></i></div>
+        <div class="ca-info">
+          <div class="ca-title" data-i18n="cardTitleGallery">Captured Memories</div>
+        </div>
+        <div class="card-link"><span data-i18n="cardLinkGallery">View</span> <i class="fa-solid fa-chevron-right"></i></div>
+      </div>
+      <div class="ca-desc" data-i18n="cardDescGallery">Every frame tells a story of where we've been and the love we've built.</div>
+    </a>
+
+    <a class="home-card card-a" href="wish.html">
+      <div class="ca-row">
+        <div class="card-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+        <div class="ca-info">
+          <div class="ca-title" data-i18n="sendWishes">Share your wishes</div>
+        </div>
+        <div class="card-link"><span data-i18n="cardLinkWishes">Send</span> <i class="fa-solid fa-chevron-right"></i></div>
+      </div>
+      <div class="ca-desc" data-i18n="sendWishesSub">Leave a heartfelt message for us to treasure long after this day</div>
+    </a>
+
+    <a class="home-card card-a" href="game.html">
+      <div class="ca-row">
+        <div class="card-icon"><i class="fa-solid fa-gamepad"></i></div>
+        <div class="ca-info">
+          <div class="ca-title" data-i18n="cardTitleGame">Fun &amp; Games 🎉</div>
+        </div>
+        <div class="card-link"><span data-i18n="cardLinkGame">Play</span> <i class="fa-solid fa-chevron-right"></i></div>
+      </div>
+      <div class="ca-desc" data-i18n="cardDescGame">Help a hungry black cat match the banquet dishes before the feast begins!</div>
+    </a>
+
+  </div>
+</section>
+
+<!-- ── PAGE THANKS ── -->
+<div class="page-thanks" id="page-thanks">Thank you for celebrating with us ❤️</div>
+
+</div><!-- /.page-content -->
+
+<footer class="gw-footer">
+  <span id="gw-footer-names"></span>
+</footer>
+
+<script src="assets/js/gw.js"></script>
+<script>
+  // Hamburger / drawer toggle
+  const hamburgerBtn = document.getElementById('hamburgerBtn');
+  const navDrawer    = document.getElementById('navDrawer');
+  const navOverlay   = document.getElementById('navOverlay');
+  const drawerClose  = document.getElementById('drawerClose');
+
+  function openDrawer()  {
+    navDrawer.classList.add('open');
+    navOverlay.classList.add('open');
+    hamburgerBtn.classList.add('open');
+  }
+  function closeDrawer() {
+    navDrawer.classList.remove('open');
+    navOverlay.classList.remove('open');
+    hamburgerBtn.classList.remove('open');
+  }
+
+  hamburgerBtn.addEventListener('click', openDrawer);
+  drawerClose.addEventListener('click', closeDrawer);
+  navOverlay.addEventListener('click', closeDrawer);
+  window.addEventListener('pageshow', closeDrawer);
+
+  // Thanks message — updates when language toggles
+  const thanksTexts = {
+    en: 'Thank you for celebrating with us ❤️',
+    zh: '感谢您与我们共庆佳期 ❤️'
+  };
+  function updateThanksMsg() {
+    const lang = document.querySelector('.lang-btn.active')?.dataset.lang || 'en';
+    const el = document.getElementById('page-thanks');
+    if (el) el.textContent = thanksTexts[lang] ?? thanksTexts.en;
+  }
+  document.querySelectorAll('.lang-btn').forEach(btn =>
+    new MutationObserver(updateThanksMsg).observe(btn, { attributes: true, attributeFilter: ['class'] })
+  );
+  document.addEventListener('DOMContentLoaded', updateThanksMsg);
+
+  // Config
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const { config } = await GW.loadData();
+      GW.applyConfig();
+      const name = config.projectName || '';
+      document.getElementById('nav-couple-name').textContent = name;
+      document.getElementById('drawer-couple-name').textContent = name;
+      const footerEl = document.getElementById('gw-footer-names');
+      if (footerEl) {
+        const year = config.eventDate ? new Date(config.eventDate).getFullYear() : new Date().getFullYear();
+        footerEl.textContent = `© ${year} ${name}`;
+      }
+      if (config.eventDate) {
+        const d = new Date(config.eventDate);
+        const dateStr = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        const heroDate = document.getElementById('hero-date');
+        if (heroDate) heroDate.textContent = dateStr;
+      }
+    } catch (e) {
+      console.warn('Could not load config:', e);
+    }
+  });
+</script>
+</body>
+</html>

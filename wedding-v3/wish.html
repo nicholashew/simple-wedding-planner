@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Send Wishes</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="assets/js/theme.js"></script>
+  <link rel="stylesheet" href="assets/css/gw.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Form wrap ── */
+    .form-wrap {
+      background: rgba(255,255,255,0.75);
+      border: 1.5px solid rgba(200,168,74,0.35);
+      border-radius: 18px; overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      min-height: 500px;
+    }
+    .form-wrap iframe { width: 100%; min-height: 1200px; border: none; display: block; }
+    .form-placeholder { padding: 48px 24px; text-align: center; }
+    .form-placeholder .icon { font-size: 48px; display: block; margin-bottom: 16px; }
+    .form-placeholder p {
+      font-size: 14px; color: var(--text2); line-height: 1.7; margin-bottom: 8px;
+    }
+    .form-placeholder code {
+      background: var(--accent-lt); border-radius: 4px;
+      padding: 2px 7px; font-size: 12px; color: var(--accent-dk);
+    }
+
+    /* ── iframe loader ── */
+    .form-loader {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 18px;
+      padding: 64px 24px; text-align: center;
+    }
+    .form-loader-spinner {
+      width: 44px; height: 44px; border-radius: 50%;
+      border: 3px solid var(--accent-lt);
+      border-top-color: var(--accent);
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .form-loader-bar {
+      width: 180px; height: 4px; border-radius: 99px;
+      background: var(--accent-lt); overflow: hidden;
+    }
+    .form-loader-bar::after {
+      content: ''; display: block; height: 100%;
+      width: 40%; border-radius: 99px; background: var(--accent);
+      animation: slide 1.2s ease-in-out infinite;
+    }
+    @keyframes slide {
+      0%   { transform: translateX(-100%); }
+      100% { transform: translateX(350%); }
+    }
+    .form-loader p { font-size: 13px; color: var(--text2); margin: 0; }
+
+    /* ── Preamble ── */
+    .form-preamble {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 16px 18px; margin-bottom: 16px;
+      background: rgba(255,255,255,0.72);
+      border: 1.5px solid rgba(200,168,74,0.30);
+      border-radius: 14px;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .form-preamble i { font-size: 20px; color: var(--accent); flex-shrink: 0; margin-top: 2px; }
+    .form-preamble p { font-size: 13px; color: var(--text2); line-height: 1.6; margin: 0; }
+
+    /* ── Success state ── */
+    .form-success {
+      padding: 60px 24px; text-align: center;
+    }
+    .form-success-icon {
+      font-size: 48px; color: var(--accent);
+      display: block; margin-bottom: 16px;
+    }
+    .form-success-title {
+      font-family: var(--serif); font-size: 22px; font-weight: 400;
+      color: var(--accent-dk); margin-bottom: 10px;
+    }
+    .form-success-body {
+      font-size: 14px; color: var(--text2); line-height: 1.7;
+    }
+
+    /* ── Error state ── */
+    .form-error {
+      padding: 48px 24px; text-align: center;
+    }
+    .form-error-icon {
+      font-size: 40px; color: var(--muted);
+      display: block; margin-bottom: 14px;
+    }
+    .form-error-title {
+      font-family: var(--serif); font-size: 18px; font-weight: 400;
+      color: var(--text); margin-bottom: 8px;
+    }
+    .form-error-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  </style>
+</head>
+<body>
+
+<!-- ── TOP NAV ── -->
+<nav class="top-nav">
+  <div class="nav-inner">
+    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-logo-wrap">
+      <div class="nav-logo">
+        <img src="assets/data/logo.svg" alt="">
+        <span class="nav-logo-name" id="nav-couple-name"></span>
+      </div>
+    </div>
+    <div class="nav-lang-mobile">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+    <div class="nav-links-desktop">
+      <a href="table.html" data-i18n="findTable">Find my seat</a>
+      <a href="menu.html" data-i18n="weddingMenu">Menu</a>
+      <a href="video.html" data-i18n="loveStory">Love Story</a>
+      <a href="gallery.html" data-i18n="photoGallery">Gallery</a>
+      <a href="wish.html" data-i18n="sendWishes">Wishes</a>
+    </div>
+    <div class="nav-lang-desktop">
+      <button class="lang-btn" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ── NAV OVERLAY ── -->
+<div class="nav-overlay" id="navOverlay"></div>
+
+<!-- ── NAV DRAWER ── -->
+<div class="nav-drawer" id="navDrawer">
+  <button class="nav-drawer-close" id="drawerClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+  <div class="nav-drawer-header">
+    <div class="nav-drawer-brand">
+      <img src="assets/data/logo.svg" alt="">
+      <div class="nav-drawer-title" id="drawer-couple-name">Our Wedding</div>
+    </div>
+  </div>
+  <a href="table.html"><i class="fa-solid fa-chair"></i> <span data-i18n="findTable">Find my seat</span></a>
+  <a href="menu.html"><i class="fa-solid fa-utensils"></i> <span data-i18n="weddingMenu">Menu</span></a>
+  <a href="video.html"><i class="fa-solid fa-circle-play"></i> <span data-i18n="loveStory">Love Story</span></a>
+  <a href="gallery.html"><i class="fa-solid fa-images"></i> <span data-i18n="photoGallery">Gallery</span></a>
+  <a href="wish.html"><i class="fa-solid fa-envelope-open-text"></i> <span data-i18n="sendWishes">Wishes</span></a>
+</div>
+
+<main class="gw-main">
+  <h2 class="page-title"><i class="fa-solid fa-envelope-open-text"></i> <span data-i18n="sendWishes">Send Wishes</span></h2>
+  <p class="page-subtitle" data-i18n="sendWishesSub">Leave a message for us</p>
+
+  <div class="form-preamble" id="form-preamble">
+    <i class="fa-solid fa-heart"></i>
+    <p data-i18n="wishPreamble">We'd love to hear your blessings — it only takes a minute. Your words mean the world to us.</p>
+  </div>
+
+  <div class="form-wrap" id="form-wrap">
+    <!-- Google Form embed — set googleFormUrl in config.json -->
+    <div class="form-placeholder" id="form-placeholder">
+      <i class="fa-solid fa-pen-to-square icon"></i>
+      <p>To enable the wishes form, add your Google Form embed URL to <code>config.json</code>:</p>
+      <p><code>"googleFormUrl": "https://docs.google.com/forms/d/e/YOUR_FORM_ID/viewform?embedded=true"</code></p>
+    </div>
+  </div>
+</main>
+
+<footer class="gw-footer">
+  <span id="gw-footer-names"></span>
+</footer>
+
+<script src="assets/js/gw.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const { config } = await GW.loadData();
+    GW.applyConfig();
+    GW.initCommonNav(config);
+
+    if (config.googleFormUrl) {
+      const wrap = document.getElementById('form-wrap');
+      const placeholder = document.getElementById('form-placeholder');
+      placeholder.remove();
+
+      // Loading indicator
+      const loader = document.createElement('div');
+      loader.className = 'form-loader';
+      loader.innerHTML = `
+        <div class="form-loader-spinner"></div>
+        <div class="form-loader-bar"></div>
+        <p data-i18n="loadingForm">Loading form…</p>
+      `;
+      wrap.appendChild(loader);
+
+      const iframe = document.createElement('iframe');
+      iframe.src = config.googleFormUrl;
+      iframe.title = 'Send Wishes';
+      iframe.setAttribute('allowfullscreen', '');
+      iframe.style.visibility = 'hidden';
+      iframe.style.position = 'absolute';
+
+      function revealForm() {
+        if (!loader.parentNode) return; // already revealed
+        loader.remove();
+        iframe.style.visibility = '';
+        iframe.style.position = '';
+      }
+
+      function showError() {
+        if (!loader.parentNode) return;
+        loader.remove();
+        iframe.remove();
+        wrap.innerHTML = `
+          <div class="form-error">
+            <i class="fa-solid fa-triangle-exclamation form-error-icon"></i>
+            <h3 class="form-error-title" data-i18n="formErrorTitle">Form unavailable</h3>
+            <p class="form-error-body" data-i18n="formErrorBody">We couldn't load the wishes form. Please try again later.</p>
+          </div>`;
+        GW.setLang(GW.lang); // re-apply i18n to injected elements
+      }
+
+      let loadCount = 0;
+      const fallbackTimer = setTimeout(showError, 20000);
+      iframe.addEventListener('load', () => {
+        clearTimeout(fallbackTimer);
+        loadCount++;
+        if (loadCount === 1) {
+          revealForm();
+        } else {
+          // Second load = Google Forms navigated to confirmation page
+          const preamble = document.getElementById('form-preamble');
+          if (preamble) preamble.style.display = 'none';
+          document.getElementById('form-wrap').innerHTML = `
+            <div class="form-success">
+              <i class="fa-solid fa-envelope-open-text form-success-icon"></i>
+              <h3 class="form-success-title" data-i18n="formSuccessTitle">Thank you!</h3>
+              <p class="form-success-body" data-i18n="formSuccessBody">Your wishes have been received.<br>We truly appreciate your heartfelt message.</p>
+            </div>`;
+          GW.setLang(GW.lang);
+          if (window.GW && GW.toast) GW.toast(GW.t('wishesSentToast') || 'Wishes sent! Thank you 🎊', 4000);
+        }
+      });
+      iframe.addEventListener('error', showError);
+
+      wrap.appendChild(iframe);
+    }
+  } catch (e) {
+    console.warn('Could not load config:', e);
+  }
+});
+
+</script>
+
+<!-- ── BOTTOM NAV (mobile) ── -->
+<nav class="bottom-nav">
+  <a class="bottom-nav-item" href="index.html"><i class="fa-solid fa-house"></i><span data-i18n="navHome">Home</span></a>
+  <a class="bottom-nav-item" href="table.html"><i class="fa-solid fa-ticket"></i><span data-i18n="bnSeat">Find Seat</span></a>
+  <a class="bottom-nav-item" href="index.html#program-section"><i class="fa-solid fa-calendar-days"></i><span data-i18n="bnProgram">Program</span></a>
+  <a class="bottom-nav-item" href="menu.html"><i class="fa-solid fa-utensils"></i><span data-i18n="bnMenu">Menu</span></a>
+  <a class="bottom-nav-item active" href="wish.html"><i class="fa-solid fa-envelope-open-text"></i><span data-i18n="bnWishes">Wishes</span></a>
+</nav>
+</body>
+</html>

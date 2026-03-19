@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Love Story Video</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="assets/js/theme.js"></script>
+  <link rel="stylesheet" href="assets/css/gw.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Video wrapper ── */
+    #montage-wrap {
+      position: relative; background: #000;
+      border-radius: 14px; overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,.18);
+      aspect-ratio: 16/9; margin-bottom: 20px;
+    }
+    /* Thumbnail + play button shown before video plays */
+    #video-poster {
+      position: absolute; inset: 0; z-index: 4;
+      background: #111 center/cover no-repeat;
+      display: none; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .video-play-btn {
+      width: 68px; height: 68px; border-radius: 50%; border: none;
+      background: rgba(200,168,74,0.88); color: #fff; font-size: 24px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 28px rgba(0,0,0,.45);
+      cursor: pointer; padding-left: 4px;
+      transition: background .2s, transform .2s;
+    }
+    .video-play-btn:hover { background: var(--accent-dk); transform: scale(1.1); }
+    #montage-video {
+      width: 100%; height: 100%; display: block; object-fit: cover;
+      filter: saturate(0.92) brightness(0.97) contrast(1.02);
+    }
+    /* Watermark over video */
+    #montage-wrap::after {
+      content: attr(data-wm);
+      position: absolute; inset: 0; z-index: 5;
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(12px,3vw,18px); font-weight: 600;
+      color: rgba(255,255,255,.18); pointer-events: none;
+      text-align: center; padding: 16px;
+      text-shadow: 0 1px 3px rgba(0,0,0,.4);
+      white-space: pre-wrap; word-break: break-all;
+    }
+    /* Lock overlay */
+    #montage-overlay {
+      position: absolute; inset: 0; z-index: 10;
+      background: rgba(10,8,5,.92);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: #fff; text-align: center; padding: 24px;
+    }
+    #montage-overlay.hidden { display: none; }
+    .lock-icon  { font-size: 36px; }
+    .lock-title {
+      font-family: Georgia, serif; font-size: 16px; font-weight: 400;
+      margin-bottom: 8px; color: var(--gold);
+    }
+    .lock-desc { font-size: 14px; color: rgba(255,255,255,.65); line-height: 1.6; margin-bottom: 20px; }
+    /* Countdown */
+    .lock-countdown { width: 100%; max-width: 320px; }
+    .lock-countdown-label {
+      font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase;
+      color: rgba(255,255,255,.45); font-weight: 600; margin-bottom: 8px;
+    }
+    .hcc-units { display: flex; gap: 5px; align-items: center; }
+    .hcc-unit {
+      display: flex; flex-direction: column; align-items: center;
+      background: rgba(255,255,255,.1); border: 1.5px solid rgba(255,255,255,.18);
+      border-radius: 8px; padding: 6px 10px; min-width: 44px; flex: 1;
+    }
+    .hcc-val {
+      font-size: 20px; font-weight: 800; color: #fff; line-height: 1;
+      font-variant-numeric: tabular-nums; font-family: Georgia, serif;
+    }
+    .hcc-lbl {
+      font-size: 9px; color: rgba(255,255,255,.45); margin-top: 3px;
+      letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .hcc-sep {
+      font-size: 16px; font-weight: 700; color: rgba(255,255,255,.25);
+      padding-bottom: 10px; flex-shrink: 0;
+    }
+    .video-info {
+      background: rgba(255,255,255,0.75);
+      border: 1.5px solid rgba(200,168,74,0.35);
+      border-radius: 14px; padding: 16px 18px;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .video-info p { font-size: 14px; color: var(--text2); line-height: 1.6; }
+    .video-notice {
+      display: flex; align-items: center; gap: 10px;
+      margin-top: 12px; padding: 10px 14px;
+      border-radius: 10px; background: rgba(200,168,74,0.08);
+      border: 1px solid rgba(200,168,74,0.25);
+      font-size: 12px; color: var(--muted); font-style: italic;
+    }
+    .video-notice i { color: var(--gold); flex-shrink: 0; }
+    @media (min-width: 640px) { #montage-wrap { border-radius: 18px; } }
+
+  </style>
+</head>
+<body>
+
+<!-- ── TOP NAV ── -->
+<nav class="top-nav">
+  <div class="nav-inner">
+    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div class="nav-logo-wrap">
+      <div class="nav-logo">
+        <img src="assets/data/logo.svg" alt="">
+        <span class="nav-logo-name" id="nav-couple-name"></span>
+      </div>
+    </div>
+    <div class="nav-lang-mobile">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+    <div class="nav-links-desktop">
+      <a href="table.html" data-i18n="findTable">Find my seat</a>
+      <a href="menu.html" data-i18n="weddingMenu">Menu</a>
+      <a href="video.html" data-i18n="loveStory">Love Story</a>
+      <a href="gallery.html" data-i18n="photoGallery">Gallery</a>
+      <a href="wish.html" data-i18n="sendWishes">Wishes</a>
+    </div>
+    <div class="nav-lang-desktop">
+      <button class="lang-btn" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ── NAV OVERLAY ── -->
+<div class="nav-overlay" id="navOverlay"></div>
+
+<!-- ── NAV DRAWER ── -->
+<div class="nav-drawer" id="navDrawer">
+  <button class="nav-drawer-close" id="drawerClose" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+  <div class="nav-drawer-header">
+    <div class="nav-drawer-brand">
+      <img src="assets/data/logo.svg" alt="">
+      <div class="nav-drawer-title" id="drawer-couple-name">Our Wedding</div>
+    </div>
+  </div>
+  <a href="table.html"><i class="fa-solid fa-chair"></i> <span data-i18n="findTable">Find my seat</span></a>
+  <a href="menu.html"><i class="fa-solid fa-utensils"></i> <span data-i18n="weddingMenu">Menu</span></a>
+  <a href="video.html"><i class="fa-solid fa-circle-play"></i> <span data-i18n="loveStory">Love Story</span></a>
+  <a href="gallery.html"><i class="fa-solid fa-images"></i> <span data-i18n="photoGallery">Gallery</span></a>
+  <a href="wish.html"><i class="fa-solid fa-envelope-open-text"></i> <span data-i18n="sendWishes">Wishes</span></a>
+</div>
+
+<main class="gw-main">
+  <h2 class="page-title"><i class="fa-solid fa-circle-play"></i> <span data-i18n="loveStory">Love Story Video</span></h2>
+  <p class="page-subtitle" data-i18n="loveStorySub">Our journey together</p>
+
+  <div id="montage-wrap" data-wm="">
+    <video id="montage-video" controls preload="none" playsinline></video>
+    <div id="video-poster">
+      <button class="video-play-btn" aria-label="Play video"><i class="fa-solid fa-play"></i></button>
+    </div>
+    <div id="montage-overlay">
+      <div class="lock-icon"><i class="fa-solid fa-clock"></i></div>
+      <div class="lock-title" data-i18n="videoUnavailable">Coming Soon</div>
+      <div class="lock-desc" id="lock-desc" data-i18n="videoLockDefault">The love story video will be available during the banquet.</div>
+      <div class="lock-countdown" id="lock-countdown" style="display:none;">
+        <div class="lock-countdown-label" data-i18n="availableIn">Available in</div>
+        <div class="hcc-units">
+          <div class="hcc-unit"><span class="hcc-val" id="hcc-d">00</span><span class="hcc-lbl" data-i18n="days">Days</span></div>
+          <span class="hcc-sep">:</span>
+          <div class="hcc-unit"><span class="hcc-val" id="hcc-h">00</span><span class="hcc-lbl" data-i18n="hours">Hours</span></div>
+          <span class="hcc-sep">:</span>
+          <div class="hcc-unit"><span class="hcc-val" id="hcc-m">00</span><span class="hcc-lbl" data-i18n="mins">Mins</span></div>
+          <span class="hcc-sep">:</span>
+          <div class="hcc-unit"><span class="hcc-val" id="hcc-s">00</span><span class="hcc-lbl" data-i18n="secs">Secs</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="video-info" id="video-info">
+    <p data-i18n="videoInfoText">Our love story montage — a journey through the moments that led us here.</p>
+    <div class="video-notice">
+      <i class="fa-solid fa-video-slash"></i>
+      <span data-i18n="videoNoRecord">Please enjoy the video without screen recording. Thank you for respecting our memories.</span>
+    </div>
+  </div>
+</main>
+
+<footer class="gw-footer">
+  <span id="gw-footer-names"></span>
+</footer>
+
+<script src="assets/js/gw.js"></script>
+<script>
+let _availFrom = '', _availDate = '';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const { config } = await GW.loadData();
+    GW.applyConfig();
+    GW.initCommonNav(config);
+
+    const name = config.projectName || '';
+    document.getElementById('montage-wrap').dataset.wm = name || 'Wedding';
+
+    const montage  = config.montage || {};
+    const videoUrl = montage.videoUrl || '';
+    _availFrom     = montage.availableFrom || '00:00';
+    const availTo  = montage.availableTo   || '23:59';
+    _availDate     = montage.availableDate || config.eventDate || '';
+
+    document.getElementById('montage-video').dataset.src = videoUrl;
+
+    const now    = new Date();
+    const date   = _availDate || now.toISOString().slice(0, 10);
+    const fromDt = new Date(`${date}T${_availFrom}:00`);
+    const toDt   = new Date(`${date}T${availTo}:00`);
+
+    if (now >= fromDt) {
+      unlockVideo(videoUrl);
+    } else {
+      applyLockDesc();
+      document.getElementById('lock-countdown').style.display = 'block';
+      startCountdown(fromDt);
+    }
+  } catch (e) {
+    console.warn('Could not load config:', e);
+  }
+});
+
+// Re-apply translated dynamic text on lang switch
+window.onLangChange = () => applyLockDesc();
+
+function applyLockDesc() {
+  const el = document.getElementById('lock-desc');
+  if (!el || !_availDate) return;
+  el.textContent = GW.lang === 'zh'
+    ? `影片將於 ${_availDate} ${_availFrom} 開放`
+    : `The video will be available from ${_availFrom} on ${_availDate}.`;
+}
+
+function unlockVideo(src) {
+  document.getElementById('montage-overlay').classList.add('hidden');
+  const video  = document.getElementById('montage-video');
+  const poster = document.getElementById('video-poster');
+  // Hide the static video-info once unlocked
+  const infoEl = document.getElementById('video-info');
+  if (infoEl) infoEl.style.display = 'none';
+  // Show thumbnail with gold play button; defer loading the video until tap
+  const thumb = (GW.config && GW.config.montage && GW.config.montage.thumbnailUrl)
+    || 'assets/data/banner.jpg';
+  poster.style.backgroundImage = `url('${thumb}')`;
+  poster.style.display = 'flex';
+  poster.addEventListener('click', () => {
+    poster.style.display = 'none';
+    video.src = src;
+    video.play().catch(() => {});
+  }, { once: true });
+  // Also hide if user starts playback via native controls
+  video.addEventListener('play', () => { poster.style.display = 'none'; }, { once: true });
+}
+
+function startCountdown(targetDate) {
+  const dUnit = document.getElementById('hcc-d').closest('.hcc-unit');
+  const dSep  = dUnit && dUnit.nextElementSibling; // the : separator after days
+  let timer = null;
+  function tick() {
+    const diff = targetDate - new Date();
+    if (diff <= 0) {
+      clearTimeout(timer);
+      unlockVideo(document.getElementById('montage-video').dataset.src || '');
+      return;
+    }
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    // Hide days unit when d === 0 (same-day banquet)
+    if (dUnit) dUnit.style.display = d === 0 ? 'none' : '';
+    if (dSep)  dSep.style.display  = d === 0 ? 'none' : '';
+    document.getElementById('hcc-d').textContent = String(d).padStart(2, '0');
+    document.getElementById('hcc-h').textContent = String(h).padStart(2, '0');
+    document.getElementById('hcc-m').textContent = String(m).padStart(2, '0');
+    document.getElementById('hcc-s').textContent = String(s).padStart(2, '0');
+    timer = setTimeout(tick, 1000);
+  }
+  tick();
+}
+
+</script>
+
+<!-- ── BOTTOM NAV (mobile) ── -->
+<nav class="bottom-nav">
+  <a class="bottom-nav-item" href="index.html"><i class="fa-solid fa-house"></i><span data-i18n="navHome">Home</span></a>
+  <a class="bottom-nav-item" href="table.html"><i class="fa-solid fa-ticket"></i><span data-i18n="bnSeat">Find Seat</span></a>
+  <a class="bottom-nav-item" href="index.html#program-section"><i class="fa-solid fa-calendar-days"></i><span data-i18n="bnProgram">Program</span></a>
+  <a class="bottom-nav-item" href="menu.html"><i class="fa-solid fa-utensils"></i><span data-i18n="bnMenu">Menu</span></a>
+  <a class="bottom-nav-item" href="wish.html"><i class="fa-solid fa-envelope-open-text"></i><span data-i18n="bnWishes">Wishes</span></a>
+</nav>
+</body>
+</html>

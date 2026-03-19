@@ -364,40 +364,8 @@
       <span class="program-header-today" data-i18n="programHeaderToday">Today's program and timing</span>
       <!-- <span class="program-header-label" data-i18n="programTitle">Program</span> -->
     </div>
-    <div class="program-card">
-      <div class="program-item">
-        <div class="program-left">
-          <div class="program-dot"></div>
-          <div class="program-connector"></div>
-        </div>
-        <div class="program-item-body">
-          <div class="program-time">1:00 PM</div>
-          <div class="program-event" data-i18n="prog1">Couple Entrance</div>
-          <div class="program-desc" data-i18n="prog1Desc">The couple makes their entrance to begin the celebration.</div>
-        </div>
-      </div>
-      <div class="program-item">
-        <div class="program-left">
-          <div class="program-dot"></div>
-          <div class="program-connector"></div>
-        </div>
-        <div class="program-item-body">
-          <div class="program-time">1:30 PM</div>
-          <div class="program-event" data-i18n="prog2">Lunch Starts</div>
-          <div class="program-desc" data-i18n="prog2Desc">Guests are served a selection of dishes prepared for the occasion.</div>
-        </div>
-      </div>
-      <div class="program-item">
-        <div class="program-left">
-          <div class="program-dot"></div>
-          <div class="program-connector"></div>
-        </div>
-        <div class="program-item-body">
-          <div class="program-time">2:30 PM</div>
-          <div class="program-event" data-i18n="prog3">Yam Seng 🍻</div>
-          <div class="program-desc" data-i18n="prog3Desc">Toasts and well-wishes are shared together.</div>
-        </div>
-      </div>
+    <div class="program-card" id="program-card">
+      <!-- rendered by JS from config.program -->
     </div>
   </div>
 
@@ -542,6 +510,31 @@
     qrInput.value = ''; // allow retry with same file
   });
 
+  // ── Program timeline (rendered from config.program)
+  let _programData = [];
+
+  function renderProgram(lang) {
+    const card = document.getElementById('program-card');
+    if (!card || !_programData.length) return;
+    const isZh = lang === 'zh';
+    card.innerHTML = _programData.map(item => {
+      const title = isZh ? (item.titleZh || item.titleEn) : (item.titleEn || item.titleZh);
+      const desc  = isZh ? (item.descZh  || item.descEn)  : (item.descEn  || item.descZh);
+      return `
+        <div class="program-item">
+          <div class="program-left">
+            <div class="program-dot"></div>
+            <div class="program-connector"></div>
+          </div>
+          <div class="program-item-body">
+            <div class="program-time">${item.time || ''}</div>
+            <div class="program-event">${title || ''}</div>
+            ${desc ? `<div class="program-desc">${desc}</div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
   // ── Thanks message i18n
   const thanksTexts = {
     en: { title: 'Thank you for celebrating with us ❤️', sub: 'We\'re grateful to celebrate this moment with you. Enjoy every second.' },
@@ -555,9 +548,10 @@
     const sub = document.getElementById('page-thanks-sub');
     if (sub) sub.textContent = t.sub;
   }
-  document.querySelectorAll('.lang-btn').forEach(btn =>
-    new MutationObserver(updateThanksMsg).observe(btn, { attributes: true, attributeFilter: ['class'] })
-  );
+  window.onLangChange = (lang) => {
+    renderProgram(lang);
+    updateThanksMsg();
+  };
 
   // ── Config + i18n
   document.addEventListener('DOMContentLoaded', async () => {
@@ -572,6 +566,10 @@
         const heroDate = document.getElementById('hero-date');
         if (heroDate) heroDate.textContent =
           d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
+      }
+      if (config.program && config.program.length) {
+        _programData = config.program;
+        renderProgram(GW.lang);
       }
     } catch (e) {
       console.warn('Could not load config:', e);

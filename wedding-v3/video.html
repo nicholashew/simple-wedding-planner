@@ -174,7 +174,7 @@
       <div class="lock-title" data-i18n="videoUnavailable">Coming Soon</div>
       <div class="lock-desc" id="lock-desc" data-i18n="videoLockDefault">The love story video will be available during the banquet.</div>
       <div class="lock-countdown" id="lock-countdown" style="display:none;">
-        <div class="lock-countdown-label" data-i18n="availableIn">Available in</div>
+        <div class="lock-countdown-label"><span data-i18n="availableIn">Available in</span><span id="tz-badge"></span></div>
         <div class="hcc-units">
           <div class="hcc-unit"><span class="hcc-val" id="hcc-d">00</span><span class="hcc-lbl" data-i18n="days">Days</span></div>
           <span class="hcc-sep">:</span>
@@ -203,7 +203,24 @@
 
 <script src="assets/js/gw.js"></script>
 <script>
-let _availFrom = '', _availDate = '';
+let _availFrom = '', _availDate = '', _timezone = '';
+
+// Parse a datetime string in a specific IANA timezone to a UTC Date object.
+// e.g. parseDateInTz('2026-05-24', '14:00', 'Asia/Singapore') → Date for 06:00 UTC
+function parseDateInTz(dateStr, timeStr, tz) {
+  const baseUtc = new Date(`${dateStr}T${timeStr}:00Z`);
+  const inTz    = new Date(baseUtc.toLocaleString('en-US', { timeZone: tz }));
+  return new Date(baseUtc.getTime() + (baseUtc - inTz));
+}
+
+// Returns short timezone abbreviation, e.g. "SGT", "UTC+8"
+function getTzAbbr(tz) {
+  try {
+    return new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'short' })
+      .formatToParts(new Date())
+      .find(p => p.type === 'timeZoneName')?.value || '';
+  } catch { return ''; }
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
@@ -219,13 +236,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     _availFrom     = montage.availableFrom || '00:00';
     const availTo  = montage.availableTo   || '23:59';
     _availDate     = montage.availableDate || config.eventDate || '';
+    _timezone      = config.timezone || '';
 
     document.getElementById('montage-video').dataset.src = videoUrl;
 
+    // Show timezone abbreviation badge next to the countdown label
+    const tzAbbr = _timezone ? getTzAbbr(_timezone) : '';
+    const tzBadge = document.getElementById('tz-badge');
+    if (tzBadge && tzAbbr) tzBadge.textContent = ` · ${tzAbbr}`;
+
     const now    = new Date();
     const date   = _availDate || now.toISOString().slice(0, 10);
-    const fromDt = new Date(`${date}T${_availFrom}:00`);
-    const toDt   = new Date(`${date}T${availTo}:00`);
+    const fromDt = _timezone
+      ? parseDateInTz(date, _availFrom, _timezone)
+      : new Date(`${date}T${_availFrom}:00`);
+    const toDt = _timezone
+      ? parseDateInTz(date, availTo, _timezone)
+      : new Date(`${date}T${availTo}:00`);
 
     if (now >= fromDt) {
       unlockVideo(videoUrl);
@@ -245,9 +272,10 @@ window.onLangChange = () => applyLockDesc();
 function applyLockDesc() {
   const el = document.getElementById('lock-desc');
   if (!el || !_availDate) return;
+  const tzAbbr = _timezone ? ` ${getTzAbbr(_timezone)}` : '';
   el.textContent = GW.lang === 'zh'
-    ? `影片將於 ${_availDate} ${_availFrom} 開放`
-    : `The video will be available from ${_availFrom} on ${_availDate}.`;
+    ? `影片將於 ${_availDate} ${_availFrom}${tzAbbr} 開放`
+    : `The video will be available from ${_availFrom}${tzAbbr} on ${_availDate}.`;
 }
 
 function unlockVideo(src) {
